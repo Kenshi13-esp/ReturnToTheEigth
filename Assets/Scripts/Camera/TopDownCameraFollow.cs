@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace ReturnToTheEigth.CameraSystem
 {
-    /// <summary>Frames exactly one XY room and cuts to the adjacent room when the target crosses a boundary.</summary>
+    /// <summary>Frames exactly one XY room in edit and play mode, cutting at room boundaries.</summary>
+    [ExecuteAlways]
     [RequireComponent(typeof(Camera))]
     [DisallowMultipleComponent]
     public sealed class TopDownCameraFollow : MonoBehaviour
@@ -80,8 +81,12 @@ namespace ReturnToTheEigth.CameraSystem
             roomCamera.orthographic = true;
             roomCamera.orthographicSize = height * Half;
             float roomAspect = width / height;
-            float outputWidth = roomCamera.targetTexture != null ? roomCamera.targetTexture.width : Screen.width;
-            float outputHeight = roomCamera.targetTexture != null ? roomCamera.targetTexture.height : Screen.height;
+            // Screen dimensions can describe a different editor window outside Play mode.
+            // Recover this camera's full render surface from its pixel viewport instead.
+            float outputWidth = roomCamera.targetTexture != null ? roomCamera.targetTexture.width
+                : roomCamera.pixelWidth / Mathf.Max(MinimumRoomDimension, roomCamera.rect.width);
+            float outputHeight = roomCamera.targetTexture != null ? roomCamera.targetTexture.height
+                : roomCamera.pixelHeight / Mathf.Max(MinimumRoomDimension, roomCamera.rect.height);
             float outputAspect = Mathf.Max(One, outputWidth) / Mathf.Max(One, outputHeight);
             if (outputAspect > roomAspect)
             {

@@ -1,7 +1,7 @@
 ﻿<Solution>
   <Project Path="ReturnToTheEigth.Runtime.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="ReturnToTheEigth.PlayModeTests.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Bezi.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>

@@ -2,55 +2,99 @@ using UnityEngine;
 
 namespace ReturnToTheEigth.CameraSystem
 {
-    /// <summary>Front-facing orthographic XY camera; optionally follows the player without rotating.</summary>
+    /// <summary>Frames exactly one XY room and cuts to the adjacent room when the target crosses a boundary.</summary>
     [RequireComponent(typeof(Camera))]
     [DisallowMultipleComponent]
     public sealed class TopDownCameraFollow : MonoBehaviour
     {
         private const float CameraDepth = -10f;
-        private const float DefaultSmoothTime = 0.15f;
-        private const float MinimumSmoothTime = 0.01f;
-        private const float DefaultPixelsPerUnit = 100f;
+        private const float Half = 0.5f;
         private const float Zero = 0f;
         private const float One = 1f;
-        [SerializeField] private Transform target;
-        [SerializeField] private bool followTarget;
-        [SerializeField, Min(MinimumSmoothTime)] private float smoothTime = DefaultSmoothTime;
-        [SerializeField, Min(One)] private float pixelsPerUnit = DefaultPixelsPerUnit;
-        private Vector3 followVelocity;
-        private Vector3 smoothPosition;
+        private const float MinimumRoomDimension = 0.001f;
+        private const float DefaultRoomWidth = 4.26f;
+        private const float DefaultRoomHeight = 2.4f;
+        private const float DefaultOriginX = -4.26f;
+        private const float DefaultOriginY = -4.8f;
+        private const int FirstRoom = 0;
+        private const int MinimumRoomCount = 1;
+        private const int DefaultColumns = 2;
+        private const int DefaultRows = 4;
+        private static readonly Vector2 DefaultRoomSize = new Vector2(DefaultRoomWidth, DefaultRoomHeight);
+        private static readonly Vector2 DefaultGridOrigin = new Vector2(DefaultOriginX, DefaultOriginY);
+        private static readonly Vector2Int DefaultRoomCount = new Vector2Int(DefaultColumns, DefaultRows);
 
-        private void Start()
+        [SerializeField] private Transform target;
+        [SerializeField] private Vector2 roomSize = DefaultRoomSize;
+        [SerializeField] private Vector2 gridOrigin = DefaultGridOrigin;
+        [SerializeField] private Vector2Int roomCount = DefaultRoomCount;
+        private Camera roomCamera;
+        public Vector2Int CurrentRoom { get; private set; }
+
+        private void Awake()
         {
-            GetComponent<Camera>().orthographic = true;
-            transform.rotation = Quaternion.identity;
-            smoothPosition = new Vector3(transform.position.x, transform.position.y, CameraDepth);
-            transform.position = smoothPosition;
+            roomCamera = GetComponent<Camera>();
+        }
+
+        private void OnEnable()
+        {
+            RefreshRoomFraming();
         }
 
         private void LateUpdate()
         {
-            if (!followTarget || target == null)
-            {
-                return;
-            }
-            Vector3 goal = new Vector3(target.position.x, target.position.y, CameraDepth);
-            smoothPosition = Vector3.SmoothDamp(smoothPosition, goal, ref followVelocity, smoothTime);
-            transform.position = new Vector3(Mathf.Round(smoothPosition.x * pixelsPerUnit) / pixelsPerUnit,
-                Mathf.Round(smoothPosition.y * pixelsPerUnit) / pixelsPerUnit, CameraDepth);
-            transform.rotation = Quaternion.identity;
+            RefreshRoomFraming();
         }
 
-        /// <summary>Assigns the XY follow target; leaves the full-map framing unchanged when following is disabled.</summary>
+        private void OnValidate()
+        {
+            roomSize.x = Mathf.Max(MinimumRoomDimension, roomSize.x);
+            roomSize.y = Mathf.Max(MinimumRoomDimension, roomSize.y);
+            roomCount.x = Mathf.Max(MinimumRoomCount, roomCount.x);
+            roomCount.y = Mathf.Max(MinimumRoomCount, roomCount.y);
+        }
+
+        /// <summary>Assigns the player and immediately frames its room instead of centering on the player.</summary>
         public void SetTarget(Transform newTarget)
         {
             target = newTarget;
-            followVelocity = Vector3.zero;
-            if (followTarget && target != null)
+            RefreshRoomFraming();
+        }
+
+        /// <summary>Applies the exact room bounds and a matching viewport, including after a display resize.</summary>
+        public void RefreshRoomFraming()
+        {
+            if (roomCamera == null) roomCamera = GetComponent<Camera>();
+            if (target == null || roomCamera == null) return;
+
+            float width = Mathf.Max(MinimumRoomDimension, roomSize.x);
+            float height = Mathf.Max(MinimumRoomDimension, roomSize.y);
+            int column = Mathf.Clamp(Mathf.FloorToInt((target.position.x - gridOrigin.x) / width),
+                FirstRoom, Mathf.Max(MinimumRoomCount, roomCount.x) - MinimumRoomCount);
+            int row = Mathf.Clamp(Mathf.FloorToInt((target.position.y - gridOrigin.y) / height),
+                FirstRoom, Mathf.Max(MinimumRoomCount, roomCount.y) - MinimumRoomCount);
+            CurrentRoom = new Vector2Int(column, row);
+            transform.SetPositionAndRotation(new Vector3(gridOrigin.x + (column + Half) * width,
+                gridOrigin.y + (row + Half) * height, CameraDepth), Quaternion.identity);
+
+            roomCamera.orthographic = true;
+            roomCamera.orthographicSize = height * Half;
+            float roomAspect = width / height;
+            float outputWidth = roomCamera.targetTexture != null ? roomCamera.targetTexture.width : Screen.width;
+            float outputHeight = roomCamera.targetTexture != null ? roomCamera.targetTexture.height : Screen.height;
+            float outputAspect = Mathf.Max(One, outputWidth) / Mathf.Max(One, outputHeight);
+            if (outputAspect > roomAspect)
             {
-                smoothPosition = new Vector3(target.position.x, target.position.y, CameraDepth);
-                transform.position = smoothPosition;
+                float viewportWidth = roomAspect / outputAspect;
+                roomCamera.rect = new Rect((One - viewportWidth) * Half, Zero, viewportWidth, One);
             }
+            else
+            {
+                float viewportHeight = outputAspect / roomAspect;
+                roomCamera.rect = new Rect(Zero, (One - viewportHeight) * Half, One, viewportHeight);
+            }
+            // Set the projection aspect explicitly to avoid subpixel viewport rounding revealing adjacent rooms.
+            roomCamera.aspect = roomAspect;
         }
     }
 }

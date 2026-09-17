@@ -65,7 +65,7 @@ namespace ReturnToTheEigth.Puzzles
             if (leverHandle != null)
             {
                 leverHandle.localRotation = restingRotation
-                    * Quaternion.Euler(IsActivated ? ActivatedAngle : Zero, Zero, Zero);
+                    * Quaternion.Euler(Zero, Zero, IsActivated ? ActivatedAngle : Zero);
             }
         }
     }

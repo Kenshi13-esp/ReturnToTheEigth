@@ -6720,15 +6720,15 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 8832432003652580977, guid: d7a4dc0a2e7c43044bf31afbbc2842b7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.24, y: 0.51}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
 --- !u!61 &1316882291
@@ -6768,10 +6768,10 @@ BoxCollider2D:
   m_Offset: {x: 0, y: 0.04}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
-    oldSize: {x: 0, y: 0}
-    newSize: {x: 0, y: 0}
-    adaptiveTilingThreshold: 0
+    pivot: {x: 0.5, y: -0.019607846}
+    oldSize: {x: 0.24, y: 0.51}
+    newSize: {x: 0.24, y: 0.51}
+    adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
@@ -6817,8 +6817,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Player.PixelPlayerVisual
   timelineChangedChannel: {fileID: 11400000, guid: b9e106cbe4429774780d5157814ac899, type: 2}
-  presentSprite: {fileID: 0}
-  pastSprite: {fileID: 0}
+  presentSprite: {fileID: 8832432003652580977, guid: d7a4dc0a2e7c43044bf31afbbc2842b7, type: 3}
+  pastSprite: {fileID: -6781015864456252069, guid: 5d65a04f6c6a60147b68a2b764136425, type: 3}
 --- !u!1 &1321456480
 GameObject:
   m_ObjectHideFlags: 0

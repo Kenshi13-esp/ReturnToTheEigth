@@ -44,6 +44,7 @@ namespace ReturnToTheEigth.Player
         [SerializeField] private Sprite presentSprite;
         [SerializeField] private Sprite pastSprite;
         private SpriteRenderer spriteRenderer;
+        private Animator animator;
         private Sprite generatedPresentSprite;
         private Sprite generatedPastSprite;
         private Texture2D presentTexture;
@@ -52,6 +53,7 @@ namespace ReturnToTheEigth.Player
         private void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+            animator = GetComponent<Animator>();
             spriteRenderer.sortingOrder = SortingOrder;
             if (presentSprite == null)
                 generatedPresentSprite = BuildSprite(PresentPixels, PresentWidth, PresentHeight,
@@ -82,6 +84,10 @@ namespace ReturnToTheEigth.Player
 
         private void ApplyEra(TimelineEra era)
         {
+            if (era == TimelineEra.Present && animator != null && animator.enabled
+                && animator.runtimeAnimatorController != null)
+                return;
+
             spriteRenderer.sprite = era == TimelineEra.Present
                 ? presentSprite != null ? presentSprite : generatedPresentSprite
                 : pastSprite != null ? pastSprite : generatedPastSprite;

@@ -4,33 +4,47 @@ using UnityEngine;
 
 namespace ReturnToTheEigth.Player
 {
-    /// <summary>Drives era-specific player animation from movement and facing direction.</summary>
+    /// <summary>Plays era-specific Aseprite animation states from player movement and facing direction.</summary>
     [RequireComponent(typeof(Animator), typeof(TopDownCharacterController), typeof(Rigidbody2D))]
     [DisallowMultipleComponent]
     public sealed class PlayerAnimationController : MonoBehaviour
     {
-        private const string MoveXParameter = "MoveX";
-        private const string MoveYParameter = "MoveY";
-        private const string IsMovingParameter = "IsMoving";
-        private const string SpeedParameter = "Speed";
+        private const string PresentIdleBackState = "Idle back";
+        private const string PresentIdleFrontState = "Idle front";
+        private const string PresentIdleLeftState = "Idle left";
+        private const string PresentIdleRightState = "Idle right";
+        private const string PresentWalkBackState = "walk_back";
+        private const string PresentWalkFrontState = "walk_front";
+        private const string PresentWalkLeftState = "walk_left";
+        private const string PresentWalkRightState = "walk_right";
+        private const string PastIdleState = "AnimationsPlayerPsIdle_Clip";
+        private const string PastWalkBackState = "walk_back";
+        private const string PastWalkFrontState = "walk front";
+        private const string PastWalkLeftState = "walk_left";
+        private const string PastWalkRightState = "walk right";
         private const float MovementThreshold = 0.01f;
         private const float MovementThresholdSquared = MovementThreshold * MovementThreshold;
-        private const float Zero = 0f;
         private const float UnitMagnitude = 1f;
-
-        private static readonly int MoveXHash = Animator.StringToHash(MoveXParameter);
-        private static readonly int MoveYHash = Animator.StringToHash(MoveYParameter);
-        private static readonly int IsMovingHash = Animator.StringToHash(IsMovingParameter);
-        private static readonly int SpeedHash = Animator.StringToHash(SpeedParameter);
+        private const float IdlePlaybackSpeed = 0.3f;
+        private const float WalkPlaybackSpeed = 0.3f;
+        private const string BaseLayerName = "Base Layer";
+        private const int BaseLayerIndex = 0;
+        private const float StartAtBeginning = 0f;
 
         [SerializeField] private TopDownCharacterController characterController;
         [SerializeField] private Animator animator;
         [SerializeField] private Rigidbody2D body;
         [SerializeField] private TimelineEventChannelSO timelineChangedChannel;
-        [SerializeField] private RuntimeAnimatorController presentAnimatorController;
-        [SerializeField] private RuntimeAnimatorController pastAnimatorController;
+        [SerializeField] private RuntimeAnimatorController presentIdleController;
+        [SerializeField] private RuntimeAnimatorController presentWalkController;
+        [SerializeField] private RuntimeAnimatorController pastIdleController;
+        [SerializeField] private RuntimeAnimatorController pastWalkController;
 
+        private TimelineEra currentEra = TimelineEra.Present;
         private Vector2 lastFacingDirection = Vector2.down;
+        private bool isMoving;
+        private RuntimeAnimatorController lastController;
+        private int lastStateHash;
 
         private void Awake()
         {
@@ -58,7 +72,7 @@ namespace ReturnToTheEigth.Player
             if (timelineChangedChannel != null)
                 timelineChangedChannel.OnTimelineChanged += HandleTimelineChanged;
 
-            ConfigureForEra(TimelineEra.Present);
+            ApplyAnimationState(true);
         }
 
         private void OnDisable()
@@ -69,11 +83,11 @@ namespace ReturnToTheEigth.Player
 
         private void Update()
         {
-            if (animator == null || !animator.enabled || animator.runtimeAnimatorController == null || body == null)
+            if (animator == null || body == null)
                 return;
 
             Vector2 velocity = body.linearVelocity;
-            bool isMoving = velocity.sqrMagnitude > MovementThresholdSquared;
+            isMoving = velocity.sqrMagnitude > MovementThresholdSquared;
             if (isMoving)
             {
                 Vector2 facingDirection = characterController != null
@@ -83,51 +97,91 @@ namespace ReturnToTheEigth.Player
                     lastFacingDirection = facingDirection.normalized;
             }
 
-            animator.SetFloat(MoveXHash, lastFacingDirection.x);
-            animator.SetFloat(MoveYHash, lastFacingDirection.y);
-            animator.SetBool(IsMovingHash, isMoving);
-            animator.SetFloat(SpeedHash, isMoving ? velocity.magnitude : Zero);
+            ApplyAnimationState(false);
         }
 
-        /// <summary>Sets the direction retained by the idle animation.</summary>
+        /// <summary>Sets the direction retained by the player's idle animation.</summary>
         public void SetFacingDirection(Vector2 direction)
         {
             if (direction.sqrMagnitude <= MovementThresholdSquared)
                 return;
 
             lastFacingDirection = Vector2.ClampMagnitude(direction, UnitMagnitude);
-            if (animator != null && animator.enabled && animator.runtimeAnimatorController != null)
-            {
-                animator.SetFloat(MoveXHash, lastFacingDirection.x);
-                animator.SetFloat(MoveYHash, lastFacingDirection.y);
-            }
+            ApplyAnimationState(false);
         }
 
         private void HandleTimelineChanged(TimelineEra era)
         {
-            ConfigureForEra(era);
+            currentEra = era;
+            isMoving = false;
+            ApplyAnimationState(true);
         }
 
-        private void ConfigureForEra(TimelineEra era)
+        private void ApplyAnimationState(bool forceRestart)
         {
             if (animator == null)
                 return;
 
-            RuntimeAnimatorController eraController = era == TimelineEra.Present
-                ? presentAnimatorController
-                : pastAnimatorController;
-            if (eraController == null)
+            RuntimeAnimatorController controller = GetControllerForCurrentState();
+            if (controller == null)
             {
                 animator.enabled = false;
+                lastController = null;
+                lastStateHash = 0;
                 return;
             }
 
-            animator.runtimeAnimatorController = eraController;
+            string stateName = GetStateNameForCurrentDirection();
+            int stateHash = Animator.StringToHash(BaseLayerName + "." + stateName);
+            bool controllerChanged = animator.runtimeAnimatorController != controller;
+            if (controllerChanged)
+                animator.runtimeAnimatorController = controller;
+
             animator.enabled = true;
-            animator.SetFloat(MoveXHash, lastFacingDirection.x);
-            animator.SetFloat(MoveYHash, lastFacingDirection.y);
-            animator.SetBool(IsMovingHash, false);
-            animator.SetFloat(SpeedHash, Zero);
+            animator.speed = isMoving ? WalkPlaybackSpeed : IdlePlaybackSpeed;
+            if (forceRestart || controllerChanged || lastController != controller || lastStateHash != stateHash)
+                animator.Play(stateHash, BaseLayerIndex, StartAtBeginning);
+
+            lastController = controller;
+            lastStateHash = stateHash;
+        }
+
+        private RuntimeAnimatorController GetControllerForCurrentState()
+        {
+            if (currentEra == TimelineEra.Present)
+                return isMoving ? presentWalkController : presentIdleController;
+
+            return isMoving ? pastWalkController : pastIdleController;
+        }
+
+        private string GetStateNameForCurrentDirection()
+        {
+            if (currentEra == TimelineEra.Past)
+            {
+                if (!isMoving)
+                    return PastIdleState;
+
+                return lastFacingDirection.y > Mathf.Abs(lastFacingDirection.x)
+                    ? PastWalkBackState
+                    : lastFacingDirection.y < -Mathf.Abs(lastFacingDirection.x)
+                        ? PastWalkFrontState
+                        : lastFacingDirection.x < 0f ? PastWalkLeftState : PastWalkRightState;
+            }
+
+            if (!isMoving)
+            {
+                return lastFacingDirection.y > Mathf.Abs(lastFacingDirection.x)
+                    ? PresentIdleBackState
+                    : lastFacingDirection.y < -Mathf.Abs(lastFacingDirection.x)
+                        ? PresentIdleFrontState
+                        : lastFacingDirection.x < 0f ? PresentIdleLeftState : PresentIdleRightState;
+            }
+
+            return lastFacingDirection.y > Mathf.Abs(lastFacingDirection.x)
+                ? PresentWalkBackState
+                : lastFacingDirection.y < -Mathf.Abs(lastFacingDirection.x)
+                    ? PresentWalkFrontState
+                    : lastFacingDirection.x < 0f ? PresentWalkLeftState : PresentWalkRightState;
         }
     }
 }

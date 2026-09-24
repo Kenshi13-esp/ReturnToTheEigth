@@ -13,7 +13,7 @@ namespace ReturnToTheEigth.Player
         private const string MoveActionPath = "Player/Move";
         private const string TimeShiftActionPath = "Player/TimeShift";
         private const string MissingInputError = "The 2D player requires Player/Move and Player/TimeShift actions.";
-        private const float DefaultMovementSpeed = 1.5f;
+        private const float DefaultMovementSpeed = 0.3f;
         private const float InputThreshold = 0.0001f;
         private const float UnitMagnitude = 1f;
         private const float Zero = 0f;

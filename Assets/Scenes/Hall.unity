@@ -6672,7 +6672,7 @@ MonoBehaviour:
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   timeShiftRequestedChannel: {fileID: 11400000, guid: caa542caa2ed7e54f90a356534234814, type: 2}
   gameStateChannel: {fileID: 11400000, guid: 7f4a22350fb90b240bf6ecb8613d0d8b, type: 2}
-  movementSpeed: 1.5
+  movementSpeed: 0.8
 --- !u!212 &1316882290
 SpriteRenderer:
   serializedVersion: 3
@@ -6831,7 +6831,7 @@ Animator:
   m_GameObject: {fileID: 1316882285}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 6913a3becf6f00841a944650b38398e5, type: 2}
+  m_Controller: {fileID: -1963440769706650632, guid: 179c6b86c756dc642acaad0bdb2a75f6, type: 3}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -6859,8 +6859,10 @@ MonoBehaviour:
   animator: {fileID: 1316882294}
   body: {fileID: 1316882292}
   timelineChangedChannel: {fileID: 11400000, guid: b9e106cbe4429774780d5157814ac899, type: 2}
-  presentAnimatorController: {fileID: 9100000, guid: 6913a3becf6f00841a944650b38398e5, type: 2}
-  pastAnimatorController: {fileID: 0}
+  presentIdleController: {fileID: -1963440769706650632, guid: 179c6b86c756dc642acaad0bdb2a75f6, type: 3}
+  presentWalkController: {fileID: 8656179443545644400, guid: 7724795ec2bafcd448990bf37fb9cf4d, type: 3}
+  pastIdleController: {fileID: -1452155301390990712, guid: d69286c98f26df64eaec35a486cead34, type: 3}
+  pastWalkController: {fileID: 8242096963504190631, guid: d6a0001aef994aa41ad8bfc488e7463b, type: 3}
 --- !u!1 &1321456480
 GameObject:
   m_ObjectHideFlags: 0
@@ -7623,9 +7625,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.10388371
+    y: 0.1346432
     width: 1
-    height: 0.7922326
+    height: 0.7307136
   near clip plane: 0.1
   far clip plane: 30
   field of view: 60

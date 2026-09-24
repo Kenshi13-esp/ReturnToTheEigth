@@ -6,7 +6,19 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/Scenes/MainMenu.unity
+    guid: b8df20a200ffd0b4fa8b44f54d28150a
+  - enabled: 1
+    path: Assets/Scenes/Hall.unity
+    guid: e6d210daf03a8d844a14cf770cef5120
+  - enabled: 1
+    path: Assets/Scenes/BoxPuzzle.unity
+    guid: b36bfbb78b761e04bb0c8511529b2275
+  - enabled: 1
+    path: Assets/Scenes/ColorTrackPuzzle.unity
+    guid: 284963c1cd051f244b9d6df3dc28d5c7
+  - enabled: 1
+    path: Assets/Scenes/KnightPuzzle.unity
+    guid: 66e1a3d2020a6d4498c8e0f17a18e96d
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

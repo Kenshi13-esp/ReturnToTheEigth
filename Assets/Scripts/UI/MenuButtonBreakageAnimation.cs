@@ -1,6 +1,8 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace ReturnToTheEigth.UI
@@ -8,15 +10,15 @@ namespace ReturnToTheEigth.UI
     /// <summary>Plays one random glass-break animation over a menu button after each click.</summary>
     [RequireComponent(typeof(Button))]
     [DisallowMultipleComponent]
-    public sealed class MenuButtonBreakageAnimation : MonoBehaviour
+    public sealed class MenuButtonBreakageAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const int AnimationVariantCount = 3;
         private const int FirstVariantIndex = 0;
         private const int SecondVariantIndex = 1;
         private const int ThirdVariantIndex = 2;
         private const float AnimationDurationSeconds = 0.3f;
-        private const float FinalFrameHoldSeconds = 0.2f;
         private const float AnimationOverlayOpacity = 0.75f;
+        private const float HoverScaleMultiplier = 1.3f;
 
         [SerializeField] private Button button;
         [SerializeField] private Image animationOverlay;
@@ -24,13 +26,17 @@ namespace ReturnToTheEigth.UI
         [SerializeField] private Sprite[] glassBreakageButton02Frames;
         [SerializeField] private Sprite[] glassBreakageButton03Frames;
         [SerializeField] private UnityEvent onAnimationFinished = new UnityEvent();
+        [SerializeField] private string sceneToLoadAfterAnimation;
 
         private Coroutine playbackCoroutine;
         private int originalSiblingIndex;
         private bool hasOriginalSiblingIndex;
+        private Vector3 originalLocalScale;
 
         private void Awake()
         {
+            originalLocalScale = transform.localScale;
+
             if (button == null)
                 button = GetComponent<Button>();
 
@@ -67,9 +73,20 @@ namespace ReturnToTheEigth.UI
             }
 
             RestoreButtonSiblingIndex();
+            transform.localScale = originalLocalScale;
 
             if (animationOverlay != null)
                 animationOverlay.enabled = false;
+        }
+
+        void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData)
+        {
+            transform.localScale = originalLocalScale * HoverScaleMultiplier;
+        }
+
+        void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
+        {
+            transform.localScale = originalLocalScale;
         }
 
         private void PlayRandomBreakageAnimation()
@@ -119,9 +136,23 @@ namespace ReturnToTheEigth.UI
                 yield return new WaitForSecondsRealtime(frameDurationSeconds);
             }
 
-            animationOverlay.sprite = frames[frames.Length - 1];
-            yield return new WaitForSecondsRealtime(FinalFrameHoldSeconds);
             onAnimationFinished?.Invoke();
+
+            if (!string.IsNullOrWhiteSpace(sceneToLoadAfterAnimation))
+            {
+                AsyncOperation sceneLoad = SceneManager.LoadSceneAsync(sceneToLoadAfterAnimation, LoadSceneMode.Single);
+                if (sceneLoad != null)
+                {
+                    int transitionFrameIndex = 0;
+                    while (!sceneLoad.isDone)
+                    {
+                        animationOverlay.sprite = frames[transitionFrameIndex];
+                        yield return new WaitForSecondsRealtime(frameDurationSeconds);
+                        transitionFrameIndex = (transitionFrameIndex + 1) % frames.Length;
+                    }
+                }
+            }
+
             animationOverlay.enabled = false;
             animationOverlay.sprite = null;
             RestoreButtonSiblingIndex();

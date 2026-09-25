@@ -16,6 +16,7 @@ namespace ReturnToTheEigth.UI
         private const int ThirdVariantIndex = 2;
         private const float AnimationDurationSeconds = 0.3f;
         private const float FinalFrameHoldSeconds = 0.2f;
+        private const float AnimationOverlayOpacity = 0.75f;
 
         [SerializeField] private Button button;
         [SerializeField] private Image animationOverlay;
@@ -25,6 +26,8 @@ namespace ReturnToTheEigth.UI
         [SerializeField] private UnityEvent onAnimationFinished = new UnityEvent();
 
         private Coroutine playbackCoroutine;
+        private int originalSiblingIndex;
+        private bool hasOriginalSiblingIndex;
 
         private void Awake()
         {
@@ -40,6 +43,9 @@ namespace ReturnToTheEigth.UI
 
             animationOverlay.raycastTarget = false;
             animationOverlay.preserveAspect = false;
+            Color overlayColor = animationOverlay.color;
+            overlayColor.a = AnimationOverlayOpacity;
+            animationOverlay.color = overlayColor;
             animationOverlay.enabled = false;
         }
 
@@ -60,6 +66,8 @@ namespace ReturnToTheEigth.UI
                 playbackCoroutine = null;
             }
 
+            RestoreButtonSiblingIndex();
+
             if (animationOverlay != null)
                 animationOverlay.enabled = false;
         }
@@ -74,8 +82,16 @@ namespace ReturnToTheEigth.UI
             }
 
             if (playbackCoroutine != null)
+            {
                 StopCoroutine(playbackCoroutine);
+            }
+            else
+            {
+                originalSiblingIndex = transform.GetSiblingIndex();
+                hasOriginalSiblingIndex = true;
+            }
 
+            transform.SetAsLastSibling();
             playbackCoroutine = StartCoroutine(PlayFrameSequence(frames));
         }
 
@@ -108,7 +124,20 @@ namespace ReturnToTheEigth.UI
             onAnimationFinished?.Invoke();
             animationOverlay.enabled = false;
             animationOverlay.sprite = null;
+            RestoreButtonSiblingIndex();
             playbackCoroutine = null;
+        }
+
+        private void RestoreButtonSiblingIndex()
+        {
+            if (!hasOriginalSiblingIndex)
+                return;
+
+            Transform buttonParent = transform.parent;
+            if (buttonParent != null)
+                transform.SetSiblingIndex(Mathf.Clamp(originalSiblingIndex, 0, buttonParent.childCount - 1));
+
+            hasOriginalSiblingIndex = false;
         }
     }
 }

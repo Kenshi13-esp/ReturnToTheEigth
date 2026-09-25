@@ -9,9 +9,9 @@ namespace ReturnToTheEigth.TimeTravel
     {
         private const string PresentTitle = "PRESENTE / 32 BITS";
         private const string PastTitle = "PASADO / 8 BITS";
-        private const string ControlsText = "WASD: mover\nShift: cambiar época\nEspacio: interactuar";
+        private const string ControlsText = "WASD: mover\nR: cambiar época\nE: interactuar";
         private const string BlockedText = "Viaje bloqueado:\nel destino está ocupado.";
-        private const string InteractPrefix = "ESPACIO: ";
+        private const string InteractPrefix = "E: ";
         private const string PrototypeText = "Prototipo 2D\nMuros con colisión";
         private const float FeedbackDuration = 2f;
         private const float PanelX = 8f;

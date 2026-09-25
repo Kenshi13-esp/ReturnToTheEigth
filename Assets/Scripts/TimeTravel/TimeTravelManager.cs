@@ -18,6 +18,7 @@ namespace ReturnToTheEigth.TimeTravel
         private const float MinimumSize = 0.001f;
         private const float Zero = 0f;
         private const string MissingSetupError = "TimeTravelManager requires distinct XY era roots and a BoxCollider2D player outside them.";
+        private const string MissingCollisionWorldWarning = "TimeTravelManager rebuilt its missing clearance query world.";
         [SerializeField] private GameObject presentMansionRoot;
         [SerializeField] private GameObject pastMansionRoot;
         [SerializeField] private BoxCollider2D playerCollider;
@@ -103,6 +104,17 @@ namespace ReturnToTheEigth.TimeTravel
 
         private bool CanTransitionToEra(TimelineEra targetEra)
         {
+            if (playerCollider == null || presentMansionRoot == null || pastMansionRoot == null)
+            {
+                return false;
+            }
+
+            if (collisionWorld == null)
+            {
+                Debug.LogWarning(MissingCollisionWorldWarning, this);
+                collisionWorld = new TimelineCollisionWorld();
+            }
+
             Physics2D.SyncTransforms();
             Transform player = playerCollider.transform;
             Vector2 center = player.TransformPoint(playerCollider.offset);

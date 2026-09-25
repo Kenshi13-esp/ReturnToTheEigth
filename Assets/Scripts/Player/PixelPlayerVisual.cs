@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ReturnToTheEigth.Events;
 using ReturnToTheEigth.TimeTravel;
 using UnityEngine;
@@ -19,6 +20,7 @@ namespace ReturnToTheEigth.Player
         private const int NoExtrusion = 0;
         private const float PresentPixelsPerUnit = 50f;
         private const float PastPixelsPerUnit = 25f;
+        private const float PastVisualScale = 3f;
         private const float PivotX = 0.5f;
         private const float PivotY = 0.1f;
         private const float Zero = 0f;
@@ -49,6 +51,9 @@ namespace ReturnToTheEigth.Player
         private Sprite generatedPastSprite;
         private Texture2D presentTexture;
         private Texture2D pastTexture;
+        private readonly Dictionary<Sprite, Sprite> scaledPastSprites = new Dictionary<Sprite, Sprite>();
+        private readonly Dictionary<Sprite, Sprite> originalPastSprites = new Dictionary<Sprite, Sprite>();
+        private TimelineEra currentEra = TimelineEra.Present;
 
         private void Awake()
         {
@@ -74,16 +79,50 @@ namespace ReturnToTheEigth.Player
             if (timelineChangedChannel != null) timelineChangedChannel.OnTimelineChanged -= ApplyEra;
         }
 
+        private void LateUpdate()
+        {
+            if (spriteRenderer == null || spriteRenderer.sprite == null)
+                return;
+
+            Sprite currentSprite = spriteRenderer.sprite;
+            if (currentEra == TimelineEra.Past)
+            {
+                if (originalPastSprites.ContainsKey(currentSprite))
+                    return;
+
+                if (!scaledPastSprites.TryGetValue(currentSprite, out Sprite scaledSprite))
+                {
+                    Vector2 normalizedPivot = new Vector2(
+                        currentSprite.pivot.x / currentSprite.rect.width,
+                        currentSprite.pivot.y / currentSprite.rect.height);
+                    scaledSprite = Sprite.Create(currentSprite.texture, currentSprite.rect,
+                        normalizedPivot, currentSprite.pixelsPerUnit / PastVisualScale);
+                    scaledSprite.name = currentSprite.name + "_PastScale3x";
+                    scaledPastSprites.Add(currentSprite, scaledSprite);
+                    originalPastSprites.Add(scaledSprite, currentSprite);
+                }
+
+                spriteRenderer.sprite = scaledSprite;
+                return;
+            }
+
+            if (originalPastSprites.TryGetValue(currentSprite, out Sprite originalSprite))
+                spriteRenderer.sprite = originalSprite;
+        }
+
         private void OnDestroy()
         {
             if (generatedPresentSprite != null) Destroy(generatedPresentSprite);
             if (generatedPastSprite != null) Destroy(generatedPastSprite);
+            foreach (Sprite scaledSprite in scaledPastSprites.Values)
+                if (scaledSprite != null) Destroy(scaledSprite);
             if (presentTexture != null) Destroy(presentTexture);
             if (pastTexture != null) Destroy(pastTexture);
         }
 
         private void ApplyEra(TimelineEra era)
         {
+            currentEra = era;
             if (era == TimelineEra.Present && animator != null && animator.enabled
                 && animator.runtimeAnimatorController != null)
                 return;

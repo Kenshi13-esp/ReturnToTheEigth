@@ -22,6 +22,8 @@ namespace ReturnToTheEigth.Core
         public static GameManager Instance { get; private set; }
         public GameState CurrentGameState { get; private set; } = GameState.Exploration;
         private GameState stateBeforePause = GameState.Exploration;
+        private Vector3 pendingPlayerReturnPosition;
+        private bool hasPendingPlayerReturnPosition;
 
         private void Awake()
         {
@@ -80,6 +82,27 @@ namespace ReturnToTheEigth.Core
 
             Time.timeScale = RunningTimeScale;
             Instance = null;
+        }
+
+        /// <summary>Stores the player's exploration position so it can be restored after a puzzle scene returns.</summary>
+        public void SetPendingPlayerReturnPosition(Vector3 position)
+        {
+            pendingPlayerReturnPosition = position;
+            hasPendingPlayerReturnPosition = true;
+        }
+
+        /// <summary>Consumes the stored exploration position once, if a puzzle return is pending.</summary>
+        public bool TryConsumePendingPlayerReturnPosition(out Vector3 position)
+        {
+            position = pendingPlayerReturnPosition;
+            if (!hasPendingPlayerReturnPosition)
+            {
+                return false;
+            }
+
+            hasPendingPlayerReturnPosition = false;
+            pendingPlayerReturnPosition = Vector3.zero;
+            return true;
         }
 
         /// <summary>Changes session state and notifies input/UI systems through the state channel.</summary>

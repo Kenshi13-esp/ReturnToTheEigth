@@ -76,6 +76,19 @@ namespace ReturnToTheEigth.Player
             timeShiftAction?.Dispose();
         }
 
+        private void Start()
+        {
+            if (GameManager.Instance == null
+                || !GameManager.Instance.TryConsumePendingPlayerReturnPosition(out Vector3 returnPosition))
+            {
+                return;
+            }
+
+            body.position = new Vector2(returnPosition.x, returnPosition.y);
+            body.linearVelocity = Vector2.zero;
+            Physics2D.SyncTransforms();
+        }
+
         private void FixedUpdate()
         {
             Vector2 direction = movementEnabled && AllowsGameplay && moveAction != null

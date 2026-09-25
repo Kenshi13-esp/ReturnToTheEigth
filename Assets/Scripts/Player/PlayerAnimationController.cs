@@ -17,7 +17,6 @@ namespace ReturnToTheEigth.Player
         private const string PresentWalkFrontState = "walk_front";
         private const string PresentWalkLeftState = "walk_left";
         private const string PresentWalkRightState = "walk_right";
-        private const string PastIdleState = "AnimationsPlayerPsIdle_Clip";
         private const string PastWalkBackState = "walk_back";
         private const string PastWalkFrontState = "walk front";
         private const string PastWalkLeftState = "walk_left";
@@ -25,7 +24,7 @@ namespace ReturnToTheEigth.Player
         private const float MovementThreshold = 0.01f;
         private const float MovementThresholdSquared = MovementThreshold * MovementThreshold;
         private const float UnitMagnitude = 1f;
-        private const float IdlePlaybackSpeed = 0.3f;
+        private const float IdlePlaybackSpeed = 0f;
         private const float WalkPlaybackSpeed = 0.3f;
         private const string BaseLayerName = "Base Layer";
         private const int BaseLayerIndex = 0;
@@ -45,6 +44,7 @@ namespace ReturnToTheEigth.Player
         private bool isMoving;
         private RuntimeAnimatorController lastController;
         private int lastStateHash;
+        private bool lastIsMoving;
 
         private void Awake()
         {
@@ -128,6 +128,7 @@ namespace ReturnToTheEigth.Player
                 animator.enabled = false;
                 lastController = null;
                 lastStateHash = 0;
+                lastIsMoving = false;
                 return;
             }
 
@@ -139,11 +140,13 @@ namespace ReturnToTheEigth.Player
 
             animator.enabled = true;
             animator.speed = isMoving ? WalkPlaybackSpeed : IdlePlaybackSpeed;
-            if (forceRestart || controllerChanged || lastController != controller || lastStateHash != stateHash)
+            if (forceRestart || controllerChanged || lastController != controller || lastStateHash != stateHash
+                || lastIsMoving != isMoving)
                 animator.Play(stateHash, BaseLayerIndex, StartAtBeginning);
 
             lastController = controller;
             lastStateHash = stateHash;
+            lastIsMoving = isMoving;
         }
 
         private RuntimeAnimatorController GetControllerForCurrentState()
@@ -151,16 +154,13 @@ namespace ReturnToTheEigth.Player
             if (currentEra == TimelineEra.Present)
                 return isMoving ? presentWalkController : presentIdleController;
 
-            return isMoving ? pastWalkController : pastIdleController;
+            return pastWalkController;
         }
 
         private string GetStateNameForCurrentDirection()
         {
             if (currentEra == TimelineEra.Past)
             {
-                if (!isMoving)
-                    return PastIdleState;
-
                 return lastFacingDirection.y > Mathf.Abs(lastFacingDirection.x)
                     ? PastWalkBackState
                     : lastFacingDirection.y < -Mathf.Abs(lastFacingDirection.x)

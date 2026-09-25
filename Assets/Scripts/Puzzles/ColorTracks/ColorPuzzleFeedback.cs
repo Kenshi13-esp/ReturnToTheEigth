@@ -1,5 +1,7 @@
+using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace ReturnToTheEigth.Puzzles
 {
@@ -7,10 +9,11 @@ namespace ReturnToTheEigth.Puzzles
     public sealed class ColorPuzzleFeedback : MonoBehaviour
     {
         private const string Title = "MODO SELECCIÓN";
-        private const string ControlsText = "WASD: mover el haz\nEspacio: seleccionar / soltar";
+        private const string ControlsText = "WASD: mover el haz\nE: seleccionar / soltar";
         private const string SelectedPrefix = "Olla seleccionada: ";
         private const string IdleText = "Sitúa el haz sobre una olla";
         private const string SolvedText = "PUZZLE RESUELTO";
+        private const string HallSceneName = "Hall";
         private const float PanelX = 8f;
         private const float PanelY = 8f;
         private const float PanelWidth = 190f;
@@ -57,6 +60,20 @@ namespace ReturnToTheEigth.Puzzles
             GUI.Label(new Rect(x, y + TitleHeight + ControlsHeight, width, MessageHeight), message, labelStyle);
         }
 
-        private void HandlePuzzleSolved() { isSolved = true; }
+        private void HandlePuzzleSolved()
+        {
+            if (isSolved)
+            {
+                return;
+            }
+
+            isSolved = true;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.SetGameState(GameState.Exploration);
+            }
+
+            SceneManager.LoadSceneAsync(HallSceneName, LoadSceneMode.Single);
+        }
     }
 }

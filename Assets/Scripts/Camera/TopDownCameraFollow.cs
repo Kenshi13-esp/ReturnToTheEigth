@@ -84,8 +84,10 @@ namespace ReturnToTheEigth.CameraSystem
             // Screen dimensions can describe a different editor window outside Play mode.
             // Recover this camera's full render surface from its pixel viewport instead.
             float outputWidth = roomCamera.targetTexture != null ? roomCamera.targetTexture.width
+                : Application.isPlaying ? Screen.width
                 : roomCamera.pixelWidth / Mathf.Max(MinimumRoomDimension, roomCamera.rect.width);
             float outputHeight = roomCamera.targetTexture != null ? roomCamera.targetTexture.height
+                : Application.isPlaying ? Screen.height
                 : roomCamera.pixelHeight / Mathf.Max(MinimumRoomDimension, roomCamera.rect.height);
             float outputAspect = Mathf.Max(One, outputWidth) / Mathf.Max(One, outputHeight);
             if (outputAspect > roomAspect)

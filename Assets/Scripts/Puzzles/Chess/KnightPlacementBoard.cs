@@ -17,6 +17,8 @@ namespace ReturnToTheEigth.Puzzles
         private const string MissingGridWarning = "KnightPlacementBoard could not find a PuzzleGrid.";
         private const string CorrectCellNotLitWarning = "KnightPlacementBoard: correctCell {0} has no PlacementHighlight; the puzzle cannot be solved.";
         private const string DuplicateHighlightWarning = "Two PlacementHighlights share cell {0}.";
+        private const string MissingRewardManagerWarning = "The Chess puzzle was solved, but its rewards were not granted because no GameManager exists.";
+        private const string ChessRewardNotice = "Has obtenido la llave de la cocina izquierda.";
         private const string DefaultPuzzleId = "KnightPuzzle";
         private const float DefaultEvaluationDelay = 0.35f;
         private const float DefaultShakeDuration = 0.5f;
@@ -38,6 +40,11 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField, Min(Zero)] private float restartDelay = DefaultRestartDelay;
         [SerializeField] private VoidEventChannelSO puzzleSolvedChannel;
         [SerializeField] private string puzzleId = DefaultPuzzleId;
+        [SerializeField] private List<PuzzleReward> completionRewards = new List<PuzzleReward>
+        {
+            new PuzzleReward(PuzzleItemIds.KitchenLeftDoorKey, 1)
+        };
+        [SerializeField, TextArea] private string rewardNotification = ChessRewardNotice;
         private readonly List<PlacementHighlight> highlights = new List<PlacementHighlight>();
         private Coroutine placementRoutine;
 
@@ -147,7 +154,19 @@ namespace ReturnToTheEigth.Puzzles
             {
                 IsSolved = true;
                 placementRoutine = null;
-                GameManager.Instance?.MarkPuzzleCompleted(puzzleId);
+                GameManager gameManager = GameManager.Instance;
+                if (gameManager != null)
+                {
+                    gameManager.MarkPuzzleCompleted(puzzleId);
+                    if (gameManager.TryGrantPuzzleRewards(puzzleId, completionRewards))
+                    {
+                        gameManager.SetPendingRewardNotice(rewardNotification);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning(MissingRewardManagerWarning, this);
+                }
                 Debug.Log(WinMessage, this);
                 if (puzzleSolvedChannel != null) puzzleSolvedChannel.RaiseEvent();
                 Solved?.Invoke();

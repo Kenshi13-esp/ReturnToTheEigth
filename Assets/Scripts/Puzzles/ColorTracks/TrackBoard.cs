@@ -14,6 +14,8 @@ namespace ReturnToTheEigth.Puzzles
         private const string RowSizeWarning = "TrackBoard: trackRows must contain grid.rows strings of grid.columns characters each.";
         private const string SliderOffTrackWarning = "TrackBoard: slider '{0}' starts on a cell that is not passable for its color.";
         private const string DuplicateTargetWarning = "TrackBoard: target '{0}' shares a cell or color with another target.";
+        private const string MissingRewardManagerWarning = "The color puzzle was solved, but its reward was not granted because no GameManager exists.";
+        private const string ChessPieceNotice = "Has obtenido la pieza de caballo necesaria para activar el puzle de ajedrez.";
         private const int FirstIndex = 0;
         private const int LastOffset = 1;
         private const float GizmoDepth = 0f;
@@ -24,6 +26,11 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField] private string[] trackRows = { ".#.", "###", ".#." };
         [SerializeField] private VoidEventChannelSO puzzleSolvedChannel;
         [SerializeField] private string puzzleId = "ColorTrackPuzzle";
+        [SerializeField] private List<PuzzleReward> completionRewards = new List<PuzzleReward>
+        {
+            new PuzzleReward(PuzzleItemIds.ChessKnightPiece, 1)
+        };
+        [SerializeField, TextArea] private string rewardNotification = ChessPieceNotice;
         private readonly List<TrackSlider> sliders = new List<TrackSlider>();
         private readonly List<ColorTarget> targets = new List<ColorTarget>();
 
@@ -144,7 +151,19 @@ namespace ReturnToTheEigth.Puzzles
                 if (occupant == null || occupant.IsMoving || occupant.ColorId != target.ColorId) return;
             }
             IsSolved = true;
-            GameManager.Instance?.MarkPuzzleCompleted(puzzleId);
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
+            {
+                gameManager.MarkPuzzleCompleted(puzzleId);
+                if (gameManager.TryGrantPuzzleRewards(puzzleId, completionRewards))
+                {
+                    gameManager.SetPendingRewardNotice(rewardNotification);
+                }
+            }
+            else
+            {
+                Debug.LogWarning(MissingRewardManagerWarning, this);
+            }
             Debug.Log(SolvedLog, this);
             puzzleSolvedChannel?.RaiseEvent();
         }

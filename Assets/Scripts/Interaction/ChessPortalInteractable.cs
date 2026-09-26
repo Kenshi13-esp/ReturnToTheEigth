@@ -15,6 +15,7 @@ namespace ReturnToTheEigth.Interaction
         private const string PuzzleSceneName = "ChessPuzle";
         private const string PuzzleId = "KnightPuzzle";
         private const string InteractionPromptText = "Entrar al puzle de ajedrez";
+        private const string MissingChessPiecePromptText = "Necesitas la pieza de caballo del puzle de color";
         private const string ChessAssetObjectName = "Chess";
         private const string PastTableObjectName = "pasttable";
         private const string SpriteShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
@@ -44,7 +45,10 @@ namespace ReturnToTheEigth.Interaction
         public Vector2 InteractionPoint => transform.TransformPoint(new Vector3(0f, -HalfExtent, 0f));
 
         /// <summary>Gets the prompt shown while the player can interact with the chess portal.</summary>
-        public override string InteractionPrompt => InteractionPromptText;
+        public override string InteractionPrompt => HasChessPiece ? InteractionPromptText : MissingChessPiecePromptText;
+
+        private bool HasChessPiece => GameManager.Instance != null &&
+            GameManager.Instance.HasItem(PuzzleItemIds.ChessKnightPiece);
 
         private void Awake()
         {
@@ -91,7 +95,7 @@ namespace ReturnToTheEigth.Interaction
                 ? playerInteraction.transform.position
                 : Vector2.positiveInfinity;
             Vector2 offset = playerPosition - InteractionPoint;
-            SetHighlighted(offset.sqrMagnitude <= InteractionRadiusSquared);
+            SetHighlighted(HasChessPiece && offset.sqrMagnitude <= InteractionRadiusSquared);
         }
 
         private void OnDestroy()
@@ -105,13 +109,20 @@ namespace ReturnToTheEigth.Interaction
         /// <summary>Saves the player's exploration state and loads the chess puzzle.</summary>
         public override void Interact(GameObject interactor)
         {
-            if (interactor == null || (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(PuzzleId)))
+            if (interactor == null)
+            {
+                return;
+            }
+
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager == null || gameManager.IsPuzzleCompleted(PuzzleId) ||
+                !gameManager.TryConsumeItem(PuzzleItemIds.ChessKnightPiece))
             {
                 return;
             }
 
             TimelineEra returnEra = FindAnyObjectByType<TimeTravelManager>()?.CurrentEra ?? TimelineEra.Present;
-            GameManager.Instance?.SetPendingPlayerReturnState(interactor.transform.position, returnEra);
+            gameManager.SetPendingPlayerReturnState(interactor.transform.position, returnEra);
             SceneManager.LoadSceneAsync(PuzzleSceneName, LoadSceneMode.Single);
         }
 

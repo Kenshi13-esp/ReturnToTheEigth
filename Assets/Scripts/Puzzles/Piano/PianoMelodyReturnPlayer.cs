@@ -25,7 +25,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const int ShakeCount = 5;
         private static readonly float[] EarthquakeShakeDurations = { 0.22f, 0.28f, 0.34f, 0.42f, 0.85f };
         private static readonly float[] EarthquakeShakeMagnitudes = { 0.12f, 0.22f, 0.38f, 0.68f, 1.6f };
-        private static readonly Vector3 UpperLeftRoomDestination = new Vector3(-3.787f, 3.158f, 0f);
+        private static readonly Vector3 ElectricInteractionArrivalPosition = new Vector3(-3.8f, 5.32f, 0f);
         private static readonly Color TransparentBlack = new Color(0f, 0f, 0f, 0f);
         private static readonly Color OpaqueBlack = Color.black;
         private static readonly Vector2 FullScreenAnchorMin = Vector2.zero;
@@ -150,7 +150,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
             CreateBlackoutOverlay();
             yield return FadeBlackoutTo(One, FadeDuration);
             yield return new WaitForSecondsRealtime(BlackoutDuration);
-            TeleportPlayerToUpperLeftRoom();
+            TeleportPlayerBesideElectric();
 
             if (cameraFollow != null)
             {
@@ -204,7 +204,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
             blackoutImage.color = color;
         }
 
-        private void TeleportPlayerToUpperLeftRoom()
+        private void TeleportPlayerBesideElectric()
         {
             playerController ??= FindAnyObjectByType<TopDownCharacterController>();
             if (playerController == null)
@@ -215,12 +215,12 @@ namespace ReturnToTheEigth.Puzzles.Piano
             Rigidbody2D body = playerController.GetComponent<Rigidbody2D>();
             if (body != null)
             {
-                body.position = new Vector2(UpperLeftRoomDestination.x, UpperLeftRoomDestination.y);
+                body.position = new Vector2(ElectricInteractionArrivalPosition.x, ElectricInteractionArrivalPosition.y);
                 body.linearVelocity = Vector2.zero;
             }
             else
             {
-                playerController.transform.position = UpperLeftRoomDestination;
+                playerController.transform.position = ElectricInteractionArrivalPosition;
             }
 
             Physics2D.SyncTransforms();

@@ -19,6 +19,8 @@ namespace ReturnToTheEigth.TimeTravel
         private const float Zero = 0f;
         private const string MissingSetupError = "TimeTravelManager requires distinct XY era roots and a BoxCollider2D player outside them.";
         private const string MissingCollisionWorldWarning = "TimeTravelManager rebuilt its missing clearance query world.";
+        private const string PianoPuzzleId = "PianoPuzzle";
+        private const string ElectricityPuzzleId = "ElectricityPuzzle";
         [SerializeField] private GameObject presentMansionRoot;
         [SerializeField] private GameObject pastMansionRoot;
         [SerializeField] private BoxCollider2D playerCollider;
@@ -88,6 +90,15 @@ namespace ReturnToTheEigth.TimeTravel
             if (!isConfigured || !isActiveAndEnabled || isTransitioning || !playerCollider.enabled
                 || Time.unscaledTime < nextTransitionTime
                 || (gameStateChannel != null && gameStateChannel.CurrentState != GameState.Exploration)) return false;
+            GameManager gameManager = GameManager.Instance;
+            bool hasCompletedPiano = gameManager != null && gameManager.IsPuzzleCompleted(PianoPuzzleId);
+            bool hasCompletedElectricity = gameManager != null && gameManager.IsPuzzleCompleted(ElectricityPuzzleId);
+            if (hasCompletedPiano && !hasCompletedElectricity)
+            {
+                transitionBlockedChannel?.RaiseEvent();
+                return false;
+            }
+
             TimelineEra targetEra = CurrentEra == TimelineEra.Present ? TimelineEra.Past : TimelineEra.Present;
             isTransitioning = true;
             try

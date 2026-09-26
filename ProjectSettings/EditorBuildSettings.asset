@@ -18,7 +18,7 @@ EditorBuildSettings:
     path: Assets/Scenes/ColorTrackPuzzle.unity
     guid: 284963c1cd051f244b9d6df3dc28d5c7
   - enabled: 1
-    path: Assets/Scenes/KnightPuzzle.unity
+    path: Assets/Scenes/ChessPuzle.unity
     guid: 66e1a3d2020a6d4498c8e0f17a18e96d
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

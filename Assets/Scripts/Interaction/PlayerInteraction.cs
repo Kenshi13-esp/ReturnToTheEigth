@@ -13,6 +13,7 @@ namespace ReturnToTheEigth.Interaction
         private const string InteractActionPath = "Player/Interact";
         private const string MissingInputError = "PlayerInteraction requires Player/Interact.";
         private const float DefaultRadius = 0.45f;
+        private const float MinimumInteractionRadius = DefaultRadius;
         private const float MinimumDistanceSquared = 0.0001f;
         private const float Zero = 0f;
         private const int Capacity = 64;
@@ -55,9 +56,13 @@ namespace ReturnToTheEigth.Interaction
             {
                 FindNearestInteractable();
                 if (CurrentInteractable != null && CurrentInteractable.isActiveAndEnabled)
+                {
                     CurrentInteractable.Interact(gameObject);
+                }
             }
         }
+
+
 
         private void FindNearestInteractable()
         {
@@ -68,8 +73,15 @@ namespace ReturnToTheEigth.Interaction
             Vector2 facing = controller != null ? controller.FacingDirection : Vector2.down;
             ContactFilter2D filter = new ContactFilter2D { useTriggers = true };
             filter.SetLayerMask(interactableLayers);
-            int count = Physics2D.OverlapCircle(origin, interactionRadius, filter, nearbyColliders);
+            float effectiveInteractionRadius = Mathf.Max(interactionRadius, MinimumInteractionRadius);
+            float searchRadius = Mathf.Max(
+                effectiveInteractionRadius,
+                Mathf.Max(
+                    ColorPuzzlePortalInteractable.MaximumInteractionRadius,
+                    ChessPortalInteractable.MaximumInteractionRadius));
+            int count = Physics2D.OverlapCircle(origin, searchRadius, filter, nearbyColliders);
             float nearestDistanceSquared = float.PositiveInfinity;
+            bool nearestIsPortal = false;
             for (int index = FirstIndex; index < count; index++)
             {
                 Collider2D collider = nearbyColliders[index];
@@ -78,9 +90,42 @@ namespace ReturnToTheEigth.Interaction
                 if (candidate == null || !candidate.isActiveAndEnabled) continue;
                 Vector2 point = collider.ClosestPoint(origin);
                 Vector2 offset = point - origin;
-                if (Vector2.Dot(facing, offset) < Zero || offset.sqrMagnitude >= nearestDistanceSquared) continue;
-                if (offset.sqrMagnitude > MinimumDistanceSquared && !HasLineOfSight(origin, point, candidate)) continue;
-                nearestDistanceSquared = offset.sqrMagnitude;
+                float candidateRadius = effectiveInteractionRadius;
+                bool isPortal = false;
+                if (candidate is ColorPuzzlePortalInteractable colorPortal)
+                {
+                    isPortal = true;
+                    point = colorPortal.InteractionPoint;
+                    offset = point - origin;
+                    candidateRadius = colorPortal.InteractionRadius;
+                }
+                else if (candidate is ChessPortalInteractable chessPortal)
+                {
+                    isPortal = true;
+                    point = chessPortal.InteractionPoint;
+                    offset = point - origin;
+                    candidateRadius = chessPortal.InteractionRadius;
+                }
+
+                float candidateDistanceSquared = offset.sqrMagnitude;
+                if (candidateDistanceSquared >= candidateRadius * candidateRadius
+                    || (!isPortal && Vector2.Dot(facing, offset) < Zero)
+                    || (nearestIsPortal && !isPortal)
+                    || (nearestIsPortal == isPortal && candidateDistanceSquared >= nearestDistanceSquared))
+                {
+                    continue;
+                }
+
+                if (!isPortal
+                    && point != origin
+                    && candidateDistanceSquared > MinimumDistanceSquared
+                    && !HasLineOfSight(origin, point, candidate))
+                {
+                    continue;
+                }
+
+                nearestDistanceSquared = candidateDistanceSquared;
+                nearestIsPortal = isPortal;
                 CurrentInteractable = candidate;
             }
         }

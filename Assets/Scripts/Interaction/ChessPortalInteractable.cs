@@ -2,44 +2,48 @@ using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Player;
 using ReturnToTheEigth.TimeTravel;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
 namespace ReturnToTheEigth.Interaction
 {
-    /// <summary>Loads the colour-track puzzle when the player interacts with its highlighted world marker.</summary>
+    /// <summary>Loads the chess puzzle from the ChessPortal marker.</summary>
     [RequireComponent(typeof(BoxCollider2D), typeof(LineRenderer))]
     [DisallowMultipleComponent]
-    public sealed class ColorPuzzlePortalInteractable : InteractableBase
+    public sealed class ChessPortalInteractable : InteractableBase
     {
-        private const string PuzzleSceneName = "ColorTrackPuzzle";
-        private const string PuzzleId = "ColorTrackPuzzle";
-        private const string InteractionPromptText = "Entrar al puzle de colores";
+        private const string PuzzleSceneName = "ChessPuzle";
+        private const string PuzzleId = "KnightPuzzle";
+        private const string InteractionPromptText = "Entrar al puzle de ajedrez";
+        private const string ChessAssetObjectName = "Chess";
+        private const string PastTableObjectName = "pasttable";
         private const string SpriteShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
         private const float HalfExtent = 0.3f;
-        private const float HighlightRadius = 0.9f;
-        private const float HighlightRadiusSquared = HighlightRadius * HighlightRadius;
+        private const float ChessInteractionRadius = 0.2f;
+        private const float InteractionRadiusSquared = ChessInteractionRadius * ChessInteractionRadius;
         private const float OutlineWidth = 0.04f;
-        private const int OutlineSortingOrder = -1;
         private const int OutlinePointCount = 4;
+        private const int ChessSortingOrderOffset = 2;
+        private const int PortalSortingOrderOffset = 1;
         private static readonly Color OutlineColor = Color.white;
 
-        /// <summary>Maximum query radius required to find colour portals.</summary>
-        public const float MaximumInteractionRadius = HighlightRadius;
-
         [SerializeField] private PlayerInteraction playerInteraction;
+
+        /// <summary>Maximum query radius required to find chess portals.</summary>
+        public const float MaximumInteractionRadius = ChessInteractionRadius;
 
         private BoxCollider2D interactionCollider;
         private LineRenderer outlineRenderer;
         private Material runtimeOutlineMaterial;
         private bool isHighlighted;
 
-        /// <summary>Gets the interaction radius of the colour portal.</summary>
-        public float InteractionRadius => HighlightRadius;
+        /// <summary>Gets the interaction radius of the chess portal.</summary>
+        public float InteractionRadius => ChessInteractionRadius;
 
-        /// <summary>Gets the world-space interaction point at the marker centre.</summary>
-        public Vector2 InteractionPoint => transform.position;
+        /// <summary>Gets the world-space interaction point at the bottom-center of the portal square.</summary>
+        public Vector2 InteractionPoint => transform.TransformPoint(new Vector3(0f, -HalfExtent, 0f));
 
-        /// <summary>Gets the prompt shown while the player can interact with this marker.</summary>
+        /// <summary>Gets the prompt shown while the player can interact with the chess portal.</summary>
         public override string InteractionPrompt => InteractionPromptText;
 
         private void Awake()
@@ -64,10 +68,16 @@ namespace ReturnToTheEigth.Interaction
             }
 
             SetHighlighted(false);
+            ConfigureChessAssetSorting();
             if (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(PuzzleId))
             {
                 DisablePortal();
             }
+        }
+
+        private void OnEnable()
+        {
+            ConfigureChessAssetSorting();
         }
 
         private void Update()
@@ -81,7 +91,7 @@ namespace ReturnToTheEigth.Interaction
                 ? playerInteraction.transform.position
                 : Vector2.positiveInfinity;
             Vector2 offset = playerPosition - InteractionPoint;
-            SetHighlighted(offset.sqrMagnitude <= HighlightRadiusSquared);
+            SetHighlighted(offset.sqrMagnitude <= InteractionRadiusSquared);
         }
 
         private void OnDestroy()
@@ -92,11 +102,10 @@ namespace ReturnToTheEigth.Interaction
             }
         }
 
-        /// <summary>Saves the player's position and timeline, then loads the colour-track puzzle.</summary>
+        /// <summary>Saves the player's exploration state and loads the chess puzzle.</summary>
         public override void Interact(GameObject interactor)
         {
-            if (interactor == null
-                || (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(PuzzleId)))
+            if (interactor == null || (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(PuzzleId)))
             {
                 return;
             }
@@ -113,6 +122,65 @@ namespace ReturnToTheEigth.Interaction
             enabled = false;
         }
 
+        private void ConfigureChessAssetSorting()
+        {
+            Transform[] sceneTransforms = FindObjectsByType<Transform>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Transform chessTransform = null;
+            Transform tableTransform = null;
+
+            foreach (Transform sceneTransform in sceneTransforms)
+            {
+                if (chessTransform == null && sceneTransform.name == ChessAssetObjectName)
+                {
+                    chessTransform = sceneTransform;
+                }
+                else if (tableTransform == null && sceneTransform.name == PastTableObjectName)
+                {
+                    tableTransform = sceneTransform;
+                }
+
+                if (chessTransform != null && tableTransform != null)
+                {
+                    break;
+                }
+            }
+
+            if (chessTransform == null)
+            {
+                return;
+            }
+
+            SortingGroup tableSortingGroup = tableTransform != null
+                ? tableTransform.GetComponent<SortingGroup>()
+                    ?? tableTransform.GetComponentInChildren<SortingGroup>(true)
+                : null;
+            Renderer tableRenderer = tableTransform != null
+                ? tableTransform.GetComponent<Renderer>()
+                    ?? tableTransform.GetComponentInChildren<Renderer>(true)
+                : null;
+            int tableSortingLayerId = tableSortingGroup != null
+                ? tableSortingGroup.sortingLayerID
+                : tableRenderer != null ? tableRenderer.sortingLayerID : 0;
+            int tableSortingOrder = tableSortingGroup != null
+                ? tableSortingGroup.sortingOrder
+                : tableRenderer != null ? tableRenderer.sortingOrder : 0;
+
+            SortingGroup chessSortingGroup = chessTransform.GetComponent<SortingGroup>();
+            if (chessSortingGroup == null)
+            {
+                chessSortingGroup = chessTransform.gameObject.AddComponent<SortingGroup>();
+            }
+
+            chessSortingGroup.sortingLayerID = tableSortingLayerId;
+            chessSortingGroup.sortingOrder = tableSortingOrder + ChessSortingOrderOffset;
+            if (outlineRenderer != null)
+            {
+                outlineRenderer.sortingLayerID = tableSortingLayerId;
+                outlineRenderer.sortingOrder = tableSortingOrder + PortalSortingOrderOffset;
+            }
+        }
+
         private void ConfigureOutline()
         {
             outlineRenderer.useWorldSpace = false;
@@ -120,7 +188,6 @@ namespace ReturnToTheEigth.Interaction
             outlineRenderer.positionCount = OutlinePointCount;
             outlineRenderer.startWidth = OutlineWidth;
             outlineRenderer.endWidth = OutlineWidth;
-            outlineRenderer.sortingOrder = OutlineSortingOrder;
             outlineRenderer.startColor = OutlineColor;
             outlineRenderer.endColor = OutlineColor;
             outlineRenderer.enabled = false;

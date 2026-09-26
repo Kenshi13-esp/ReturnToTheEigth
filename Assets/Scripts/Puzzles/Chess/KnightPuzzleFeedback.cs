@@ -1,4 +1,6 @@
+using ReturnToTheEigth.Core;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace ReturnToTheEigth.Puzzles
 {
@@ -12,6 +14,7 @@ namespace ReturnToTheEigth.Puzzles
         private const string NotLitText = "Solo puedes colocarlo en una casilla iluminada";
         private const string FailedText = "Posición incorrecta...";
         private const string WinText = "YOU WIN";
+        private const string HallSceneName = "Hall";
         private const float RejectMessageSeconds = 1.5f;
         private const float PanelX = 8f;
         private const float PanelY = 8f;
@@ -31,6 +34,7 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField] private KnightPlacementBoard board;
         [SerializeField] private KnightCursorController cursorController;
         private bool hasFailed;
+        private bool isReturningToHall;
         private GUIStyle labelStyle;
 
         private void Awake()
@@ -44,6 +48,7 @@ namespace ReturnToTheEigth.Puzzles
             if (board == null) return;
             board.Failed += HandleFailed;
             board.Restarted += HandleRestarted;
+            board.Solved += HandlePuzzleSolved;
         }
 
         private void OnDisable()
@@ -51,6 +56,15 @@ namespace ReturnToTheEigth.Puzzles
             if (board == null) return;
             board.Failed -= HandleFailed;
             board.Restarted -= HandleRestarted;
+            board.Solved -= HandlePuzzleSolved;
+        }
+
+        private void Start()
+        {
+            if (board != null && board.IsSolved)
+            {
+                HandlePuzzleSolved();
+            }
         }
 
         private void OnGUI()
@@ -77,6 +91,18 @@ namespace ReturnToTheEigth.Puzzles
             else { message = IdleText; messageColor = Color.white; }
             labelStyle.normal.textColor = messageColor;
             GUI.Label(new Rect(x, y + TitleHeight + ControlsHeight, width, MessageHeight), message, labelStyle);
+        }
+
+        private void HandlePuzzleSolved()
+        {
+            if (isReturningToHall)
+            {
+                return;
+            }
+
+            isReturningToHall = true;
+            GameManager.Instance?.SetGameState(GameState.Exploration);
+            SceneManager.LoadSceneAsync(HallSceneName, LoadSceneMode.Single);
         }
 
         private void HandleFailed() { hasFailed = true; }

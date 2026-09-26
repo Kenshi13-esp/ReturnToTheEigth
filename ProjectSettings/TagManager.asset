@@ -17,7 +17,7 @@ TagManager:
   - MansionGround
   - Interactable
   - Player
-  - 
+  - Bridgets
   - 
   - 
   - 
@@ -40,6 +40,12 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Assets and player
+    uniqueID: 3085693381
+    locked: 0
+  - name: Bridgets
+    uniqueID: 1567108557
     locked: 0
   m_RenderingLayers:
   - Default

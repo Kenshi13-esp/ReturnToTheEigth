@@ -25,6 +25,7 @@ namespace ReturnToTheEigth.Player
         private const float MovementThresholdSquared = MovementThreshold * MovementThreshold;
         private const float UnitMagnitude = 1f;
         private const float IdlePlaybackSpeed = 0f;
+        private const float PresentIdlePlaybackSpeed = 0.3f;
         private const float WalkPlaybackSpeed = 0.3f;
         private const string BaseLayerName = "Base Layer";
         private const int BaseLayerIndex = 0;
@@ -139,7 +140,9 @@ namespace ReturnToTheEigth.Player
                 animator.runtimeAnimatorController = controller;
 
             animator.enabled = true;
-            animator.speed = isMoving ? WalkPlaybackSpeed : IdlePlaybackSpeed;
+            animator.speed = isMoving
+                ? WalkPlaybackSpeed
+                : currentEra == TimelineEra.Present ? PresentIdlePlaybackSpeed : IdlePlaybackSpeed;
             if (forceRestart || controllerChanged || lastController != controller || lastStateHash != stateHash
                 || lastIsMoving != isMoving)
                 animator.Play(stateHash, BaseLayerIndex, StartAtBeginning);

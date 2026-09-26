@@ -1,6 +1,7 @@
 using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using ReturnToTheEigth.Player;
+using ReturnToTheEigth.Puzzles;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -105,6 +106,10 @@ namespace ReturnToTheEigth.Interaction
                     point = chessPortal.InteractionPoint;
                     offset = point - origin;
                     candidateRadius = chessPortal.InteractionRadius;
+                }
+                else if (candidate is DoorController)
+                {
+                    candidateRadius = DoorController.DoorInteractionRadius;
                 }
 
                 float candidateDistanceSquared = offset.sqrMagnitude;

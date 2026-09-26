@@ -26,6 +26,8 @@ namespace ReturnToTheEigth.Core
         [SerializeField] private bool persistAcrossScenes = true;
 
         public static GameManager Instance { get; private set; }
+        /// <summary>Gets the session door-state channel used by door controllers.</summary>
+        public DoorStateEventChannelSO DoorStateChannel => doorStateChannel;
         public GameState CurrentGameState { get; private set; } = GameState.Exploration;
         private GameState stateBeforePause = GameState.Exploration;
         private Vector3 pendingPlayerReturnPosition;

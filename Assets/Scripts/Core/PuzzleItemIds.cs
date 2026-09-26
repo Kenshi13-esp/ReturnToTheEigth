@@ -14,5 +14,8 @@ namespace ReturnToTheEigth.Core
 
         /// <summary>Painting fragment awarded by the Chess puzzle.</summary>
         public const string ChessPuzzlePaintingFragment = "ChessPuzzlePaintingFragment";
+
+        /// <summary>Sheet music awarded by the Chess puzzle and required to enter the piano puzzle.</summary>
+        public const string PianoSheetMusic = "PianoSheetMusic";
     }
 }

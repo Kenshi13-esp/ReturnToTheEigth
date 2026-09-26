@@ -2594,6 +2594,15 @@ MonoBehaviour:
   shakeMagnitude: 0.18
   restartDelay: 0.7
   puzzleSolvedChannel: {fileID: 11400000, guid: 0d716ce22b37b9843a2254776694cbcc, type: 2}
+  puzzleId: KnightPuzzle
+  completionRewards:
+  - itemId: KitchenLeftDoorKey
+    amount: 1
+  - itemId: ChessPuzzlePaintingFragment
+    amount: 1
+  - itemId: PianoSheetMusic
+    amount: 1
+  rewardNotification: Has obtenido la llave de la cocina izquierda, un fragmento de pintura y una partitura para el piano.
 --- !u!114 &906110773
 MonoBehaviour:
   m_ObjectHideFlags: 0

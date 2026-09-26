@@ -36,12 +36,12 @@ namespace ReturnToTheEigth.Puzzles
         private const float HallKeyDoorInteractionRadius = 0.45f;
         public const float DoorInteractionRadius = 0.25f;
         private const float InteractionOutlineWidth = 0.02f;
-        private const int DefaultOutlineSortingOrder = 21;
         private const float DoubleDoorHorizontalInset = 0.04f;
         private const float LowerDoorMinYFromBottom = 0.02f;
         private const float LowerDoorMaxYFromBottom = 0.58f;
         private const float UpperDoorMinYFromBottom = 0.76f;
         private const float UpperDoorMaxYFromBottom = 0.95f;
+        private const int DefaultOutlineSortingOrder = 21;
         private const int OutlineSortingOrderOffset = 1;
         private const int OutlinePointCount = 4;
         private static readonly Color InteractionOutlineColor = Color.white;

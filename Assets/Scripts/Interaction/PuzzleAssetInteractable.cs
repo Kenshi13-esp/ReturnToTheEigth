@@ -11,21 +11,25 @@ namespace ReturnToTheEigth.Interaction
     public sealed class PuzzleAssetInteractable : InteractableBase
     {
         private const string DefaultPrompt = "Entrar al puzle";
+        private const string MissingRequiredItemPrompt = "Necesitas la partitura del piano";
         private const string DefaultPuzzleSceneName = "ColorTrackPuzzle";
         private const string DefaultPuzzleId = "ColorTrackPuzzle";
         private const string OutlineShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
-        private const float DefaultInteractionRadius = 0.3f;
+        private const float DefaultInteractionRadius = 0.9f;
         private const float DefaultOutlineWidth = 0.02f;
         private const float DefaultTriggerPadding = 0.1f;
         private const int DefaultOutlineSortingOrder = 21;
         private const int OutlinePointCount = 5;
         private const float Zero = 0f;
+        public const float MaximumInteractionRadius = DefaultInteractionRadius;
         private static readonly Color DefaultOutlineColor = Color.white;
 
         [SerializeField] private PlayerInteraction playerInteraction;
         [SerializeField] private string sceneToLoad = DefaultPuzzleSceneName;
         [SerializeField] private string puzzleId = DefaultPuzzleId;
         [SerializeField] private string interactionPrompt = DefaultPrompt;
+        [SerializeField] private string requiredItemId;
+        [SerializeField] private string missingRequiredItemPrompt = MissingRequiredItemPrompt;
         [SerializeField, Min(Zero)] private float interactionRadius = DefaultInteractionRadius;
         [SerializeField, Min(Zero)] private float outlineWidth = DefaultOutlineWidth;
         [SerializeField, Min(Zero)] private float triggerPadding = DefaultTriggerPadding;
@@ -40,8 +44,18 @@ namespace ReturnToTheEigth.Interaction
         private bool isConfigured;
 
         /// <summary>Gets the prompt displayed when the player is close enough to enter this puzzle.</summary>
-        public override string InteractionPrompt => string.IsNullOrWhiteSpace(interactionPrompt)
-            ? DefaultPrompt : interactionPrompt;
+        public override string InteractionPrompt => HasRequiredItem
+            ? string.IsNullOrWhiteSpace(interactionPrompt) ? DefaultPrompt : interactionPrompt
+            : string.IsNullOrWhiteSpace(missingRequiredItemPrompt) ? MissingRequiredItemPrompt : missingRequiredItemPrompt;
+
+        /// <summary>Gets the center point used for nearby interaction checks.</summary>
+        public Vector2 InteractionPoint => targetRenderer != null ? targetRenderer.bounds.center : transform.position;
+
+        /// <summary>Gets the maximum distance allowed to interact with this puzzle entrance.</summary>
+        public float InteractionRadius => interactionRadius;
+
+        private bool HasRequiredItem => string.IsNullOrWhiteSpace(requiredItemId)
+            || (GameManager.Instance != null && GameManager.Instance.HasItem(requiredItemId));
 
         /// <summary>Configures this asset as a puzzle entrance; use a unique, stable puzzle identifier per puzzle.</summary>
         public void Configure(string targetScene, string stablePuzzleId, PlayerInteraction player)
@@ -90,12 +104,13 @@ namespace ReturnToTheEigth.Interaction
                 return;
             }
 
-            Bounds spriteBounds = targetRenderer.bounds;
+            Vector3 interactionPoint = InteractionPoint;
             Vector3 playerPosition = playerInteraction != null
                 ? playerInteraction.transform.position : Vector3.positiveInfinity;
-            playerPosition.z = spriteBounds.center.z;
+            playerPosition.z = interactionPoint.z;
+            Vector3 offset = playerPosition - interactionPoint;
             bool shouldShowOutline = playerInteraction != null
-                && spriteBounds.SqrDistance(playerPosition) <= interactionRadius * interactionRadius;
+                && offset.sqrMagnitude <= interactionRadius * interactionRadius;
             SetOutlineVisible(shouldShowOutline);
         }
 
@@ -111,6 +126,7 @@ namespace ReturnToTheEigth.Interaction
         public override void Interact(GameObject interactor)
         {
             if (!isConfigured || interactor == null || string.IsNullOrWhiteSpace(sceneToLoad)
+                || !HasRequiredItem
                 || (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(puzzleId)))
             {
                 return;

@@ -18,7 +18,7 @@ namespace ReturnToTheEigth.Puzzles
         private const string CorrectCellNotLitWarning = "KnightPlacementBoard: correctCell {0} has no PlacementHighlight; the puzzle cannot be solved.";
         private const string DuplicateHighlightWarning = "Two PlacementHighlights share cell {0}.";
         private const string MissingRewardManagerWarning = "The Chess puzzle was solved, but its rewards were not granted because no GameManager exists.";
-        private const string ChessRewardNotice = "Has obtenido la llave de la cocina izquierda y un fragmento de pintura.";
+        private const string ChessRewardNotice = "Has obtenido la llave de la cocina izquierda, un fragmento de pintura y una partitura para el piano.";
         private const string DefaultPuzzleId = "KnightPuzzle";
         private const float DefaultEvaluationDelay = 0.35f;
         private const float DefaultShakeDuration = 0.5f;
@@ -43,7 +43,8 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField] private List<PuzzleReward> completionRewards = new List<PuzzleReward>
         {
             new PuzzleReward(PuzzleItemIds.KitchenLeftDoorKey, 1),
-            new PuzzleReward(PuzzleItemIds.ChessPuzzlePaintingFragment, 1)
+            new PuzzleReward(PuzzleItemIds.ChessPuzzlePaintingFragment, 1),
+            new PuzzleReward(PuzzleItemIds.PianoSheetMusic, 1)
         };
         [SerializeField, TextArea] private string rewardNotification = ChessRewardNotice;
         private readonly List<PlacementHighlight> highlights = new List<PlacementHighlight>();

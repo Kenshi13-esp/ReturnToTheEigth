@@ -1,0 +1,490 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using ReturnToTheEigth.CameraSystem;
+using ReturnToTheEigth.Core;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+namespace ReturnToTheEigth.Puzzles.Piano
+{
+    /// <summary>Captures seven piano-key actions, validates the sequence and records completion when confirmed.</summary>
+    [DisallowMultipleComponent]
+    public sealed class PianoSequenceController : MonoBehaviour
+    {
+        private const string PuzzleId = "PianoPuzzle";
+        private const string MissingActionsWarning = "PianoSequenceController could not find piano left/right and confirm actions.";
+        private const string MissingAudioSourceWarning = "PianoSequenceController has no note AudioSource; piano notes will be silent.";
+        private const string MissingCameraShakeWarning = "PianoSequenceController has no CameraShake; wrong sequences will still reset.";
+        private const string MissingNoteClipWarning = "PianoSequenceController is missing a note clip; that key will be silent.";
+        private const string PianoActionPrefix = "Player/";
+        private const string ConfirmActionPath = "Player/Interact";
+        private const string ConfirmPrompt = "A/D: mover selector · E: aceptar tecla";
+        private const string InputPrompt = "A/D: mover selector · E: aceptar tecla";
+        private const string WrongSequenceText = "Secuencia incorrecta. Inténtalo de nuevo.";
+        private const string SolvedText = "Secuencia correcta.";
+        private const int SequenceLength = 5;
+        private const int KeyCount = 7;
+        private const int NavigationActionCount = 2;
+        private const int FirstIndex = 0;
+        private const float DefaultFailureShakeDuration = 0.5f;
+        private const float DefaultFailureShakeMagnitude = 0.18f;
+        private const float DefaultFailureResetDelay = 0.5f;
+        private const float Zero = 0f;
+        private const float PanelWidth = 620f;
+        private const float PanelHeight = 330f;
+        private const float SceneArtPanelHeight = 126f;
+        private const float KeyboardTopOffset = 155f;
+        private const float KeyboardHeight = 170f;
+        private const float KeyGap = 4f;
+        private const float PanelPadding = 18f;
+        private const int HeaderFontSize = 22;
+        private const int KeyFontSize = 26;
+        private const int StatusFontSize = 17;
+        private static readonly Color PianoWhite = Color.white;
+        private static readonly Color SelectionColor = new Color(0.95f, 0.62f, 0.12f, 1f);
+        private static readonly Color TextColor = new Color(0.08f, 0.08f, 0.08f, 1f);
+        private static readonly Color PanelColor = new Color(0.08f, 0.08f, 0.1f, 0.92f);
+        private static readonly string[] KeyLabels = { "A", "S", "D", "F", "G", "H", "J" };
+        private static readonly string[] PianoActionNames = { "PianoLeft", "PianoRight" };
+        private static readonly PianoKey[] TargetSequence =
+        {
+            PianoKey.D,
+            PianoKey.F,
+            PianoKey.D,
+            PianoKey.A,
+            PianoKey.H
+        };
+
+        [SerializeField] private InputActionAsset inputActions;
+        [SerializeField] private AudioSource noteAudioSource;
+        [SerializeField] private AudioClip nota1;
+        [SerializeField] private AudioClip nota2;
+        [SerializeField] private AudioClip nota3;
+        [SerializeField] private AudioClip nota4;
+        [SerializeField] private AudioClip nota5;
+        [SerializeField] private AudioClip nota6;
+        [SerializeField] private CameraShake cameraShake;
+        [SerializeField] private SpriteRenderer[] keyVisuals = Array.Empty<SpriteRenderer>();
+        [SerializeField, Min(Zero)] private float failureShakeDuration = DefaultFailureShakeDuration;
+        [SerializeField, Min(Zero)] private float failureShakeMagnitude = DefaultFailureShakeMagnitude;
+        [SerializeField, Min(Zero)] private float failureResetDelay = DefaultFailureResetDelay;
+
+        private readonly List<PianoKey> enteredSequence = new List<PianoKey>(SequenceLength);
+        private readonly InputAction[] navigationActions = new InputAction[NavigationActionCount];
+        private InputAction confirmAction;
+        private Coroutine resetRoutine;
+        private GUIStyle headerStyle;
+        private GUIStyle statusStyle;
+        private GUIStyle keyLabelStyle;
+        private Texture2D whiteTexture;
+        private Texture2D blackTexture;
+        private Texture2D selectionTexture;
+        private string statusText = InputPrompt;
+        private int selectedKeyIndex;
+        private bool inputLocked;
+
+        /// <summary>Raised once after the player confirms the correct sequence.</summary>
+        public event Action Solved;
+
+        /// <summary>Raised whenever the player confirms an incorrect complete sequence.</summary>
+        public event Action Failed;
+
+        /// <summary>Gets whether the correct sequence has been confirmed.</summary>
+        public bool IsSolved { get; private set; }
+
+        private enum PianoKey
+        {
+            A,
+            S,
+            D,
+            F,
+            G,
+            H,
+            J
+        }
+
+        private void Awake()
+        {
+            if (inputActions == null)
+            {
+                Debug.LogWarning(MissingActionsWarning, this);
+            }
+            else
+            {
+                for (int index = FirstIndex; index < PianoActionNames.Length; index++)
+                {
+                    InputAction sourceAction = inputActions.FindAction(PianoActionPrefix + PianoActionNames[index], false);
+                    navigationActions[index] = sourceAction != null ? sourceAction.Clone() : null;
+                    if (navigationActions[index] == null)
+                    {
+                        Debug.LogWarning(MissingActionsWarning, this);
+                        break;
+                    }
+                }
+                InputAction sourceConfirmAction = inputActions.FindAction(ConfirmActionPath, false);
+                confirmAction = sourceConfirmAction != null ? sourceConfirmAction.Clone() : null;
+                if (confirmAction == null)
+                {
+                    Debug.LogWarning(MissingActionsWarning, this);
+                }
+            }
+
+            if (noteAudioSource == null)
+            {
+                noteAudioSource = GetComponent<AudioSource>();
+            }
+            if (noteAudioSource == null)
+            {
+                Debug.LogWarning(MissingAudioSourceWarning, this);
+            }
+            if (cameraShake == null)
+            {
+                cameraShake = FindAnyObjectByType<CameraShake>();
+            }
+        }
+
+        private void Start()
+        {
+            statusText = string.Format("Tecla seleccionada: {0}     {1}",
+                KeyLabels[selectedKeyIndex], GetProgressText());
+            RefreshKeyVisuals();
+            GameManager.Instance?.SetGameState(GameState.Puzzle);
+        }
+
+        private void OnEnable()
+        {
+            for (int index = FirstIndex; index < navigationActions.Length; index++)
+            {
+                navigationActions[index]?.Enable();
+            }
+            confirmAction?.Enable();
+        }
+
+        private void OnDisable()
+        {
+            for (int index = FirstIndex; index < navigationActions.Length; index++)
+            {
+                navigationActions[index]?.Disable();
+            }
+            confirmAction?.Disable();
+            if (resetRoutine != null)
+            {
+                StopCoroutine(resetRoutine);
+                resetRoutine = null;
+                inputLocked = false;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            for (int index = FirstIndex; index < navigationActions.Length; index++)
+            {
+                navigationActions[index]?.Dispose();
+            }
+            confirmAction?.Dispose();
+            if (whiteTexture != null) Destroy(whiteTexture);
+            if (blackTexture != null) Destroy(blackTexture);
+            if (selectionTexture != null) Destroy(selectionTexture);
+        }
+
+        private void Update()
+        {
+            if (inputLocked || IsSolved)
+            {
+                return;
+            }
+
+            if (navigationActions[FirstIndex] != null && navigationActions[FirstIndex].WasPerformedThisFrame())
+            {
+                SetSelectedKey(selectedKeyIndex - 1);
+                return;
+            }
+            if (navigationActions[FirstIndex + 1] != null && navigationActions[FirstIndex + 1].WasPerformedThisFrame())
+            {
+                SetSelectedKey(selectedKeyIndex + 1);
+                return;
+            }
+            if (confirmAction != null && confirmAction.WasPerformedThisFrame())
+            {
+                AcceptSelectedKey();
+            }
+        }
+
+        private void SetSelectedKey(int index)
+        {
+            selectedKeyIndex = Mathf.Clamp(index, FirstIndex, KeyCount - 1);
+            statusText = string.Format("Tecla seleccionada: {0}     {1}",
+                KeyLabels[selectedKeyIndex], GetProgressText());
+            RefreshKeyVisuals();
+        }
+
+        private void AcceptSelectedKey()
+        {
+            if (enteredSequence.Count >= SequenceLength)
+            {
+                return;
+            }
+
+            PianoKey selectedKey = (PianoKey)selectedKeyIndex;
+            int sequenceIndex = enteredSequence.Count;
+            AudioClip playedClip = PlayKeySound(selectedKey, sequenceIndex);
+            enteredSequence.Add(selectedKey);
+
+            if (enteredSequence.Count == SequenceLength)
+            {
+                ValidateSequence(playedClip);
+                return;
+            }
+
+            statusText = string.Format("Tecla aceptada: {0}     {1}",
+                KeyLabels[selectedKeyIndex], GetProgressText());
+        }
+
+        private string GetProgressText()
+        {
+            return string.Format("{0}/{1}     {2}", enteredSequence.Count, SequenceLength, ConfirmPrompt);
+        }
+
+        private void ValidateSequence(AudioClip finalNoteClip)
+        {
+            for (int index = FirstIndex; index < SequenceLength; index++)
+            {
+                if (enteredSequence[index] != TargetSequence[index])
+                {
+                    HandleWrongSequence();
+                    return;
+                }
+            }
+
+            IsSolved = true;
+            inputLocked = true;
+            statusText = SolvedText;
+            GameManager.Instance?.SetGameState(GameState.Puzzle);
+            if (finalNoteClip != null && noteAudioSource != null && noteAudioSource.isPlaying)
+            {
+                StartCoroutine(CompleteSolvedSequenceAfterFinalNote());
+                return;
+            }
+
+            CompleteSolvedSequence();
+        }
+
+        private IEnumerator CompleteSolvedSequenceAfterFinalNote()
+        {
+            while (noteAudioSource != null && noteAudioSource.isPlaying)
+            {
+                yield return null;
+            }
+
+            CompleteSolvedSequence();
+        }
+
+        private void CompleteSolvedSequence()
+        {
+            GameManager.Instance?.MarkPuzzleCompleted(PuzzleId);
+            Solved?.Invoke();
+        }
+
+        private void HandleWrongSequence()
+        {
+            inputLocked = true;
+            statusText = WrongSequenceText;
+            Failed?.Invoke();
+            if (cameraShake != null)
+            {
+                cameraShake.Shake(failureShakeDuration, failureShakeMagnitude);
+            }
+            else
+            {
+                Debug.LogWarning(MissingCameraShakeWarning, this);
+            }
+
+            resetRoutine = StartCoroutine(ResetAfterFailure());
+        }
+
+        private IEnumerator ResetAfterFailure()
+        {
+            yield return new WaitForSeconds(failureResetDelay);
+            enteredSequence.Clear();
+            selectedKeyIndex = FirstIndex;
+            statusText = string.Format("Tecla seleccionada: {0}     {1}", KeyLabels[selectedKeyIndex], GetProgressText());
+            RefreshKeyVisuals();
+            inputLocked = false;
+            resetRoutine = null;
+        }
+
+        private AudioClip PlayKeySound(PianoKey key, int sequenceIndex)
+        {
+            if (noteAudioSource == null)
+            {
+                return null;
+            }
+
+            AudioClip clip = GetClipForKey(key, sequenceIndex);
+            if (clip == null)
+            {
+                Debug.LogWarning(MissingNoteClipWarning, this);
+                return null;
+            }
+
+            noteAudioSource.PlayOneShot(clip);
+            return clip;
+        }
+
+        private AudioClip GetClipForKey(PianoKey key, int sequenceIndex)
+        {
+            switch (key)
+            {
+                case PianoKey.D:
+                    if (sequenceIndex == 0) return nota1;
+                    if (sequenceIndex == 2) return nota3;
+                    return nota6;
+                case PianoKey.F:
+                    return nota2;
+                case PianoKey.A:
+                    return nota4;
+                case PianoKey.H:
+                    return nota5;
+                default:
+                    return nota6;
+            }
+        }
+
+        private void OnGUI()
+        {
+            EnsureGuiStyles();
+            bool hasSceneKeyboardArt = HasSceneKeyboardArt();
+            float panelWidth = Mathf.Min(PanelWidth, Screen.width - PanelPadding * 2f);
+            float panelHeight = hasSceneKeyboardArt ? SceneArtPanelHeight : PanelHeight;
+            float panelX = (Screen.width - panelWidth) * 0.5f;
+            float panelY = hasSceneKeyboardArt
+                ? PanelPadding
+                : Mathf.Max(PanelPadding, (Screen.height - panelHeight) * 0.5f);
+            GUI.DrawTexture(new Rect(panelX, panelY, panelWidth, panelHeight), blackTexture);
+
+            Rect headerRect = new Rect(panelX + PanelPadding, panelY + PanelPadding,
+                panelWidth - PanelPadding * 2f, 36f);
+            GUI.Label(headerRect, "PIANO", headerStyle);
+            Rect statusRect = new Rect(panelX + PanelPadding, panelY + 58f,
+                panelWidth - PanelPadding * 2f, 48f);
+            GUI.Label(statusRect, statusText, statusStyle);
+
+            if (hasSceneKeyboardArt)
+            {
+                return;
+            }
+
+            float keyboardWidth = panelWidth - PanelPadding * 2f;
+            float keyWidth = (keyboardWidth - KeyGap * (KeyCount - 1)) / KeyCount;
+            float keyY = panelY + KeyboardTopOffset;
+            float keyHeight = Mathf.Min(KeyboardHeight, panelY + PanelHeight - PanelPadding - keyY);
+            for (int index = FirstIndex; index < KeyCount; index++)
+            {
+                float keyX = panelX + PanelPadding + index * (keyWidth + KeyGap);
+                Rect keyRect = new Rect(keyX, keyY, keyWidth, keyHeight);
+                GUI.DrawTexture(keyRect, whiteTexture);
+                GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, keyRect.width, 2f), blackTexture);
+                GUI.DrawTexture(new Rect(keyRect.x, keyRect.yMax - 2f, keyRect.width, 2f), blackTexture);
+                GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, 2f, keyRect.height), blackTexture);
+                GUI.DrawTexture(new Rect(keyRect.xMax - 2f, keyRect.y, 2f, keyRect.height), blackTexture);
+                if (index == selectedKeyIndex)
+                {
+                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, keyRect.width, 5f), selectionTexture);
+                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.yMax - 5f, keyRect.width, 5f), selectionTexture);
+                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, 5f, keyRect.height), selectionTexture);
+                    GUI.DrawTexture(new Rect(keyRect.xMax - 5f, keyRect.y, 5f, keyRect.height), selectionTexture);
+                }
+                GUI.Label(new Rect(keyRect.x, keyRect.yMax - 42f, keyRect.width, 36f), KeyLabels[index], keyLabelStyle);
+            }
+        }
+
+        private bool HasSceneKeyboardArt()
+        {
+            if (keyVisuals == null || keyVisuals.Length < KeyCount)
+            {
+                return false;
+            }
+
+            for (int index = FirstIndex; index < KeyCount; index++)
+            {
+                if (keyVisuals[index] == null || keyVisuals[index].sprite == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void RefreshKeyVisuals()
+        {
+            if (keyVisuals == null)
+            {
+                return;
+            }
+
+            int visualCount = Mathf.Min(keyVisuals.Length, KeyCount);
+            for (int index = FirstIndex; index < visualCount; index++)
+            {
+                SpriteRenderer keyVisual = keyVisuals[index];
+                if (keyVisual != null)
+                {
+                    keyVisual.color = index == selectedKeyIndex ? SelectionColor : PianoWhite;
+                }
+            }
+        }
+
+        private void EnsureGuiStyles()
+        {
+            if (whiteTexture == null)
+            {
+                whiteTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+                whiteTexture.SetPixel(0, 0, PianoWhite);
+                whiteTexture.Apply();
+            }
+            if (blackTexture == null)
+            {
+                blackTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+                blackTexture.SetPixel(0, 0, PanelColor);
+                blackTexture.Apply();
+            }
+            if (selectionTexture == null)
+            {
+                selectionTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+                selectionTexture.SetPixel(0, 0, SelectionColor);
+                selectionTexture.Apply();
+            }
+            if (headerStyle == null)
+            {
+                headerStyle = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = HeaderFontSize,
+                    fontStyle = FontStyle.Bold
+                };
+                headerStyle.normal.textColor = PianoWhite;
+            }
+            if (statusStyle == null)
+            {
+                statusStyle = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = StatusFontSize,
+                    wordWrap = true
+                };
+                statusStyle.normal.textColor = PianoWhite;
+            }
+            if (keyLabelStyle == null)
+            {
+                keyLabelStyle = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = KeyFontSize,
+                    fontStyle = FontStyle.Bold
+                };
+                keyLabelStyle.normal.textColor = TextColor;
+            }
+        }
+    }
+}

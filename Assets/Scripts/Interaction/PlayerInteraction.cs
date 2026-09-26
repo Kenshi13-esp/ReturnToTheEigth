@@ -79,8 +79,10 @@ namespace ReturnToTheEigth.Interaction
             float searchRadius = Mathf.Max(
                 effectiveInteractionRadius,
                 Mathf.Max(
-                    ColorPuzzlePortalInteractable.MaximumInteractionRadius,
-                    ChessPortalInteractable.MaximumInteractionRadius));
+                    PuzzleAssetInteractable.MaximumInteractionRadius,
+                    Mathf.Max(
+                        ColorPuzzlePortalInteractable.MaximumInteractionRadius,
+                        ChessPortalInteractable.MaximumInteractionRadius)));
             int count = Physics2D.OverlapCircle(origin, searchRadius, filter, nearbyColliders);
             float nearestDistanceSquared = float.PositiveInfinity;
             bool nearestIsPortal = false;
@@ -107,6 +109,13 @@ namespace ReturnToTheEigth.Interaction
                     point = chessPortal.InteractionPoint;
                     offset = point - origin;
                     candidateRadius = chessPortal.InteractionRadius;
+                }
+                else if (candidate is PuzzleAssetInteractable puzzleAsset)
+                {
+                    isPortal = true;
+                    point = puzzleAsset.InteractionPoint;
+                    offset = point - origin;
+                    candidateRadius = puzzleAsset.InteractionRadius;
                 }
                 else if (candidate is DoorController door)
                 {

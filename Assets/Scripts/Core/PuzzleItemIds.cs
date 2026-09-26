@@ -8,5 +8,11 @@ namespace ReturnToTheEigth.Core
 
         /// <summary>Key item awarded by Chess and used by the left kitchen door.</summary>
         public const string KitchenLeftDoorKey = "KitchenLeftDoorKey";
+
+        /// <summary>Painting fragment awarded by the ColorTrackPuzzle.</summary>
+        public const string ColorTrackPuzzlePaintingFragment = "ColorTrackPuzzlePaintingFragment";
+
+        /// <summary>Painting fragment awarded by the Chess puzzle.</summary>
+        public const string ChessPuzzlePaintingFragment = "ChessPuzzlePaintingFragment";
     }
 }

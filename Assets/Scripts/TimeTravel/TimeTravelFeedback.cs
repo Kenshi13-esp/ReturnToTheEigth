@@ -78,18 +78,20 @@ namespace ReturnToTheEigth.TimeTravel
             labelStyle.normal.textColor = Color.white;
             GUI.Label(new Rect(x, y + TitleHeight, width, ControlsHeight), ControlsText, labelStyle);
             bool blocked = Time.unscaledTime < blockedUntil;
-            bool showingRewardNotice = !blocked && Time.unscaledTime < rewardNoticeUntil
+            bool rewardNoticeActive = Time.unscaledTime < rewardNoticeUntil
                 && !string.IsNullOrWhiteSpace(activeRewardNotice);
+            bool showingRewardNotice = !blocked && rewardNoticeActive;
             labelStyle.normal.textColor = blocked ? Color.yellow : showingRewardNotice ? RewardNoticeColor : Color.white;
             string message = blocked ? BlockedText : showingRewardNotice ? activeRewardNotice : PrototypeText;
             GUI.Label(new Rect(x, y + TitleHeight + ControlsHeight, width, MessageHeight), message, labelStyle);
-            DrawInteractionPrompt();
+            DrawInteractionPrompt(rewardNoticeActive);
         }
 
-        private void DrawInteractionPrompt()
+        private void DrawInteractionPrompt(bool showingRewardNotice)
         {
             InteractableBase target = playerInteraction != null ? playerInteraction.CurrentInteractable : null;
-            if (target == null || !target.isActiveAndEnabled)
+            bool showingInteractionPrompt = target != null && target.isActiveAndEnabled;
+            if (!showingRewardNotice && !showingInteractionPrompt)
             {
                 return;
             }
@@ -103,13 +105,22 @@ namespace ReturnToTheEigth.TimeTravel
             GUI.color = Color.white;
             GUI.DrawTexture(panelRect, interactionPanelTexture, ScaleMode.StretchToFill, false);
 
-            bool isWrongSideDoor = target is DoorController door && door.IsPlayerOnWrongSide;
-            string prompt = isWrongSideDoor ? target.InteractionPrompt : InteractPrefix + target.InteractionPrompt;
+            string message;
+            if (showingRewardNotice)
+            {
+                message = activeRewardNotice;
+            }
+            else
+            {
+                bool isWrongSideDoor = target is DoorController door && door.IsPlayerOnWrongSide;
+                message = isWrongSideDoor ? target.InteractionPrompt : InteractPrefix + target.InteractionPrompt;
+            }
+
             Rect textRect = new Rect(panelX + InteractionPanelHorizontalPadding,
                 panelY + InteractionPanelVerticalPadding,
                 panelWidth - InteractionPanelHorizontalPadding * 2f,
                 InteractionPanelHeight - InteractionPanelVerticalPadding * 2f);
-            GUI.Label(textRect, prompt, interactionTextStyle);
+            GUI.Label(textRect, message, interactionTextStyle);
             GUI.color = previousGuiColor;
         }
 

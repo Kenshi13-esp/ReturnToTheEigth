@@ -95,7 +95,7 @@ namespace ReturnToTheEigth.Interaction
                 ? playerInteraction.transform.position
                 : Vector2.positiveInfinity;
             Vector2 offset = playerPosition - InteractionPoint;
-            SetHighlighted(HasChessPiece && offset.sqrMagnitude <= InteractionRadiusSquared);
+            SetHighlighted(offset.sqrMagnitude <= InteractionRadiusSquared);
         }
 
         private void OnDestroy()

@@ -137,7 +137,7 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 35
+      width: 36
       height: 86
     spriteID: 4fd01340ef400d247866917a5ae43356
     spriteBone: []
@@ -169,7 +169,7 @@ ScriptedImporter:
       cellRect:
         x: 0
         y: 0
-        width: 35
+        width: 36
         height: 86
       spriteId: 4fd01340ef400d247866917a5ae43356
     linkedCells: []
@@ -181,4 +181,4 @@ ScriptedImporter:
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   previousTextureSize: {x: 64, y: 128}
-  canvasSize: {x: 35, y: 86}
+  canvasSize: {x: 36, y: 86}

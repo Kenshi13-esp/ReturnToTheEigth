@@ -15,7 +15,7 @@ namespace ReturnToTheEigth.Puzzles
         private const string SliderOffTrackWarning = "TrackBoard: slider '{0}' starts on a cell that is not passable for its color.";
         private const string DuplicateTargetWarning = "TrackBoard: target '{0}' shares a cell or color with another target.";
         private const string MissingRewardManagerWarning = "The color puzzle was solved, but its reward was not granted because no GameManager exists.";
-        private const string ChessPieceNotice = "Has obtenido la pieza de caballo necesaria para activar el puzle de ajedrez.";
+        private const string ChessPieceNotice = "Has obtenido la pieza de caballo necesaria para activar el puzle de ajedrez y un fragmento de pintura.";
         private const int FirstIndex = 0;
         private const int LastOffset = 1;
         private const float GizmoDepth = 0f;
@@ -28,7 +28,8 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField] private string puzzleId = "ColorTrackPuzzle";
         [SerializeField] private List<PuzzleReward> completionRewards = new List<PuzzleReward>
         {
-            new PuzzleReward(PuzzleItemIds.ChessKnightPiece, 1)
+            new PuzzleReward(PuzzleItemIds.ChessKnightPiece, 1),
+            new PuzzleReward(PuzzleItemIds.ColorTrackPuzzlePaintingFragment, 1)
         };
         [SerializeField, TextArea] private string rewardNotification = ChessPieceNotice;
         private readonly List<TrackSlider> sliders = new List<TrackSlider>();

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ReturnToTheEigth.Events;
+using ReturnToTheEigth.Puzzles;
 using ReturnToTheEigth.TimeTravel;
 using UnityEngine;
 
@@ -15,6 +16,8 @@ namespace ReturnToTheEigth.Core
         private const float RunningTimeScale = 1f;
         private const float StoppedTimeScale = 0f;
         private const string InvalidStateWarning = "Ignored an unsupported game state.";
+        private const string InvalidInventoryOperationWarning = "Rejected an invalid inventory item ID or quantity.";
+        private const string InvalidPuzzleRewardWarning = "Rejected invalid rewards for puzzle ID '{0}'.";
 
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField] private VoidEventChannelSO pauseRequestedChannel;
@@ -28,7 +31,10 @@ namespace ReturnToTheEigth.Core
         private Vector3 pendingPlayerReturnPosition;
         private TimelineEra pendingPlayerReturnEra = TimelineEra.Present;
         private bool hasPendingPlayerReturnPosition;
+        private string pendingRewardNotice;
         private readonly HashSet<string> completedPuzzleIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly Dictionary<string, int> itemCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly HashSet<string> puzzlesWithGrantedRewards = new HashSet<string>(StringComparer.Ordinal);
 
         private void Awake()
         {
@@ -102,6 +108,132 @@ namespace ReturnToTheEigth.Core
             {
                 completedPuzzleIds.Add(puzzleId);
             }
+        }
+
+        /// <summary>Returns whether the session inventory contains at least one item with the supplied identifier.</summary>
+        public bool HasItem(string itemId)
+        {
+            return GetItemCount(itemId) > 0;
+        }
+
+        /// <summary>Returns the session inventory count for an item, or zero for an invalid or absent identifier.</summary>
+        public int GetItemCount(string itemId)
+        {
+            return !string.IsNullOrWhiteSpace(itemId) && itemCounts.TryGetValue(itemId, out int count)
+                ? count : 0;
+        }
+
+        /// <summary>Adds a positive quantity of an item to the session inventory.</summary>
+        public bool AddItem(string itemId, int amount = 1)
+        {
+            if (string.IsNullOrWhiteSpace(itemId) || amount <= 0)
+            {
+                Debug.LogWarning(InvalidInventoryOperationWarning, this);
+                return false;
+            }
+
+            int currentCount = GetItemCount(itemId);
+            if (amount > int.MaxValue - currentCount)
+            {
+                Debug.LogWarning(InvalidInventoryOperationWarning, this);
+                return false;
+            }
+
+            itemCounts[itemId] = currentCount + amount;
+            return true;
+        }
+
+        /// <summary>Consumes a positive quantity of an item when the session inventory has enough.</summary>
+        public bool TryConsumeItem(string itemId, int amount = 1)
+        {
+            if (string.IsNullOrWhiteSpace(itemId) || amount <= 0)
+            {
+                Debug.LogWarning(InvalidInventoryOperationWarning, this);
+                return false;
+            }
+
+            if (!itemCounts.TryGetValue(itemId, out int currentCount) || currentCount < amount)
+            {
+                return false;
+            }
+
+            int remainingCount = currentCount - amount;
+            if (remainingCount == 0)
+            {
+                itemCounts.Remove(itemId);
+            }
+            else
+            {
+                itemCounts[itemId] = remainingCount;
+            }
+
+            return true;
+        }
+
+        /// <summary>Grants a puzzle's configured rewards once per session after validating the complete reward list.</summary>
+        public bool TryGrantPuzzleRewards(string puzzleId, IReadOnlyList<PuzzleReward> rewards)
+        {
+            if (string.IsNullOrWhiteSpace(puzzleId) || rewards == null || rewards.Count == 0 ||
+                puzzlesWithGrantedRewards.Contains(puzzleId))
+            {
+                return false;
+            }
+
+            Dictionary<string, long> additions = new Dictionary<string, long>(StringComparer.Ordinal);
+            for (int index = 0; index < rewards.Count; index++)
+            {
+                PuzzleReward reward = rewards[index];
+                if (reward == null || string.IsNullOrWhiteSpace(reward.ItemId) || reward.Amount <= 0)
+                {
+                    Debug.LogWarning(string.Format(InvalidPuzzleRewardWarning, puzzleId), this);
+                    return false;
+                }
+
+                additions.TryGetValue(reward.ItemId, out long currentAddition);
+                long totalAddition = currentAddition + reward.Amount;
+                long currentCount = GetItemCount(reward.ItemId);
+                if (totalAddition > int.MaxValue || currentCount + totalAddition > int.MaxValue)
+                {
+                    Debug.LogWarning(string.Format(InvalidPuzzleRewardWarning, puzzleId), this);
+                    return false;
+                }
+
+                additions[reward.ItemId] = totalAddition;
+            }
+
+            foreach (KeyValuePair<string, long> addition in additions)
+            {
+                itemCounts[addition.Key] = GetItemCount(addition.Key) + (int)addition.Value;
+            }
+
+            puzzlesWithGrantedRewards.Add(puzzleId);
+            return true;
+        }
+
+        /// <summary>Stores a configured reward message for one-time display after returning to exploration.</summary>
+        public bool SetPendingRewardNotice(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return false;
+            }
+
+            pendingRewardNotice = message;
+            return true;
+        }
+
+        /// <summary>Consumes a pending reward message once, clearing it from the session state.</summary>
+        public bool TryConsumePendingRewardNotice(out string message)
+        {
+            message = pendingRewardNotice;
+            if (string.IsNullOrWhiteSpace(pendingRewardNotice))
+            {
+                pendingRewardNotice = null;
+                return false;
+            }
+
+            pendingRewardNotice = null;
+            return true;
         }
 
         /// <summary>Stores the player's exploration position and timeline so they can be restored after a puzzle returns.</summary>

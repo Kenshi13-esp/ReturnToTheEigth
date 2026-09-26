@@ -30,6 +30,8 @@ namespace ReturnToTheEigth.Tests
         private const string DoorIdentifierField = "doorIdentifier";
         private const string DoorChannelField = "doorStateChannel";
         private const string DoorColliderField = "blockingCollider";
+        private const string DoorAssetRootField = "doorAssetRoot";
+        private const string AccessPlaneField = "accessPlane";
         private const int TestLayer = 31;
         private const int LayerBit = 1;
         private const int NoEvents = 0;
@@ -250,6 +252,8 @@ namespace ReturnToTheEigth.Tests
             SetField(door, DoorIdentifierField, TestDoorIdentifier);
             SetField(door, DoorChannelField, doorChannel);
             SetField(door, DoorColliderField, collider);
+            SetField(door, DoorAssetRootField, collider.gameObject);
+            SetField(door, AccessPlaneField, collider.transform);
             return door;
         }
 

@@ -1,3 +1,4 @@
+using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using ReturnToTheEigth.Interaction;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace ReturnToTheEigth.TimeTravel
         private const string InteractPrefix = "E: ";
         private const string PrototypeText = "Prototipo 2D\nMuros con colisión";
         private const float FeedbackDuration = 2f;
+        private const float RewardNoticeDuration = 3.5f;
         private const float PanelX = 8f;
         private const float PanelY = 8f;
         private const float PanelWidth = 174f;
@@ -25,17 +27,26 @@ namespace ReturnToTheEigth.TimeTravel
         private const int FontSize = 12;
         private static readonly Color PastColor = new Color(1f, 0.85f, 0.45f, 1f);
         private static readonly Color PresentColor = new Color(0.5f, 0.87f, 1f, 1f);
+        private static readonly Color RewardNoticeColor = new Color(0.65f, 1f, 0.65f, 1f);
         [SerializeField] private TimelineEventChannelSO timelineChangedChannel;
         [SerializeField] private VoidEventChannelSO transitionBlockedChannel;
         [SerializeField] private PlayerInteraction playerInteraction;
         private TimelineEra currentEra;
         private float blockedUntil = float.NegativeInfinity;
+        private float rewardNoticeUntil = float.NegativeInfinity;
+        private string activeRewardNotice;
         private GUIStyle labelStyle;
 
         private void OnEnable()
         {
             if (timelineChangedChannel != null) timelineChangedChannel.OnTimelineChanged += HandleTimelineChanged;
             if (transitionBlockedChannel != null) transitionBlockedChannel.OnEventRaised += HandleTransitionBlocked;
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null && gameManager.TryConsumePendingRewardNotice(out string pendingNotice))
+            {
+                activeRewardNotice = pendingNotice;
+                rewardNoticeUntil = Time.unscaledTime + RewardNoticeDuration;
+            }
         }
 
         private void OnDisable()
@@ -56,10 +67,12 @@ namespace ReturnToTheEigth.TimeTravel
             labelStyle.normal.textColor = Color.white;
             GUI.Label(new Rect(x, y + TitleHeight, width, ControlsHeight), ControlsText, labelStyle);
             bool blocked = Time.unscaledTime < blockedUntil;
+            bool showingRewardNotice = !blocked && Time.unscaledTime < rewardNoticeUntil
+                && !string.IsNullOrWhiteSpace(activeRewardNotice);
             InteractableBase target = playerInteraction != null ? playerInteraction.CurrentInteractable : null;
-            string message = blocked ? BlockedText : target != null && target.isActiveAndEnabled
-                ? InteractPrefix + target.InteractionPrompt : PrototypeText;
-            labelStyle.normal.textColor = blocked ? Color.yellow : Color.white;
+            string message = blocked ? BlockedText : showingRewardNotice ? activeRewardNotice
+                : target != null && target.isActiveAndEnabled ? InteractPrefix + target.InteractionPrompt : PrototypeText;
+            labelStyle.normal.textColor = blocked ? Color.yellow : showingRewardNotice ? RewardNoticeColor : Color.white;
             GUI.Label(new Rect(x, y + TitleHeight + ControlsHeight, width, MessageHeight), message, labelStyle);
         }
 

@@ -34,6 +34,7 @@ namespace ReturnToTheEigth.Player
         private TopDownCharacterController controller;
         private InputAction moveAction;
         private Coroutine stepRoutine;
+        private PuzzleExitZone puzzleExitZone;
         private Vector2Int playerCell;
         private Vector2Int dragAxis;
         private Vector2Int stepTargetCell;
@@ -41,13 +42,16 @@ namespace ReturnToTheEigth.Player
         public PushableBox GrabbedBox { get; private set; }
         public bool IsGrabbing => GrabbedBox != null;
         public bool IsStepping => stepRoutine != null;
-        private bool AllowsGameplay => gameStateChannel == null || gameStateChannel.CurrentState == GameState.Exploration;
+        private bool IsPuzzleSolved => puzzleExitZone != null && puzzleExitZone.IsSolved;
+        private bool AllowsGameplay => !IsPuzzleSolved
+            && (gameStateChannel == null || gameStateChannel.CurrentState == GameState.Exploration);
 
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
             playerCollider = GetComponent<BoxCollider2D>();
             controller = GetComponent<TopDownCharacterController>();
+            puzzleExitZone = FindAnyObjectByType<PuzzleExitZone>();
             InputAction sourceMove = inputActions != null ? inputActions.FindAction(MoveActionPath) : null;
             if (sourceMove == null)
             {
@@ -78,6 +82,7 @@ namespace ReturnToTheEigth.Player
         private void Update()
         {
             if (!IsGrabbing) return;
+            if (IsPuzzleSolved) { Release(); return; }
             if (!GrabbedBox.isActiveAndEnabled) { Release(); return; }
             if (!AllowsGameplay || IsStepping || GrabbedBox.IsMoving || moveAction == null) return;
             float axisInput = Vector2.Dot(moveAction.ReadValue<Vector2>(), dragAxis);
@@ -88,6 +93,11 @@ namespace ReturnToTheEigth.Player
         /// <summary>Releases the current box when one is held; otherwise tries to grab the supplied box. Returns the resulting grab state.</summary>
         public bool ToggleGrab(PushableBox box)
         {
+            if (IsPuzzleSolved)
+            {
+                Release();
+                return false;
+            }
             if (IsStepping) return IsGrabbing;
             if (IsGrabbing)
             {
@@ -100,7 +110,7 @@ namespace ReturnToTheEigth.Player
         /// <summary>Grabs the box when it occupies a cardinal neighbour cell; snaps the player to its cell center and locks free movement.</summary>
         public bool TryGrab(PushableBox box)
         {
-            if (box == null || grid == null || !box.isActiveAndEnabled || box.IsMoving || IsGrabbing) return false;
+            if (IsPuzzleSolved || box == null || grid == null || !box.isActiveAndEnabled || box.IsMoving || IsGrabbing) return false;
             Vector2Int currentCell = grid.WorldToCell(body.position);
             Vector2Int delta = box.Cell - currentCell;
             if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) != CardinalManhattanLength) return false;

@@ -98,7 +98,7 @@ namespace ReturnToTheEigth.Puzzles
 
         private void Update()
         {
-            if (!AllowsGameplay || Grid == null) return;
+            if (!AllowsGameplay || Grid == null || board.IsSolved) return;
             if (interactAction != null && interactAction.WasPerformedThisFrame()) ToggleSelection();
             Vector2Int step = ReadStep();
             if (step == Vector2Int.zero) return;

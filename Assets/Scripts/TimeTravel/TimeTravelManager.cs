@@ -57,6 +57,11 @@ namespace ReturnToTheEigth.TimeTravel
             }
             collisionWorld = new TimelineCollisionWorld();
             CurrentEra = initialEra;
+            if (GameManager.Instance != null
+                && GameManager.Instance.TryGetPendingPlayerReturnEra(out TimelineEra returnEra))
+            {
+                CurrentEra = returnEra;
+            }
             SetEraRootsActive(CurrentEra);
             Physics2D.SyncTransforms();
         }

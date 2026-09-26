@@ -21,8 +21,19 @@ namespace ReturnToTheEigth.Puzzles
 
         [SerializeField] private VoidEventChannelSO puzzleSolvedChannel;
         [SerializeField] private BoxDragController dragController;
+        [SerializeField] private PuzzleExitZone exitZone;
         private bool isSolved;
         private GUIStyle labelStyle;
+
+        private void Awake()
+        {
+            if (exitZone == null) exitZone = FindAnyObjectByType<PuzzleExitZone>();
+        }
+
+        private void Start()
+        {
+            isSolved = exitZone != null && exitZone.IsSolved;
+        }
 
         private void OnEnable()
         {

@@ -41,6 +41,15 @@ namespace ReturnToTheEigth.Puzzles
             if (puzzleSolvedChannel != null) puzzleSolvedChannel.OnEventRaised -= HandlePuzzleSolved;
         }
 
+        private void Start()
+        {
+            TrackBoard board = FindAnyObjectByType<TrackBoard>();
+            if (board != null && board.IsSolved)
+            {
+                HandlePuzzleSolved();
+            }
+        }
+
         private void OnGUI()
         {
             if (labelStyle == null) labelStyle = new GUIStyle(GUI.skin.label) { fontSize = FontSize, wordWrap = true };

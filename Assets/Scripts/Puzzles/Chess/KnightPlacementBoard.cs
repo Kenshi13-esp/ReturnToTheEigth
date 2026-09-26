@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using ReturnToTheEigth.CameraSystem;
+using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using UnityEngine;
 
@@ -16,6 +17,7 @@ namespace ReturnToTheEigth.Puzzles
         private const string MissingGridWarning = "KnightPlacementBoard could not find a PuzzleGrid.";
         private const string CorrectCellNotLitWarning = "KnightPlacementBoard: correctCell {0} has no PlacementHighlight; the puzzle cannot be solved.";
         private const string DuplicateHighlightWarning = "Two PlacementHighlights share cell {0}.";
+        private const string DefaultPuzzleId = "KnightPuzzle";
         private const float DefaultEvaluationDelay = 0.35f;
         private const float DefaultShakeDuration = 0.5f;
         private const float DefaultShakeMagnitude = 0.18f;
@@ -35,6 +37,7 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField, Min(Zero)] private float shakeMagnitude = DefaultShakeMagnitude;
         [SerializeField, Min(Zero)] private float restartDelay = DefaultRestartDelay;
         [SerializeField] private VoidEventChannelSO puzzleSolvedChannel;
+        [SerializeField] private string puzzleId = DefaultPuzzleId;
         private readonly List<PlacementHighlight> highlights = new List<PlacementHighlight>();
         private Coroutine placementRoutine;
 
@@ -55,11 +58,22 @@ namespace ReturnToTheEigth.Puzzles
             if (grid == null) Debug.LogWarning(MissingGridWarning, this);
             if (cameraShake == null) cameraShake = FindAnyObjectByType<CameraShake>();
             if (placedKnight == null) Debug.LogError(MissingKnightError, this);
+            IsSolved = GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(puzzleId);
         }
 
         private void Start()
         {
             if (!IsCandidate(correctCell)) Debug.LogWarning(string.Format(CorrectCellNotLitWarning, correctCell), this);
+            if (IsSolved)
+            {
+                if (placedKnight != null)
+                {
+                    placedKnight.PlaceAt(correctCell);
+                    placedKnight.SetVisible(true);
+                }
+                SetHighlightsVisible(false);
+                return;
+            }
             if (placedKnight != null) placedKnight.SetVisible(false);
         }
 
@@ -133,6 +147,7 @@ namespace ReturnToTheEigth.Puzzles
             {
                 IsSolved = true;
                 placementRoutine = null;
+                GameManager.Instance?.MarkPuzzleCompleted(puzzleId);
                 Debug.Log(WinMessage, this);
                 if (puzzleSolvedChannel != null) puzzleSolvedChannel.RaiseEvent();
                 Solved?.Invoke();

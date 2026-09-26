@@ -1,5 +1,6 @@
 using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Player;
+using ReturnToTheEigth.TimeTravel;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,6 +13,7 @@ namespace ReturnToTheEigth.Interaction
     public sealed class ColorPuzzlePortalInteractable : InteractableBase
     {
         private const string PuzzleSceneName = "ColorTrackPuzzle";
+        private const string DefaultPuzzleId = "ColorTrackPuzzle";
         private const string InteractionPromptText = "Entrar al puzle de colores";
         private const string SpriteShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
         private const float HalfExtent = 0.3f;
@@ -23,6 +25,7 @@ namespace ReturnToTheEigth.Interaction
         private static readonly Color HighlightedOutlineColor = new Color(1f, 0.88f, 0.2f, 1f);
 
         [SerializeField] private PlayerInteraction playerInteraction;
+        [SerializeField] private string puzzleId = DefaultPuzzleId;
 
         private BoxCollider2D interactionCollider;
         private LineRenderer outlineRenderer;
@@ -66,6 +69,10 @@ namespace ReturnToTheEigth.Interaction
             }
 
             SetHighlighted(false);
+            if (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(puzzleId))
+            {
+                DisablePortal();
+            }
         }
 
         private void Update()
@@ -93,13 +100,22 @@ namespace ReturnToTheEigth.Interaction
         /// <summary>Loads the colour-track puzzle scene when the player interacts with this entrance.</summary>
         public override void Interact(GameObject interactor)
         {
-            if (interactor == null)
+            if (interactor == null
+                || (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(puzzleId)))
             {
                 return;
             }
 
-            GameManager.Instance?.SetPendingPlayerReturnPosition(interactor.transform.position);
+            TimelineEra returnEra = FindAnyObjectByType<TimeTravelManager>()?.CurrentEra ?? TimelineEra.Present;
+            GameManager.Instance?.SetPendingPlayerReturnState(interactor.transform.position, returnEra);
             SceneManager.LoadSceneAsync(PuzzleSceneName, LoadSceneMode.Single);
+        }
+
+        private void DisablePortal()
+        {
+            interactionCollider.enabled = false;
+            outlineRenderer.enabled = false;
+            enabled = false;
         }
 
         private void ConfigureOutline()

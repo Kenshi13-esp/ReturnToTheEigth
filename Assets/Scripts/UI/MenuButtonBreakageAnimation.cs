@@ -31,6 +31,7 @@ namespace ReturnToTheEigth.UI
         private Coroutine playbackCoroutine;
         private int originalSiblingIndex;
         private bool hasOriginalSiblingIndex;
+        private bool isSiblingIndexRestorePending;
         private Vector3 originalLocalScale;
 
         private void Awake()
@@ -59,6 +60,8 @@ namespace ReturnToTheEigth.UI
         {
             if (button != null)
                 button.onClick.AddListener(PlayRandomBreakageAnimation);
+
+            RestorePendingSiblingIndex();
         }
 
         private void OnDisable()
@@ -163,6 +166,24 @@ namespace ReturnToTheEigth.UI
         {
             if (!hasOriginalSiblingIndex)
                 return;
+
+            // SetSiblingIndex is not allowed while Unity activates or deactivates a parent,
+            // e.g. when this OnDisable runs because MenuBackground is being deactivated.
+            if (!gameObject.activeInHierarchy)
+            {
+                isSiblingIndexRestorePending = true;
+                return;
+            }
+
+            RestorePendingSiblingIndex();
+        }
+
+        private void RestorePendingSiblingIndex()
+        {
+            if (!isSiblingIndexRestorePending)
+                return;
+
+            isSiblingIndexRestorePending = false;
 
             Transform buttonParent = transform.parent;
             if (buttonParent != null)

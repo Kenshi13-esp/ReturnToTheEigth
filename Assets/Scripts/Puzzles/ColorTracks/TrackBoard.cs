@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using UnityEngine;
 
@@ -22,6 +23,7 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField] private PuzzleGrid grid;
         [SerializeField] private string[] trackRows = { ".#.", "###", ".#." };
         [SerializeField] private VoidEventChannelSO puzzleSolvedChannel;
+        [SerializeField] private string puzzleId = "ColorTrackPuzzle";
         private readonly List<TrackSlider> sliders = new List<TrackSlider>();
         private readonly List<ColorTarget> targets = new List<ColorTarget>();
 
@@ -31,6 +33,7 @@ namespace ReturnToTheEigth.Puzzles
         private void Awake()
         {
             ResolveGrid();
+            IsSolved = GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(puzzleId);
         }
 
         /// <summary>True when the cell is inside the grid and marked with '#' in <c>trackRows</c> (first string is the top row).</summary>
@@ -141,6 +144,7 @@ namespace ReturnToTheEigth.Puzzles
                 if (occupant == null || occupant.IsMoving || occupant.ColorId != target.ColorId) return;
             }
             IsSolved = true;
+            GameManager.Instance?.MarkPuzzleCompleted(puzzleId);
             Debug.Log(SolvedLog, this);
             puzzleSolvedChannel?.RaiseEvent();
         }

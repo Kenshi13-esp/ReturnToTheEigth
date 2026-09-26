@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using ReturnToTheEigth.Events;
+using ReturnToTheEigth.TimeTravel;
 using UnityEngine;
 
 namespace ReturnToTheEigth.Core
@@ -23,7 +26,9 @@ namespace ReturnToTheEigth.Core
         public GameState CurrentGameState { get; private set; } = GameState.Exploration;
         private GameState stateBeforePause = GameState.Exploration;
         private Vector3 pendingPlayerReturnPosition;
+        private TimelineEra pendingPlayerReturnEra = TimelineEra.Present;
         private bool hasPendingPlayerReturnPosition;
+        private readonly HashSet<string> completedPuzzleIds = new HashSet<string>(StringComparer.Ordinal);
 
         private void Awake()
         {
@@ -84,11 +89,34 @@ namespace ReturnToTheEigth.Core
             Instance = null;
         }
 
-        /// <summary>Stores the player's exploration position so it can be restored after a puzzle scene returns.</summary>
-        public void SetPendingPlayerReturnPosition(Vector3 position)
+        /// <summary>Returns whether the puzzle with the supplied stable identifier has been completed this session.</summary>
+        public bool IsPuzzleCompleted(string puzzleId)
+        {
+            return !string.IsNullOrWhiteSpace(puzzleId) && completedPuzzleIds.Contains(puzzleId);
+        }
+
+        /// <summary>Marks the puzzle with the supplied stable identifier as completed for the rest of this session.</summary>
+        public void MarkPuzzleCompleted(string puzzleId)
+        {
+            if (!string.IsNullOrWhiteSpace(puzzleId))
+            {
+                completedPuzzleIds.Add(puzzleId);
+            }
+        }
+
+        /// <summary>Stores the player's exploration position and timeline so they can be restored after a puzzle returns.</summary>
+        public void SetPendingPlayerReturnState(Vector3 position, TimelineEra era)
         {
             pendingPlayerReturnPosition = position;
+            pendingPlayerReturnEra = era;
             hasPendingPlayerReturnPosition = true;
+        }
+
+        /// <summary>Reads the pending return timeline without consuming the saved player state.</summary>
+        public bool TryGetPendingPlayerReturnEra(out TimelineEra era)
+        {
+            era = pendingPlayerReturnEra;
+            return hasPendingPlayerReturnPosition;
         }
 
         /// <summary>Consumes the stored exploration position once, if a puzzle return is pending.</summary>
@@ -102,6 +130,7 @@ namespace ReturnToTheEigth.Core
 
             hasPendingPlayerReturnPosition = false;
             pendingPlayerReturnPosition = Vector3.zero;
+            pendingPlayerReturnEra = TimelineEra.Present;
             return true;
         }
 

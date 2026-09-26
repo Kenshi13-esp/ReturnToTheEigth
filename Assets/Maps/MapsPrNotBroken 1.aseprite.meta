@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: e6d1214cf1fbced42a25e5c00333d791
+guid: a6bcac450e224b140b30824d30118a1d
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -163,7 +163,7 @@ ScriptedImporter:
     layerType: 0
     blendMode: 0
     cells:
-    - name: MapsPrNotBroken
+    - name: MapsPrNotBroken 1
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:

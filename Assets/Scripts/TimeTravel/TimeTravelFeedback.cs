@@ -113,7 +113,14 @@ namespace ReturnToTheEigth.TimeTravel
             else
             {
                 bool isWrongSideDoor = target is DoorController door && door.IsPlayerOnWrongSide;
-                message = isWrongSideDoor ? target.InteractionPrompt : InteractPrefix + target.InteractionPrompt;
+                bool shouldShowPrefix = true;
+                if (target is DoorController promptDoor)
+                {
+                    shouldShowPrefix = promptDoor.ShouldShowInteractionPrefix;
+                }
+                message = isWrongSideDoor || !shouldShowPrefix
+                    ? target.InteractionPrompt
+                    : InteractPrefix + target.InteractionPrompt;
             }
 
             Rect textRect = new Rect(panelX + InteractionPanelHorizontalPadding,

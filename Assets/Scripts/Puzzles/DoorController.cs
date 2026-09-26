@@ -29,15 +29,19 @@ namespace ReturnToTheEigth.Puzzles
         private const string OutlineShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
         private const string DeepDoorObjectName = "DoorDeep";
         private const string DiningDoorObjectName = "DoorDinner";
+        private const string HallKeyDoorObjectName = "DoorH";
+        private const string HallKeyDoorIdentifier = "DoorH";
+        private const string HallKeyDoorLockedPrompt = "This door is locked.";
+        private const string HallKeyDoorItemDisplayName = "la llave del puzle de ajedrez";
+        private const float HallKeyDoorInteractionRadius = 0.45f;
         public const float DoorInteractionRadius = 0.25f;
-        private const float InteractionHighlightRadius = DoorInteractionRadius;
         private const float InteractionOutlineWidth = 0.02f;
+        private const int DefaultOutlineSortingOrder = 21;
         private const float DoubleDoorHorizontalInset = 0.04f;
         private const float LowerDoorMinYFromBottom = 0.02f;
         private const float LowerDoorMaxYFromBottom = 0.58f;
         private const float UpperDoorMinYFromBottom = 0.76f;
         private const float UpperDoorMaxYFromBottom = 0.95f;
-        private const int DefaultOutlineSortingOrder = 21;
         private const int OutlineSortingOrderOffset = 1;
         private const int OutlinePointCount = 4;
         private static readonly Color InteractionOutlineColor = Color.white;
@@ -72,10 +76,37 @@ namespace ReturnToTheEigth.Puzzles
         /// <summary>Gets whether this door has been permanently opened for the current session.</summary>
         public bool IsOpen { get; private set; }
 
+        /// <summary>Gets the radius used for this door's nearby interaction and outline checks.</summary>
+        public float InteractionRadius => string.Equals(gameObject.name, HallKeyDoorObjectName, StringComparison.Ordinal)
+            ? HallKeyDoorInteractionRadius : DoorInteractionRadius;
+
+        private float InteractionHighlightRadius => InteractionRadius;
+
         /// <summary>Gets whether the nearby player is standing on the side from which this door opens.</summary>
         public bool IsPlayerOnWrongSide => accessMode == DoorAccessMode.OneSided
             && playerInteraction != null
             && !IsOnAuthorizedSide(playerInteraction.gameObject);
+
+        /// <summary>Gets whether the interaction panel should prepend its usual interaction key to this door's status text.</summary>
+        public bool ShouldShowInteractionPrefix
+        {
+            get
+            {
+                if (IsOpen) return true;
+                if (string.Equals(gameObject.name, DiningDoorObjectName, StringComparison.Ordinal)
+                    && accessMode == DoorAccessMode.OneSided && !IsPlayerOnWrongSide)
+                {
+                    return false;
+                }
+                if (string.Equals(gameObject.name, HallKeyDoorObjectName, StringComparison.Ordinal)
+                    && accessMode == DoorAccessMode.RequiredItem
+                    && (GameManager.Instance == null || !GameManager.Instance.HasItem(requiredItemId)))
+                {
+                    return false;
+                }
+                return true;
+            }
+        }
 
         private bool UsesDoubleDoorInteractionOutline =>
             string.Equals(gameObject.name, DeepDoorObjectName, StringComparison.Ordinal)
@@ -115,15 +146,98 @@ namespace ReturnToTheEigth.Puzzles
                     ? requiredItemId : requiredItemDisplayName;
                 bool hasRequiredItem = GameManager.Instance != null &&
                     GameManager.Instance.HasItem(requiredItemId);
+                if (!hasRequiredItem && string.Equals(gameObject.name, HallKeyDoorObjectName, StringComparison.Ordinal))
+                {
+                    return HallKeyDoorLockedPrompt;
+                }
                 return hasRequiredItem
                     ? string.Format(RequiredItemPromptFormat, itemName)
                     : string.Format(MissingItemPromptFormat, itemName);
             }
         }
 
+        /// <summary>Ensures Hall's locked DoorH has a 2D blocking collider and the normal door interaction behavior.</summary>
+        public static void EnsureHallKeyDoor()
+        {
+            GameObject keyDoor = GameObject.Find(HallKeyDoorObjectName);
+            if (keyDoor == null)
+            {
+                return;
+            }
+
+            Collider2D blockingCollider = keyDoor.GetComponent<Collider2D>();
+            if (blockingCollider == null)
+            {
+                blockingCollider = keyDoor.AddComponent<BoxCollider2D>();
+            }
+            if (blockingCollider is BoxCollider2D boxCollider)
+            {
+                FitColliderToSprite(keyDoor.transform, boxCollider);
+            }
+            blockingCollider.enabled = true;
+            blockingCollider.isTrigger = false;
+
+            if (keyDoor.GetComponent<DoorController>() == null)
+            {
+                keyDoor.AddComponent<DoorController>();
+            }
+        }
+
+        private static void FitColliderToSprite(Transform doorTransform, BoxCollider2D boxCollider)
+        {
+            SpriteRenderer spriteRenderer = doorTransform.GetComponentInChildren<SpriteRenderer>(true);
+            if (spriteRenderer != null && spriteRenderer.sprite != null)
+            {
+                Bounds spriteBounds = spriteRenderer.sprite.bounds;
+                Vector3 firstCorner = doorTransform.InverseTransformPoint(spriteRenderer.transform.TransformPoint(
+                    new Vector3(spriteBounds.min.x, spriteBounds.min.y, Zero)));
+                Vector3 secondCorner = doorTransform.InverseTransformPoint(spriteRenderer.transform.TransformPoint(
+                    new Vector3(spriteBounds.max.x, spriteBounds.max.y, Zero)));
+                Vector3 thirdCorner = doorTransform.InverseTransformPoint(spriteRenderer.transform.TransformPoint(
+                    new Vector3(spriteBounds.min.x, spriteBounds.max.y, Zero)));
+                Vector3 fourthCorner = doorTransform.InverseTransformPoint(spriteRenderer.transform.TransformPoint(
+                    new Vector3(spriteBounds.max.x, spriteBounds.min.y, Zero)));
+                SetBoxColliderBounds(boxCollider, firstCorner, secondCorner, thirdCorner, fourthCorner);
+                return;
+            }
+
+            Renderer doorRenderer = doorTransform.GetComponentInChildren<Renderer>(true);
+            if (doorRenderer == null)
+            {
+                return;
+            }
+
+            Bounds rendererBounds = doorRenderer.bounds;
+            Vector3 minimum = rendererBounds.min;
+            Vector3 maximum = rendererBounds.max;
+            Vector3 firstWorldCorner = doorTransform.InverseTransformPoint(new Vector3(minimum.x, minimum.y, Zero));
+            Vector3 secondWorldCorner = doorTransform.InverseTransformPoint(new Vector3(maximum.x, maximum.y, Zero));
+            Vector3 thirdWorldCorner = doorTransform.InverseTransformPoint(new Vector3(minimum.x, maximum.y, Zero));
+            Vector3 fourthWorldCorner = doorTransform.InverseTransformPoint(new Vector3(maximum.x, minimum.y, Zero));
+            SetBoxColliderBounds(boxCollider, firstWorldCorner, secondWorldCorner, thirdWorldCorner, fourthWorldCorner);
+        }
+
+        private static void SetBoxColliderBounds(BoxCollider2D boxCollider, Vector3 firstCorner,
+            Vector3 secondCorner, Vector3 thirdCorner, Vector3 fourthCorner)
+        {
+            float minX = Mathf.Min(firstCorner.x, secondCorner.x, thirdCorner.x, fourthCorner.x);
+            float maxX = Mathf.Max(firstCorner.x, secondCorner.x, thirdCorner.x, fourthCorner.x);
+            float minY = Mathf.Min(firstCorner.y, secondCorner.y, thirdCorner.y, fourthCorner.y);
+            float maxY = Mathf.Max(firstCorner.y, secondCorner.y, thirdCorner.y, fourthCorner.y);
+            boxCollider.offset = new Vector2((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
+            boxCollider.size = new Vector2(maxX - minX, maxY - minY);
+        }
+
         private void Awake()
         {
-            if (string.Equals(gameObject.name, DeepDoorObjectName, StringComparison.Ordinal)
+            if (string.Equals(gameObject.name, HallKeyDoorObjectName, StringComparison.Ordinal))
+            {
+                doorIdentifier = HallKeyDoorIdentifier;
+                accessMode = DoorAccessMode.RequiredItem;
+                requiredItemId = PuzzleItemIds.KitchenLeftDoorKey;
+                requiredItemDisplayName = HallKeyDoorItemDisplayName;
+            }
+            else if (string.Equals(gameObject.name, DeepDoorObjectName, StringComparison.Ordinal)
                 && string.Equals(doorIdentifier, DiningDoorObjectName, StringComparison.Ordinal))
             {
                 doorIdentifier = DeepDoorObjectName;

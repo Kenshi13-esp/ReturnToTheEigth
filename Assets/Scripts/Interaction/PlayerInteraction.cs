@@ -35,6 +35,7 @@ namespace ReturnToTheEigth.Interaction
         private void Awake()
         {
             controller = GetComponent<TopDownCharacterController>();
+            DoorController.EnsureHallKeyDoor();
             InputAction source = inputActions != null ? inputActions.FindAction(InteractActionPath) : null;
             if (source == null)
             {
@@ -107,9 +108,9 @@ namespace ReturnToTheEigth.Interaction
                     offset = point - origin;
                     candidateRadius = chessPortal.InteractionRadius;
                 }
-                else if (candidate is DoorController)
+                else if (candidate is DoorController door)
                 {
-                    candidateRadius = DoorController.DoorInteractionRadius;
+                    candidateRadius = door.InteractionRadius;
                 }
 
                 float candidateDistanceSquared = offset.sqrMagnitude;

@@ -723,9 +723,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.0016186833
+    x: 0.00083869696
     y: 0
-    width: 0.99676263
+    width: 0.9983226
     height: 1
   near clip plane: 0.1
   far clip plane: 30
@@ -2408,7 +2408,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.12, y: 0.06}
+  m_Size: {x: 0.16, y: 0.14}
   m_EdgeRadius: 0
 --- !u!50 &1092855653
 Rigidbody2D:
@@ -2505,7 +2505,6 @@ MonoBehaviour:
   gameStateChannel: {fileID: 11400000, guid: 7f4a22350fb90b240bf6ecb8613d0d8b, type: 2}
   timelineChangedChannel: {fileID: 11400000, guid: b9e106cbe4429774780d5157814ac899, type: 2}
   grid: {fileID: 802341806}
-  playerVisual: {fileID: 0}
   axisThreshold: 0.5
 --- !u!95 &1092855658
 Animator:

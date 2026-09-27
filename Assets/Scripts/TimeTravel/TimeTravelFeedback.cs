@@ -68,6 +68,7 @@ namespace ReturnToTheEigth.TimeTravel
 
         private void OnGUI()
         {
+            if (FamilyPhotoFrameInteractable.HidesExplorationHud) return;
             if (labelStyle == null) labelStyle = new GUIStyle(GUI.skin.label) { fontSize = FontSize, wordWrap = true };
             GUI.Box(new Rect(PanelX, PanelY, PanelWidth, PanelHeight), GUIContent.none);
             float x = PanelX + Inset;

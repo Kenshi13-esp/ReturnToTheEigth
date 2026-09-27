@@ -13,6 +13,7 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         private const string DuplicateTileWarning = "ElectricityPuzzleBoard has duplicate tiles at cell {0}.";
         private const string MissingTileWarning = "ElectricityPuzzleBoard has no tile at cell {0}.";
         private const string PuzzleId = "ElectricityPuzzle";
+        private const string ElectricityRewardNotice = "Has conseguido un fragmento de la foto familiar.";
         private const float TerminalReach = 0.92f;
         private const float TerminalEdgeInset = 0.5f;
         private const float TerminalLineWidth = 0.075f;
@@ -42,6 +43,10 @@ namespace ReturnToTheEigth.Puzzles.Electricity
             ElectricityPorts.West,
             ElectricityPorts.North,
             ElectricityPorts.East
+        };
+        private static readonly PuzzleReward[] CompletionRewards =
+        {
+            new PuzzleReward(PuzzleItemIds.ElectricityPuzzlePaintingFragment, 1)
         };
         private static readonly Color InputColor = new Color(0.2f, 0.95f, 0.25f, 1f);
         private static readonly Color OutputColor = new Color(1f, 0.16f, 0.12f, 1f);
@@ -177,7 +182,15 @@ namespace ReturnToTheEigth.Puzzles.Electricity
             if (!IsSolved && IsSolvedConfiguration())
             {
                 IsSolved = true;
-                GameManager.Instance?.MarkPuzzleCompleted(puzzleId);
+                GameManager gameManager = GameManager.Instance;
+                if (gameManager != null)
+                {
+                    gameManager.MarkPuzzleCompleted(puzzleId);
+                    if (gameManager.TryGrantPuzzleRewards(puzzleId, CompletionRewards))
+                    {
+                        gameManager.SetPendingRewardNotice(ElectricityRewardNotice);
+                    }
+                }
                 Solved?.Invoke();
             }
         }

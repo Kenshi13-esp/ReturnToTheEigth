@@ -20,6 +20,8 @@ namespace ReturnToTheEigth.Interaction
         private const int Capacity = 64;
         private const int FirstIndex = 0;
         private const int AllLayers = -1;
+        private static readonly Color InteractionHighlightColor = new Color(1f, 0.82f, 0.42f, 1f);
+        private const float InteractionHighlightBlend = 0.42f;
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField] private LayerMask interactableLayers = AllLayers;
@@ -29,6 +31,9 @@ namespace ReturnToTheEigth.Interaction
         private readonly RaycastHit2D[] sightHits = new RaycastHit2D[Capacity];
         private InputAction interactAction;
         private TopDownCharacterController controller;
+        private InteractableBase highlightedInteractable;
+        private SpriteRenderer[] highlightedRenderers = System.Array.Empty<SpriteRenderer>();
+        private Color[] originalRendererColors = System.Array.Empty<Color>();
         public InteractableBase CurrentInteractable { get; private set; }
         private bool AllowsGameplay => gameStateChannel == null || gameStateChannel.CurrentState == GameState.Exploration;
 
@@ -47,13 +52,23 @@ namespace ReturnToTheEigth.Interaction
         }
 
         private void OnEnable() { interactAction?.Enable(); }
-        private void OnDisable() { interactAction?.Disable(); CurrentInteractable = null; }
+        private void OnDisable()
+        {
+            interactAction?.Disable();
+            CurrentInteractable = null;
+            SetHighlightedInteractable(null);
+        }
         private void OnDestroy() { interactAction?.Dispose(); }
         private void FixedUpdate() { FindNearestInteractable(); }
 
         private void Update()
         {
-            if (!AllowsGameplay) { CurrentInteractable = null; return; }
+            if (!AllowsGameplay)
+            {
+                CurrentInteractable = null;
+                SetHighlightedInteractable(null);
+                return;
+            }
             if (interactAction != null && interactAction.WasPerformedThisFrame())
             {
                 FindNearestInteractable();
@@ -69,7 +84,11 @@ namespace ReturnToTheEigth.Interaction
         private void FindNearestInteractable()
         {
             CurrentInteractable = null;
-            if (!AllowsGameplay) return;
+            if (!AllowsGameplay)
+            {
+                SetHighlightedInteractable(null);
+                return;
+            }
             Physics2D.SyncTransforms();
             Vector2 origin = transform.position;
             Vector2 facing = controller != null ? controller.FacingDirection : Vector2.down;
@@ -160,6 +179,49 @@ namespace ReturnToTheEigth.Interaction
                 nearestDistanceSquared = candidateDistanceSquared;
                 nearestIsPortal = isPortal;
                 CurrentInteractable = candidate;
+            }
+            SetHighlightedInteractable(CurrentInteractable);
+        }
+
+        private void SetHighlightedInteractable(InteractableBase interactable)
+        {
+            if (highlightedInteractable == interactable) return;
+
+            if (highlightedInteractable is IInteractionHighlightTarget previousHighlightTarget)
+            {
+                previousHighlightTarget.SetInteractionHighlighted(false);
+            }
+
+            for (int index = 0; index < highlightedRenderers.Length; index++)
+            {
+                SpriteRenderer renderer = highlightedRenderers[index];
+                if (renderer != null) renderer.color = originalRendererColors[index];
+            }
+
+            highlightedInteractable = interactable;
+            if (interactable == null)
+            {
+                highlightedRenderers = System.Array.Empty<SpriteRenderer>();
+                originalRendererColors = System.Array.Empty<Color>();
+                return;
+            }
+
+            if (interactable is IInteractionHighlightTarget nextHighlightTarget)
+            {
+                nextHighlightTarget.SetInteractionHighlighted(true);
+            }
+
+            highlightedRenderers = interactable.GetComponentsInChildren<SpriteRenderer>(true);
+            originalRendererColors = new Color[highlightedRenderers.Length];
+            for (int index = 0; index < highlightedRenderers.Length; index++)
+            {
+                SpriteRenderer renderer = highlightedRenderers[index];
+                if (renderer == null) continue;
+                Color originalColor = renderer.color;
+                originalRendererColors[index] = originalColor;
+                Color targetColor = new Color(InteractionHighlightColor.r, InteractionHighlightColor.g,
+                    InteractionHighlightColor.b, originalColor.a);
+                renderer.color = Color.Lerp(originalColor, targetColor, InteractionHighlightBlend);
             }
         }
 

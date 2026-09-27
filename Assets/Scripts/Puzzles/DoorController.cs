@@ -70,7 +70,6 @@ namespace ReturnToTheEigth.Puzzles
         private LineRenderer secondaryInteractionOutline;
         private SpriteRenderer outlineBoundsRenderer;
         private Material runtimeOutlineMaterial;
-        private bool isInteractionOutlineVisible;
         private bool hasInitialized;
 
         /// <summary>Gets whether this door has been permanently opened for the current session.</summary>
@@ -457,14 +456,8 @@ namespace ReturnToTheEigth.Puzzles
 
         private void SetInteractionOutlineVisible(bool visible)
         {
-            if (isInteractionOutlineVisible == visible)
-            {
-                return;
-            }
-
-            isInteractionOutlineVisible = visible;
-            if (interactionOutline != null) interactionOutline.enabled = visible;
-            if (secondaryInteractionOutline != null) secondaryInteractionOutline.enabled = visible;
+            if (interactionOutline != null) interactionOutline.enabled = false;
+            if (secondaryInteractionOutline != null) secondaryInteractionOutline.enabled = false;
         }
 
 

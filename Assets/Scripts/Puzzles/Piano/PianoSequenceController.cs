@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using ReturnToTheEigth.CameraSystem;
+using ReturnToTheEigth.Puzzles;
 using ReturnToTheEigth.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -23,6 +24,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const string InputPrompt = "A/D: mover selector · E: aceptar tecla";
         private const string WrongSequenceText = "Secuencia incorrecta. Inténtalo de nuevo.";
         private const string SolvedText = "Secuencia correcta.";
+        private const string PianoRewardNotice = "Has conseguido un fragmento de la foto familiar.";
         private const int SequenceLength = 5;
         private const int KeyCount = 7;
         private const int NavigationActionCount = 2;
@@ -54,6 +56,10 @@ namespace ReturnToTheEigth.Puzzles.Piano
             PianoKey.D,
             PianoKey.A,
             PianoKey.H
+        };
+        private static readonly PuzzleReward[] CompletionRewards =
+        {
+            new PuzzleReward(PuzzleItemIds.PianoPuzzlePaintingFragment, 1)
         };
 
         [SerializeField] private InputActionAsset inputActions;
@@ -282,7 +288,15 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private void CompleteSolvedSequence()
         {
-            GameManager.Instance?.MarkPuzzleCompleted(PuzzleId);
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
+            {
+                gameManager.MarkPuzzleCompleted(PuzzleId);
+                if (gameManager.TryGrantPuzzleRewards(PuzzleId, CompletionRewards))
+                {
+                    gameManager.SetPendingRewardNotice(PianoRewardNotice);
+                }
+            }
             Solved?.Invoke();
         }
 

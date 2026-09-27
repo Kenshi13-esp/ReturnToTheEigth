@@ -1,5 +1,4 @@
 using ReturnToTheEigth.Core;
-using ReturnToTheEigth.Player;
 using ReturnToTheEigth.TimeTravel;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -10,7 +9,7 @@ namespace ReturnToTheEigth.Interaction
     /// <summary>Loads the chess puzzle from the ChessPortal marker.</summary>
     [RequireComponent(typeof(BoxCollider2D), typeof(LineRenderer))]
     [DisallowMultipleComponent]
-    public sealed class ChessPortalInteractable : InteractableBase
+    public sealed class ChessPortalInteractable : InteractableBase, IInteractionHighlightTarget
     {
         private const string PuzzleSceneName = "ChessPuzle";
         private const string PuzzleId = "KnightPuzzle";
@@ -18,25 +17,21 @@ namespace ReturnToTheEigth.Interaction
         private const string MissingChessPiecePromptText = "Necesitas la pieza de caballo del puzle de color";
         private const string ChessAssetObjectName = "Chess";
         private const string PastTableObjectName = "pasttable";
-        private const string SpriteShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
         private const float HalfExtent = 0.3f;
-        private const float ChessInteractionRadius = 0.2f;
-        private const float InteractionRadiusSquared = ChessInteractionRadius * ChessInteractionRadius;
-        private const float OutlineWidth = 0.04f;
-        private const int OutlinePointCount = 4;
+        private const float ChessInteractionRadius = 0.9f;
+        private const float HighlightBlend = 0.42f;
         private const int ChessSortingOrderOffset = 2;
         private const int PortalSortingOrderOffset = 1;
-        private static readonly Color OutlineColor = Color.white;
-
-        [SerializeField] private PlayerInteraction playerInteraction;
+        private static readonly Color InteractionHighlightColor = new Color(1f, 0.82f, 0.42f, 1f);
 
         /// <summary>Maximum query radius required to find chess portals.</summary>
         public const float MaximumInteractionRadius = ChessInteractionRadius;
 
         private BoxCollider2D interactionCollider;
         private LineRenderer outlineRenderer;
-        private Material runtimeOutlineMaterial;
-        private bool isHighlighted;
+        private SpriteRenderer chessSpriteRenderer;
+        private Color originalChessSpriteColor = Color.white;
+        private bool hasOriginalChessSpriteColor;
 
         /// <summary>Gets the interaction radius of the chess portal.</summary>
         public float InteractionRadius => ChessInteractionRadius;
@@ -57,22 +52,10 @@ namespace ReturnToTheEigth.Interaction
             interactionCollider.size = new Vector2(HalfExtent * 2f, HalfExtent * 2f);
 
             outlineRenderer = GetComponent<LineRenderer>();
-            ConfigureOutline();
+            if (outlineRenderer != null) outlineRenderer.enabled = false;
 
-            if (playerInteraction == null)
-            {
-                playerInteraction = FindAnyObjectByType<PlayerInteraction>();
-            }
-
-            Shader outlineShader = Shader.Find(SpriteShaderName);
-            if (outlineShader != null)
-            {
-                runtimeOutlineMaterial = new Material(outlineShader);
-                outlineRenderer.material = runtimeOutlineMaterial;
-            }
-
-            SetHighlighted(false);
             ConfigureChessAssetSorting();
+            SetInteractionHighlighted(false);
             if (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(PuzzleId))
             {
                 DisablePortal();
@@ -82,28 +65,6 @@ namespace ReturnToTheEigth.Interaction
         private void OnEnable()
         {
             ConfigureChessAssetSorting();
-        }
-
-        private void Update()
-        {
-            if (playerInteraction == null)
-            {
-                playerInteraction = FindAnyObjectByType<PlayerInteraction>();
-            }
-
-            Vector2 playerPosition = playerInteraction != null
-                ? playerInteraction.transform.position
-                : Vector2.positiveInfinity;
-            Vector2 offset = playerPosition - InteractionPoint;
-            SetHighlighted(offset.sqrMagnitude <= InteractionRadiusSquared);
-        }
-
-        private void OnDestroy()
-        {
-            if (runtimeOutlineMaterial != null)
-            {
-                Destroy(runtimeOutlineMaterial);
-            }
         }
 
         /// <summary>Saves the player's exploration state and loads the chess puzzle.</summary>
@@ -128,8 +89,9 @@ namespace ReturnToTheEigth.Interaction
 
         private void DisablePortal()
         {
+            SetInteractionHighlighted(false);
             interactionCollider.enabled = false;
-            outlineRenderer.enabled = false;
+            if (outlineRenderer != null) outlineRenderer.enabled = false;
             enabled = false;
         }
 
@@ -162,6 +124,15 @@ namespace ReturnToTheEigth.Interaction
                 return;
             }
 
+            SpriteRenderer targetSpriteRenderer = chessTransform.GetComponent<SpriteRenderer>()
+                ?? chessTransform.GetComponentInChildren<SpriteRenderer>(true);
+            if (targetSpriteRenderer != null && chessSpriteRenderer != targetSpriteRenderer)
+            {
+                chessSpriteRenderer = targetSpriteRenderer;
+                originalChessSpriteColor = chessSpriteRenderer.color;
+                hasOriginalChessSpriteColor = true;
+            }
+
             SortingGroup tableSortingGroup = tableTransform != null
                 ? tableTransform.GetComponent<SortingGroup>()
                     ?? tableTransform.GetComponentInChildren<SortingGroup>(true)
@@ -192,37 +163,19 @@ namespace ReturnToTheEigth.Interaction
             }
         }
 
-        private void ConfigureOutline()
+        /// <summary>Tints the visible chess asset with the same warm highlight used by nearby interactables.</summary>
+        public void SetInteractionHighlighted(bool highlighted)
         {
-            outlineRenderer.useWorldSpace = false;
-            outlineRenderer.loop = true;
-            outlineRenderer.positionCount = OutlinePointCount;
-            outlineRenderer.startWidth = OutlineWidth;
-            outlineRenderer.endWidth = OutlineWidth;
-            outlineRenderer.startColor = OutlineColor;
-            outlineRenderer.endColor = OutlineColor;
-            outlineRenderer.enabled = false;
-            outlineRenderer.SetPosition(0, new Vector3(-HalfExtent, -HalfExtent, 0f));
-            outlineRenderer.SetPosition(1, new Vector3(-HalfExtent, HalfExtent, 0f));
-            outlineRenderer.SetPosition(2, new Vector3(HalfExtent, HalfExtent, 0f));
-            outlineRenderer.SetPosition(3, new Vector3(HalfExtent, -HalfExtent, 0f));
-        }
-
-        private void SetHighlighted(bool highlighted)
-        {
-            if (outlineRenderer == null || isHighlighted == highlighted)
+            if (chessSpriteRenderer == null || !hasOriginalChessSpriteColor) return;
+            if (!highlighted)
             {
+                chessSpriteRenderer.color = originalChessSpriteColor;
                 return;
             }
 
-            isHighlighted = highlighted;
-            outlineRenderer.enabled = highlighted;
-            outlineRenderer.startColor = OutlineColor;
-            outlineRenderer.endColor = OutlineColor;
-            if (runtimeOutlineMaterial != null)
-            {
-                runtimeOutlineMaterial.color = OutlineColor;
-            }
+            Color highlightColor = new Color(InteractionHighlightColor.r, InteractionHighlightColor.g,
+                InteractionHighlightColor.b, originalChessSpriteColor.a);
+            chessSpriteRenderer.color = Color.Lerp(originalChessSpriteColor, highlightColor, HighlightBlend);
         }
     }
 }

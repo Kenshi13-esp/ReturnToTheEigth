@@ -10,4 +10,11 @@ namespace ReturnToTheEigth.Interaction
         /// <summary>Executes this object's interaction for the supplied player.</summary>
         public abstract void Interact(GameObject interactor);
     }
+
+    /// <summary>Optional visual feedback hook for interactables whose visible target is not a child sprite.</summary>
+    public interface IInteractionHighlightTarget
+    {
+        /// <summary>Shows or clears this interactable's selected proximity feedback.</summary>
+        void SetInteractionHighlighted(bool highlighted);
+    }
 }

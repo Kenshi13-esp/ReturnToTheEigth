@@ -6,10 +6,10 @@ using UnityEngine.SceneManagement;
 
 namespace ReturnToTheEigth.Interaction
 {
-    /// <summary>Loads the colour-track puzzle when the player interacts with its highlighted world marker.</summary>
+    /// <summary>Loads the colour-track puzzle when the player interacts with its softly glowing marker.</summary>
     [RequireComponent(typeof(BoxCollider2D), typeof(LineRenderer))]
     [DisallowMultipleComponent]
-    public sealed class ColorPuzzlePortalInteractable : InteractableBase
+    public sealed class ColorPuzzlePortalInteractable : InteractableBase, IInteractionHighlightTarget
     {
         private const string PuzzleSceneName = "ColorTrackPuzzle";
         private const string PuzzleId = "ColorTrackPuzzle";
@@ -17,21 +17,25 @@ namespace ReturnToTheEigth.Interaction
         private const string SpriteShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
         private const float HalfExtent = 0.3f;
         private const float HighlightRadius = 0.9f;
-        private const float HighlightRadiusSquared = HighlightRadius * HighlightRadius;
-        private const float OutlineWidth = 0.04f;
-        private const int OutlineSortingOrder = -1;
-        private const int OutlinePointCount = 4;
-        private static readonly Color OutlineColor = Color.white;
+        private const float HaloRadiusPadding = 0.09f;
+        private const float HaloWidth = 0.035f;
+        private const float MinimumHaloAlpha = 0.55f;
+        private const float HaloPulseSpeed = 3.2f;
+        private const float Zero = 0f;
+        private const float One = 1f;
+        private const float TwoPi = Mathf.PI * 2f;
+        private const int HaloPointCount = 32;
+        private const int HaloSortingOrder = 10;
+        private const string HaloSortingLayer = "Assets and player";
+        private static readonly Color HaloColor = new Color(1f, 0.82f, 0.42f, 1f);
 
         /// <summary>Maximum query radius required to find colour portals.</summary>
         public const float MaximumInteractionRadius = HighlightRadius;
 
-        [SerializeField] private PlayerInteraction playerInteraction;
-
         private BoxCollider2D interactionCollider;
-        private LineRenderer outlineRenderer;
-        private Material runtimeOutlineMaterial;
-        private bool isHighlighted;
+        private LineRenderer haloRenderer;
+        private Material runtimeHaloMaterial;
+        private bool isInteractionHighlighted;
 
         /// <summary>Gets the interaction radius of the colour portal.</summary>
         public float InteractionRadius => HighlightRadius;
@@ -48,22 +52,16 @@ namespace ReturnToTheEigth.Interaction
             interactionCollider.isTrigger = true;
             interactionCollider.size = new Vector2(HalfExtent * 2f, HalfExtent * 2f);
 
-            outlineRenderer = GetComponent<LineRenderer>();
-            ConfigureOutline();
-
-            if (playerInteraction == null)
+            haloRenderer = GetComponent<LineRenderer>();
+            ConfigureHalo();
+            Shader haloShader = Shader.Find(SpriteShaderName);
+            if (haloShader != null)
             {
-                playerInteraction = FindAnyObjectByType<PlayerInteraction>();
+                runtimeHaloMaterial = new Material(haloShader);
+                haloRenderer.material = runtimeHaloMaterial;
             }
+            SetInteractionHighlighted(false);
 
-            Shader outlineShader = Shader.Find(SpriteShaderName);
-            if (outlineShader != null)
-            {
-                runtimeOutlineMaterial = new Material(outlineShader);
-                outlineRenderer.material = runtimeOutlineMaterial;
-            }
-
-            SetHighlighted(false);
             if (GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(PuzzleId))
             {
                 DisablePortal();
@@ -72,24 +70,29 @@ namespace ReturnToTheEigth.Interaction
 
         private void Update()
         {
-            if (playerInteraction == null)
-            {
-                playerInteraction = FindAnyObjectByType<PlayerInteraction>();
-            }
-
-            Vector2 playerPosition = playerInteraction != null
-                ? playerInteraction.transform.position
-                : Vector2.positiveInfinity;
-            Vector2 offset = playerPosition - InteractionPoint;
-            SetHighlighted(offset.sqrMagnitude <= HighlightRadiusSquared);
+            if (!isInteractionHighlighted || haloRenderer == null) return;
+            float pulse = MinimumHaloAlpha + (One - MinimumHaloAlpha) * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * HaloPulseSpeed));
+            Color pulseColor = new Color(HaloColor.r, HaloColor.g, HaloColor.b, pulse);
+            haloRenderer.startColor = pulseColor;
+            haloRenderer.endColor = pulseColor;
+            if (runtimeHaloMaterial != null) runtimeHaloMaterial.color = pulseColor;
         }
 
         private void OnDestroy()
         {
-            if (runtimeOutlineMaterial != null)
-            {
-                Destroy(runtimeOutlineMaterial);
-            }
+            if (runtimeHaloMaterial != null) Destroy(runtimeHaloMaterial);
+        }
+
+        /// <summary>Shows or hides the warm circular halo when this is the player's current interactable.</summary>
+        public void SetInteractionHighlighted(bool highlighted)
+        {
+            isInteractionHighlighted = highlighted;
+            if (haloRenderer == null) return;
+            haloRenderer.enabled = highlighted;
+            Color color = highlighted ? HaloColor : Color.clear;
+            haloRenderer.startColor = color;
+            haloRenderer.endColor = color;
+            if (runtimeHaloMaterial != null) runtimeHaloMaterial.color = color;
         }
 
         /// <summary>Saves the player's position and timeline, then loads the colour-track puzzle.</summary>
@@ -108,42 +111,29 @@ namespace ReturnToTheEigth.Interaction
 
         private void DisablePortal()
         {
+            SetInteractionHighlighted(false);
             interactionCollider.enabled = false;
-            outlineRenderer.enabled = false;
             enabled = false;
         }
 
-        private void ConfigureOutline()
+        private void ConfigureHalo()
         {
-            outlineRenderer.useWorldSpace = false;
-            outlineRenderer.loop = true;
-            outlineRenderer.positionCount = OutlinePointCount;
-            outlineRenderer.startWidth = OutlineWidth;
-            outlineRenderer.endWidth = OutlineWidth;
-            outlineRenderer.sortingOrder = OutlineSortingOrder;
-            outlineRenderer.startColor = OutlineColor;
-            outlineRenderer.endColor = OutlineColor;
-            outlineRenderer.enabled = false;
-            outlineRenderer.SetPosition(0, new Vector3(-HalfExtent, -HalfExtent, 0f));
-            outlineRenderer.SetPosition(1, new Vector3(-HalfExtent, HalfExtent, 0f));
-            outlineRenderer.SetPosition(2, new Vector3(HalfExtent, HalfExtent, 0f));
-            outlineRenderer.SetPosition(3, new Vector3(HalfExtent, -HalfExtent, 0f));
-        }
+            haloRenderer.useWorldSpace = false;
+            haloRenderer.loop = true;
+            haloRenderer.positionCount = HaloPointCount;
+            haloRenderer.startWidth = HaloWidth;
+            haloRenderer.endWidth = HaloWidth;
+            haloRenderer.sortingLayerName = HaloSortingLayer;
+            haloRenderer.sortingOrder = HaloSortingOrder;
+            haloRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            haloRenderer.receiveShadows = false;
+            haloRenderer.enabled = false;
 
-        private void SetHighlighted(bool highlighted)
-        {
-            if (outlineRenderer == null || isHighlighted == highlighted)
+            float radius = HalfExtent + HaloRadiusPadding;
+            for (int index = 0; index < HaloPointCount; index++)
             {
-                return;
-            }
-
-            isHighlighted = highlighted;
-            outlineRenderer.enabled = highlighted;
-            outlineRenderer.startColor = OutlineColor;
-            outlineRenderer.endColor = OutlineColor;
-            if (runtimeOutlineMaterial != null)
-            {
-                runtimeOutlineMaterial.color = OutlineColor;
+                float angle = TwoPi * index / HaloPointCount;
+                haloRenderer.SetPosition(index, new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f));
             }
         }
     }

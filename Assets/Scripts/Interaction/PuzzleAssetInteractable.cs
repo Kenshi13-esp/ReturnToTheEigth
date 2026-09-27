@@ -251,13 +251,8 @@ namespace ReturnToTheEigth.Interaction
 
         private void SetOutlineVisible(bool visible)
         {
-            if (outlineRenderer == null || isNearPlayer == visible)
-            {
-                return;
-            }
-
             isNearPlayer = visible;
-            outlineRenderer.enabled = visible;
+            if (outlineRenderer != null) outlineRenderer.enabled = false;
         }
     }
 }

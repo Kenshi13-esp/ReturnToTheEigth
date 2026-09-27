@@ -723,10 +723,10 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0
-    y: 0.13489726
-    width: 1
-    height: 0.7302055
+    x: 0.00083869696
+    y: 0
+    width: 0.9983226
+    height: 1
   near clip plane: 0.1
   far clip plane: 30
   field of view: 60
@@ -1617,6 +1617,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Puzzles.PuzzleSolvedFeedback
   puzzleSolvedChannel: {fileID: 11400000, guid: 0d716ce22b37b9843a2254776694cbcc, type: 2}
   dragController: {fileID: 1092855657}
+  exitZone: {fileID: 0}
 --- !u!1 &861163921
 GameObject:
   m_ObjectHideFlags: 0
@@ -2838,6 +2839,7 @@ MonoBehaviour:
   playerLayers:
     serializedVersion: 2
     m_Bits: 2048
+  puzzleId: BoxPuzzle
 --- !u!1 &1225379893
 GameObject:
   m_ObjectHideFlags: 0

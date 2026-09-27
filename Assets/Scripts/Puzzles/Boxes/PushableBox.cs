@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ReturnToTheEigth.Puzzles
 {
-    /// <summary>Present-era box that can be grabbed and moved one cell at a time, mirroring its Past copy.</summary>
+    /// <summary>Present-era box that can be grabbed and moved one cell at a time, optionally mirroring a Past copy.</summary>
     [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
     [DisallowMultipleComponent]
     public sealed class PushableBox : InteractableBase
@@ -13,10 +13,11 @@ namespace ReturnToTheEigth.Puzzles
         private const string GrabPrompt = "Agarrar caja";
         private const string ReleasePrompt = "Soltar caja";
         private const string MissingGridWarning = "PushableBox could not find a PuzzleGrid in the scene.";
-        private const string MissingPastWarning = "PushableBox has no pastCounterpart; the box will not exist in the Past.";
+        public const float InteractionRadius = 0.6f;
         private const float DefaultStepDuration = 0.2f;
         private const float MinimumStepDuration = 0.01f;
         private const float Zero = 0f;
+        private const float One = 1f;
         private static readonly WaitForFixedUpdate WaitForPhysicsStep = new WaitForFixedUpdate();
 
         [SerializeField] private PuzzleGrid grid;
@@ -33,6 +34,7 @@ namespace ReturnToTheEigth.Puzzles
         public bool IsGrabbed { get; set; }
         public float StepDuration => stepDuration;
         public Collider2D Collider => boxCollider;
+        public Renderer VisualRenderer => GetComponent<Renderer>();
 
         private void Awake()
         {
@@ -48,7 +50,6 @@ namespace ReturnToTheEigth.Puzzles
                 Debug.LogWarning(MissingGridWarning, this);
                 return;
             }
-            if (pastCounterpart == null) Debug.LogWarning(MissingPastWarning, this);
             SnapToCell(grid.WorldToCell(transform.position));
         }
 
@@ -93,7 +94,9 @@ namespace ReturnToTheEigth.Puzzles
             {
                 yield return WaitForPhysicsStep;
                 elapsed += Time.fixedDeltaTime;
-                body.MovePosition(Vector2.Lerp(start, target, Mathf.Clamp01(elapsed / duration)));
+                float progress = Mathf.Clamp01(elapsed / duration);
+                float easedProgress = Mathf.SmoothStep(Zero, One, progress);
+                body.MovePosition(Vector2.Lerp(start, target, easedProgress));
             }
             moveRoutine = null;
             SnapToCell(moveTargetCell);

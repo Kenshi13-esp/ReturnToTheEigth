@@ -79,10 +79,12 @@ namespace ReturnToTheEigth.Interaction
             float searchRadius = Mathf.Max(
                 effectiveInteractionRadius,
                 Mathf.Max(
-                    PuzzleAssetInteractable.MaximumInteractionRadius,
+                    PushableBox.InteractionRadius,
                     Mathf.Max(
-                        ColorPuzzlePortalInteractable.MaximumInteractionRadius,
-                        ChessPortalInteractable.MaximumInteractionRadius)));
+                        PuzzleAssetInteractable.MaximumInteractionRadius,
+                        Mathf.Max(
+                            ColorPuzzlePortalInteractable.MaximumInteractionRadius,
+                            ChessPortalInteractable.MaximumInteractionRadius))));
             int count = Physics2D.OverlapCircle(origin, searchRadius, filter, nearbyColliders);
             float nearestDistanceSquared = float.PositiveInfinity;
             bool nearestIsPortal = false;
@@ -117,6 +119,22 @@ namespace ReturnToTheEigth.Interaction
                     offset = point - origin;
                     candidateRadius = puzzleAsset.InteractionRadius;
                 }
+                else if (candidate is PushableBox pushableBox)
+                {
+                    candidateRadius = Mathf.Max(candidateRadius, PushableBox.InteractionRadius);
+                    BoxDragController dragController = GetComponent<BoxDragController>();
+                    if (dragController != null)
+                    {
+                        if (dragController.IsGrabbing)
+                        {
+                            if (dragController.GrabbedBox != pushableBox) continue;
+                        }
+                        else if (!dragController.CanGrab(pushableBox))
+                        {
+                            continue;
+                        }
+                    }
+                }
                 else if (candidate is DoorController door)
                 {
                     candidateRadius = door.InteractionRadius;
@@ -134,7 +152,7 @@ namespace ReturnToTheEigth.Interaction
                 if (!isPortal
                     && point != origin
                     && candidateDistanceSquared > MinimumDistanceSquared
-                    && !HasLineOfSight(origin, point, candidate))
+                    && !HasLineOfSight(origin, point, candidate, candidate is PushableBox))
                 {
                     continue;
                 }
@@ -145,16 +163,19 @@ namespace ReturnToTheEigth.Interaction
             }
         }
 
-        private bool HasLineOfSight(Vector2 origin, Vector2 target, InteractableBase candidate)
+        private bool HasLineOfSight(Vector2 origin, Vector2 target, InteractableBase candidate, bool ignorePuzzleObstacles)
         {
             ContactFilter2D filter = new ContactFilter2D { useTriggers = false };
             filter.SetLayerMask(lineOfSightObstacleLayers);
             int count = Physics2D.Linecast(origin, target, filter, sightHits);
             if (count == sightHits.Length) return false;
+            PuzzleGrid candidateGrid = ignorePuzzleObstacles ? candidate.GetComponentInParent<PuzzleGrid>() : null;
             for (int index = FirstIndex; index < count; index++)
             {
                 Transform hit = sightHits[index].transform;
-                if (!hit.IsChildOf(transform) && !hit.IsChildOf(candidate.transform)) return false;
+                if (hit.IsChildOf(transform) || hit.IsChildOf(candidate.transform)) continue;
+                if (candidateGrid != null && hit.GetComponentInParent<PuzzleGrid>() == candidateGrid) continue;
+                return false;
             }
             return true;
         }

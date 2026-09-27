@@ -20,7 +20,18 @@ namespace ReturnToTheEigth.Player
         private const float MinimumAxisThreshold = 0.05f;
         private const float MaximumAxisThreshold = 1f;
         private const float MinimumStepDuration = 0.01f;
+        private const float GrabAlignmentDuration = 0.08f;
+        private const float GrabAssistDistance = 0.18f;
+        private const float InputBufferDuration = 0.30f;
+        private const float BufferedInputGrace = 0.08f;
+        private const float InitialRepeatDelay = 0.22f;
+        private const float RepeatInterval = 0.08f;
+        private const float BlockedRepeatDelay = 0.12f;
+        private const float InputReleaseThreshold = 0.25f;
+        private const float MinimumGrabDirectionSquared = 0.0001f;
+        private const float SpriteContactGap = 0.01f;
         private const float Zero = 0f;
+        private const float One = 1f;
         private const int CardinalManhattanLength = 1;
         private static readonly WaitForFixedUpdate WaitForPhysicsStep = new WaitForFixedUpdate();
 
@@ -28,16 +39,26 @@ namespace ReturnToTheEigth.Player
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField] private TimelineEventChannelSO timelineChangedChannel;
         [SerializeField] private PuzzleGrid grid;
+        [SerializeField] private Transform playerVisual;
         [SerializeField, Range(MinimumAxisThreshold, MaximumAxisThreshold)] private float axisThreshold = DefaultAxisThreshold;
         private Rigidbody2D body;
         private BoxCollider2D playerCollider;
         private TopDownCharacterController controller;
+        private PlayerAnimationController animationController;
+        private SpriteRenderer playerSpriteRenderer;
+        private Vector3 defaultVisualLocalPosition;
+        private Vector3 grabbedVisualLocalPosition;
         private InputAction moveAction;
         private Coroutine stepRoutine;
         private PuzzleExitZone puzzleExitZone;
         private Vector2Int playerCell;
         private Vector2Int dragAxis;
         private Vector2Int stepTargetCell;
+        private Vector2Int bufferedDirection;
+        private Vector2Int lastInputDirection;
+        private float bufferedDirectionExpiresAt;
+        private float nextStepAllowedAt;
+        private int consecutiveSteps;
 
         public PushableBox GrabbedBox { get; private set; }
         public bool IsGrabbing => GrabbedBox != null;
@@ -51,6 +72,21 @@ namespace ReturnToTheEigth.Player
             body = GetComponent<Rigidbody2D>();
             playerCollider = GetComponent<BoxCollider2D>();
             controller = GetComponent<TopDownCharacterController>();
+            if (playerVisual == null)
+            {
+                SpriteRenderer[] childRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+                foreach (SpriteRenderer childRenderer in childRenderers)
+                {
+                    if (childRenderer.transform != transform)
+                    {
+                        playerVisual = childRenderer.transform;
+                        break;
+                    }
+                }
+            }
+            playerSpriteRenderer = playerVisual != null ? playerVisual.GetComponent<SpriteRenderer>() : null;
+            animationController = GetComponent<PlayerAnimationController>();
+            if (playerVisual != null) defaultVisualLocalPosition = playerVisual.localPosition;
             puzzleExitZone = FindAnyObjectByType<PuzzleExitZone>();
             InputAction sourceMove = inputActions != null ? inputActions.FindAction(MoveActionPath) : null;
             if (sourceMove == null)
@@ -84,10 +120,67 @@ namespace ReturnToTheEigth.Player
             if (!IsGrabbing) return;
             if (IsPuzzleSolved) { Release(); return; }
             if (!GrabbedBox.isActiveAndEnabled) { Release(); return; }
-            if (!AllowsGameplay || IsStepping || GrabbedBox.IsMoving || moveAction == null) return;
+            if (!AllowsGameplay || moveAction == null)
+            {
+                ResetBufferedInput();
+                return;
+            }
+
             float axisInput = Vector2.Dot(moveAction.ReadValue<Vector2>(), dragAxis);
-            if (axisInput >= axisThreshold) TryStep(dragAxis);
-            else if (axisInput <= -axisThreshold) TryStep(-dragAxis);
+            Vector2Int requestedDirection = GetRequestedDirection(axisInput);
+            float currentTime = Time.unscaledTime;
+            if (requestedDirection == Vector2Int.zero)
+            {
+                lastInputDirection = Vector2Int.zero;
+                consecutiveSteps = 0;
+                if (currentTime > bufferedDirectionExpiresAt) bufferedDirection = Vector2Int.zero;
+            }
+            else if (requestedDirection != lastInputDirection)
+            {
+                lastInputDirection = requestedDirection;
+                consecutiveSteps = 0;
+                nextStepAllowedAt = currentTime;
+                bufferedDirection = requestedDirection;
+                bufferedDirectionExpiresAt = currentTime + Mathf.Max(InputBufferDuration, GrabbedBox.StepDuration + BufferedInputGrace);
+            }
+
+            if (IsStepping || GrabbedBox.IsMoving || currentTime < nextStepAllowedAt) return;
+            Vector2Int direction = bufferedDirection != Vector2Int.zero && currentTime <= bufferedDirectionExpiresAt
+                ? bufferedDirection
+                : requestedDirection;
+            if (direction == Vector2Int.zero) return;
+            bufferedDirection = Vector2Int.zero;
+            if (TryStep(direction))
+            {
+                consecutiveSteps++;
+                nextStepAllowedAt = currentTime + (consecutiveSteps == 1 ? InitialRepeatDelay : RepeatInterval);
+            }
+            else
+            {
+                nextStepAllowedAt = currentTime + BlockedRepeatDelay;
+            }
+        }
+
+        private Vector2Int GetRequestedDirection(float axisInput)
+        {
+            if (lastInputDirection != Vector2Int.zero
+                && Mathf.Sign(axisInput) == Mathf.Sign(Vector2.Dot(lastInputDirection, dragAxis))
+                && Mathf.Abs(axisInput) >= InputReleaseThreshold)
+            {
+                return lastInputDirection;
+            }
+            if (axisInput >= axisThreshold) return dragAxis;
+            if (axisInput <= -axisThreshold) return -dragAxis;
+            return Vector2Int.zero;
+        }
+
+        private void ResetBufferedInput()
+        {
+            bufferedDirection = Vector2Int.zero;
+            lastInputDirection = Vector2Int.zero;
+            bufferedDirectionExpiresAt = Zero;
+            nextStepAllowedAt = Zero;
+            consecutiveSteps = 0;
         }
 
         /// <summary>Releases the current box when one is held; otherwise tries to grab the supplied box. Returns the resulting grab state.</summary>
@@ -107,25 +200,125 @@ namespace ReturnToTheEigth.Player
             return TryGrab(box);
         }
 
-        /// <summary>Grabs the box when it occupies a cardinal neighbour cell; snaps the player to its cell center and locks free movement.</summary>
+        /// <summary>Returns true when a stationary box can be grabbed from an adjacent cell or a valid close-contact position.</summary>
+        public bool CanGrab(PushableBox box)
+        {
+            return !IsPuzzleSolved
+                && box != null
+                && grid != null
+                && body != null
+                && box.isActiveAndEnabled
+                && !box.IsMoving
+                && !IsGrabbing
+                && !IsStepping
+                && TryGetGrabPlan(box, out _, out _);
+        }
+
+        private bool TryGetGrabPlan(PushableBox box, out Vector2Int targetPlayerCell, out Vector2Int targetDragAxis)
+        {
+            targetPlayerCell = Vector2Int.zero;
+            targetDragAxis = Vector2Int.zero;
+            if (box.Collider == null) return false;
+
+            Vector2Int boxCell = box.Cell;
+            Vector2Int currentPlayerCell = grid.WorldToCell(body.position);
+            Vector2Int delta = boxCell - currentPlayerCell;
+            if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) == CardinalManhattanLength)
+            {
+                targetPlayerCell = currentPlayerCell;
+                targetDragAxis = delta;
+            }
+            else
+            {
+                Vector2 closestPointOffset = box.Collider.ClosestPoint(body.position) - body.position;
+                if (closestPointOffset.sqrMagnitude > GrabAssistDistance * GrabAssistDistance) return false;
+
+                Vector2 directionToBox = (Vector2)box.transform.position - body.position;
+                if (directionToBox.sqrMagnitude <= MinimumGrabDirectionSquared && controller != null)
+                {
+                    directionToBox = controller.FacingDirection;
+                }
+                targetDragAxis = Mathf.Abs(directionToBox.x) > Mathf.Abs(directionToBox.y)
+                    ? (directionToBox.x >= Zero ? Vector2Int.right : Vector2Int.left)
+                    : (directionToBox.y >= Zero ? Vector2Int.up : Vector2Int.down);
+                targetPlayerCell = boxCell - targetDragAxis;
+            }
+
+            if (!grid.IsInside(targetPlayerCell)
+                || !grid.IsCellFree(targetPlayerCell, playerCollider, box.Collider))
+            {
+                return false;
+            }
+
+            bool canPush = box.CanMove(targetDragAxis, playerCollider);
+            bool canPull = grid.IsCellFree(targetPlayerCell - targetDragAxis, playerCollider, box.Collider);
+            return canPush || canPull;
+        }
+
+        /// <summary>Grabs and smoothly aligns to a valid adjacent cell, then locks free movement.</summary>
         public bool TryGrab(PushableBox box)
         {
-            if (IsPuzzleSolved || box == null || grid == null || !box.isActiveAndEnabled || box.IsMoving || IsGrabbing) return false;
-            Vector2Int currentCell = grid.WorldToCell(body.position);
-            Vector2Int delta = box.Cell - currentCell;
-            if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) != CardinalManhattanLength) return false;
-            playerCell = currentCell;
-            dragAxis = delta;
+            if (!CanGrab(box) || !TryGetGrabPlan(box, out Vector2Int targetPlayerCell, out Vector2Int targetDragAxis)) return false;
+            playerCell = targetPlayerCell;
+            dragAxis = targetDragAxis;
+            AlignVisualToBoxSide(box, targetDragAxis, targetPlayerCell);
+            controller.SetFacingDirection(targetDragAxis);
+            animationController?.SetFacingDirection(targetDragAxis);
             GrabbedBox = box;
             box.IsGrabbed = true;
+            SetGrabbedBoxCollisionIgnored(true);
             controller.SetMovementEnabled(false);
-            body.position = grid.CellToWorld(playerCell);
+            stepTargetCell = playerCell;
+            stepRoutine = StartCoroutine(AlignPlayerToCell());
             return true;
+        }
+
+        private void AlignVisualToBoxSide(PushableBox box, Vector2Int directionToBox, Vector2Int targetPlayerCell)
+        {
+            Renderer boxRenderer = box.VisualRenderer;
+            if (playerVisual == null || playerSpriteRenderer == null || boxRenderer == null) return;
+
+            Bounds playerBounds = playerSpriteRenderer.bounds;
+            Bounds boxBounds = boxRenderer.bounds;
+            float boxExtent = directionToBox.x != 0 ? boxBounds.extents.x : boxBounds.extents.y;
+            float playerExtent = directionToBox.x != 0 ? playerBounds.extents.x : playerBounds.extents.y;
+            Vector3 direction = new Vector3(directionToBox.x, directionToBox.y, Zero);
+            Vector3 targetSpriteCenter = boxBounds.center - direction * (boxExtent + playerExtent + SpriteContactGap);
+            Vector3 targetPlayerPosition = grid.CellToWorld(targetPlayerCell);
+            targetPlayerPosition.z = transform.position.z;
+            Vector3 currentSpriteCenterAtTarget = playerBounds.center + targetPlayerPosition - transform.position;
+            Vector3 worldVisualOffset = targetSpriteCenter - currentSpriteCenterAtTarget;
+            Vector3 localVisualOffset = transform.InverseTransformVector(worldVisualOffset);
+            grabbedVisualLocalPosition = defaultVisualLocalPosition + localVisualOffset;
+        }
+
+        private IEnumerator AlignPlayerToCell()
+        {
+            Vector2 start = body.position;
+            Vector2 target = grid.CellToWorld(playerCell);
+            Vector3 visualStart = playerVisual != null ? playerVisual.localPosition : defaultVisualLocalPosition;
+            float elapsed = Zero;
+            while (elapsed < GrabAlignmentDuration)
+            {
+                yield return WaitForPhysicsStep;
+                elapsed += Time.fixedDeltaTime;
+                float progress = Mathf.Clamp01(elapsed / GrabAlignmentDuration);
+                float easedProgress = Mathf.SmoothStep(Zero, One, progress);
+                body.MovePosition(Vector2.Lerp(start, target, easedProgress));
+                if (playerVisual != null)
+                {
+                    playerVisual.localPosition = Vector3.Lerp(visualStart, grabbedVisualLocalPosition, easedProgress);
+                }
+            }
+            body.position = target;
+            if (playerVisual != null) playerVisual.localPosition = grabbedVisualLocalPosition;
+            stepRoutine = null;
         }
 
         /// <summary>Drops the held box (if any), finishing any step in progress by snapping to its target cell, and restores free movement.</summary>
         public void Release()
         {
+            ResetBufferedInput();
             if (stepRoutine != null)
             {
                 StopCoroutine(stepRoutine);
@@ -135,19 +328,29 @@ namespace ReturnToTheEigth.Player
             }
             if (GrabbedBox != null)
             {
+                SetGrabbedBoxCollisionIgnored(false);
+                if (playerVisual != null) playerVisual.localPosition = defaultVisualLocalPosition;
                 GrabbedBox.IsGrabbed = false;
                 GrabbedBox = null;
             }
             if (controller != null) controller.SetMovementEnabled(true);
         }
 
-        private void TryStep(Vector2Int direction)
+        private void SetGrabbedBoxCollisionIgnored(bool ignored)
+        {
+            if (playerCollider == null || GrabbedBox == null || GrabbedBox.Collider == null) return;
+            Physics2D.IgnoreCollision(playerCollider, GrabbedBox.Collider, ignored);
+        }
+
+        private bool TryStep(Vector2Int direction)
         {
             bool isPush = direction == dragAxis;
             bool canStep = isPush
                 ? GrabbedBox.CanMove(direction, playerCollider)
                 : grid.IsCellFree(playerCell + direction, playerCollider, GrabbedBox.Collider);
-            if (canStep) stepRoutine = StartCoroutine(StepRoutine(direction));
+            if (!canStep) return false;
+            stepRoutine = StartCoroutine(StepRoutine(direction));
+            return true;
         }
 
         private IEnumerator StepRoutine(Vector2Int direction)
@@ -163,7 +366,9 @@ namespace ReturnToTheEigth.Player
             {
                 yield return WaitForPhysicsStep;
                 elapsed += Time.fixedDeltaTime;
-                body.MovePosition(Vector2.Lerp(start, target, Mathf.Clamp01(elapsed / duration)));
+                float progress = Mathf.Clamp01(elapsed / duration);
+                float easedProgress = Mathf.SmoothStep(Zero, One, progress);
+                body.MovePosition(Vector2.Lerp(start, target, easedProgress));
             }
             body.position = target;
             playerCell = stepTargetCell;

@@ -100,6 +100,13 @@ namespace ReturnToTheEigth.Player
             body.linearVelocity = direction * movementSpeed;
         }
 
+        /// <summary>Sets the direction retained by idle animation and interaction systems.</summary>
+        public void SetFacingDirection(Vector2 direction)
+        {
+            if (direction.sqrMagnitude <= InputThreshold) return;
+            FacingDirection = direction.normalized;
+        }
+
         /// <summary>Enables or stops movement without changing the independent interaction/time-travel bindings.</summary>
         public void SetMovementEnabled(bool isEnabled)
         {

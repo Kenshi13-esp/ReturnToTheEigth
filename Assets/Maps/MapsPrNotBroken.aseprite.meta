@@ -129,7 +129,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: MapsPrNotBroken
     originalName: 
-    pivot: {x: 0.50117093, y: 0}
+    pivot: {x: 0.48691696, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,7 +137,7 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 854
+      width: 879
       height: 1200
     spriteID: 63dde06e9741ec441be36d97371ffa17
     spriteBone: []
@@ -169,7 +169,7 @@ ScriptedImporter:
       cellRect:
         x: -2
         y: 0
-        width: 854
+        width: 879
         height: 1200
       spriteId: 63dde06e9741ec441be36d97371ffa17
     linkedCells: []

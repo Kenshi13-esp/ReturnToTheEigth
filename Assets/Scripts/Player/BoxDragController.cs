@@ -86,7 +86,8 @@ namespace ReturnToTheEigth.Player
             }
             playerSpriteRenderer = playerVisual != null ? playerVisual.GetComponent<SpriteRenderer>() : null;
             animationController = GetComponent<PlayerAnimationController>();
-            if (playerVisual != null) defaultVisualLocalPosition = playerVisual.localPosition;
+            defaultVisualLocalPosition = Vector3.zero;
+            if (playerVisual != null) playerVisual.localPosition = defaultVisualLocalPosition;
             puzzleExitZone = FindAnyObjectByType<PuzzleExitZone>();
             InputAction sourceMove = inputActions != null ? inputActions.FindAction(MoveActionPath) : null;
             if (sourceMove == null)
@@ -329,10 +330,10 @@ namespace ReturnToTheEigth.Player
             if (GrabbedBox != null)
             {
                 SetGrabbedBoxCollisionIgnored(false);
-                if (playerVisual != null) playerVisual.localPosition = defaultVisualLocalPosition;
                 GrabbedBox.IsGrabbed = false;
                 GrabbedBox = null;
             }
+            if (playerVisual != null) playerVisual.localPosition = defaultVisualLocalPosition;
             if (controller != null) controller.SetMovementEnabled(true);
         }
 

@@ -35,6 +35,8 @@ namespace ReturnToTheEigth.Interaction
         private SpriteRenderer[] highlightedRenderers = System.Array.Empty<SpriteRenderer>();
         private Color[] originalRendererColors = System.Array.Empty<Color>();
         public InteractableBase CurrentInteractable { get; private set; }
+        /// <summary>Gets the configured input-action asset used by the player interaction controls.</summary>
+        public InputActionAsset InputActions => inputActions;
         private bool AllowsGameplay => gameStateChannel == null || gameStateChannel.CurrentState == GameState.Exploration;
 
         private void Awake()

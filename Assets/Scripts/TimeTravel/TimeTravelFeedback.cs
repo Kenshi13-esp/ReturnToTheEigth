@@ -1,17 +1,16 @@
 using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using ReturnToTheEigth.Interaction;
-using ReturnToTheEigth.Puzzles;
 using ReturnToTheEigth.UI;
 using UnityEngine;
 
 namespace ReturnToTheEigth.TimeTravel
 {
-    /// <summary>Displays only the active interaction, reward, and blocked-transition messages; the prototype top-left HUD is intentionally omitted.</summary>
+    /// <summary>Shows first-time family-frame guidance, pending reward notices and blocked time-travel feedback.</summary>
     public sealed class TimeTravelFeedback : MonoBehaviour
     {
         private const string BlockedText = "Viaje bloqueado: el destino está ocupado.";
-        private static string InteractPrefix => InputPromptUtility.InteractControlLabel + ": ";
+        private const string FrameInteractionInstruction = "Pulsa {0} para interactuar con el cuadro.";
         private const float FeedbackDuration = 2f;
         private const float RewardNoticeDuration = 3.5f;
         private const float PanelWidthRatio = 0.82f;
@@ -49,8 +48,9 @@ namespace ReturnToTheEigth.TimeTravel
             bool rewardNoticeActive = Time.unscaledTime < rewardNoticeUntil
                 && !string.IsNullOrWhiteSpace(activeRewardNotice);
             InteractableBase target = playerInteraction != null ? playerInteraction.CurrentInteractable : null;
-            bool showingInteractionPrompt = target != null && target.isActiveAndEnabled;
-            if (!blocked && !rewardNoticeActive && !showingInteractionPrompt) return;
+            bool showingFrameInteractionInstruction = target is FamilyPhotoFrameInteractable frame
+                && frame.isActiveAndEnabled && frame.ShouldShowInitialInteractionHint;
+            if (!blocked && !rewardNoticeActive && !showingFrameInteractionInstruction) return;
 
             string message;
             if (blocked)
@@ -63,11 +63,7 @@ namespace ReturnToTheEigth.TimeTravel
             }
             else
             {
-                bool isWrongSideDoor = target is DoorController door && door.IsPlayerOnWrongSide;
-                bool shouldShowPrefix = !(target is DoorController promptDoor) || promptDoor.ShouldShowInteractionPrefix;
-                message = isWrongSideDoor || !shouldShowPrefix
-                    ? target.InteractionPrompt
-                    : InteractPrefix + target.InteractionPrompt;
+                message = string.Format(FrameInteractionInstruction, InputPromptUtility.InteractControlLabel);
             }
 
             float panelWidth = Screen.width * PanelWidthRatio;

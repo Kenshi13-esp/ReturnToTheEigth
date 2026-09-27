@@ -31,6 +31,10 @@ namespace ReturnToTheEigth.Core
         public GameState CurrentGameState { get; private set; } = GameState.Exploration;
         /// <summary>Gets whether the player has examined the family portrait and unlocked timeline travel this session.</summary>
         public bool IsTimelineTravelUnlocked { get; private set; }
+        /// <summary>Gets whether the family-frame interaction instruction has already been used this session.</summary>
+        public bool HasUsedFamilyFrameInteraction { get; private set; }
+        /// <summary>Gets whether the family-frame exit instruction has already been used this session.</summary>
+        public bool HasUsedFamilyFrameExit { get; private set; }
         private GameState stateBeforePause = GameState.Exploration;
         private Vector3 pendingPlayerReturnPosition;
         private TimelineEra pendingPlayerReturnEra = TimelineEra.Present;
@@ -103,6 +107,18 @@ namespace ReturnToTheEigth.Core
         public void UnlockTimelineTravel()
         {
             IsTimelineTravelUnlocked = true;
+        }
+
+        /// <summary>Records that the player has used the first family-frame interaction instruction this session.</summary>
+        public void MarkFamilyFrameInteractionUsed()
+        {
+            HasUsedFamilyFrameInteraction = true;
+        }
+
+        /// <summary>Records that the player has used the family-frame exit instruction this session.</summary>
+        public void MarkFamilyFrameExitUsed()
+        {
+            HasUsedFamilyFrameExit = true;
         }
 
         /// <summary>Returns whether the puzzle with the supplied stable identifier has been completed this session.</summary>

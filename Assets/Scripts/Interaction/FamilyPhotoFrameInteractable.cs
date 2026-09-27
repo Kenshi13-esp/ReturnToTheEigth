@@ -2,6 +2,7 @@ using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Player;
 using ReturnToTheEigth.UI;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ReturnToTheEigth.Interaction
 {
@@ -11,15 +12,13 @@ namespace ReturnToTheEigth.Interaction
     public sealed class FamilyPhotoFrameInteractable : InteractableBase
     {
         private const string OpenPrompt = "Ver el marco familiar";
-        private const string ClosePrompt = "Cerrar el marco";
-        private const string CompletePrompt = "Cerrar el marco";
-        private const string NarrativeText = "A este marco le falta la foto de mi familia.";
+        private const string FrameExitActionPath = "Player/PuzzleExit";
+        private const string MissingFrameExitActionWarning = "FamilyPhotoFrameInteractable could not find Player/PuzzleExit.";
         private const int PanelMargin = 24;
         private const float HighlightRadius = 0.9f;
         private const float ColliderPadding = 0.4f;
         private const float ImageWidthRatio = 0.54f;
         private const float ImageHeightRatio = 0.66f;
-        private const float ImageTextGap = 24f;
         private const float TextHeight = 76f;
         private const float Zero = 0f;
         private static readonly string[] FragmentIds =
@@ -35,18 +34,27 @@ namespace ReturnToTheEigth.Interaction
         private SpriteRenderer frameRenderer;
         private TopDownCharacterController playerController;
         private TimelineUnlockSequence timelineUnlockSequence;
+        private InputAction frameExitAction;
         private Texture2D solidTexture;
         private bool isOpen;
         private bool isEnding;
         private bool isTimelineIntroPlaying;
+        private bool hasOpenedFrame;
+        private bool hasUsedFrameExit;
 
         /// <summary>Gets whether this view should hide the normal exploration HUD.</summary>
         public static bool HidesExplorationHud { get; private set; }
 
-        /// <summary>Gets the prompt for opening or closing the family portrait.</summary>
-        public override string InteractionPrompt => isOpen
-            ? HasAllFragments() ? CompletePrompt : ClosePrompt
-            : OpenPrompt;
+        /// <summary>Gets whether the first-time interaction instruction should be shown for this frame.</summary>
+        public bool ShouldShowInitialInteractionHint => GameManager.Instance != null
+            ? !GameManager.Instance.HasUsedFamilyFrameInteraction : !hasOpenedFrame;
+
+        /// <summary>Gets whether the first-time exit instruction should be shown inside the frame.</summary>
+        private bool ShouldShowFrameExitHint => GameManager.Instance != null
+            ? !GameManager.Instance.HasUsedFamilyFrameExit : !hasUsedFrameExit;
+
+        /// <summary>Gets the prompt used before the family portrait has been opened for the first time.</summary>
+        public override string InteractionPrompt => OpenPrompt;
 
         private void Awake()
         {
@@ -62,21 +70,52 @@ namespace ReturnToTheEigth.Interaction
             }
         }
 
-        /// <summary>Opens the portrait, closes it, or completes the game when all four fragments are present.</summary>
+        private void OnEnable()
+        {
+            if (isOpen) frameExitAction?.Enable();
+        }
+
+        private void Update()
+        {
+            if (isOpen && frameExitAction != null && frameExitAction.WasPerformedThisFrame())
+            {
+                hasUsedFrameExit = true;
+                GameManager.Instance?.MarkFamilyFrameExitUsed();
+                CloseFrame();
+            }
+        }
+
+        /// <summary>Opens the portrait on its first interaction; closing it is reserved for the Q/PuzzleExit action.</summary>
         public override void Interact(GameObject interactor)
         {
-            if (interactor == null || isEnding) return;
+            if (interactor == null || isEnding || isOpen) return;
 
-            if (!isOpen)
+            playerController = interactor.GetComponent<TopDownCharacterController>();
+            PlayerInteraction playerInteraction = interactor.GetComponent<PlayerInteraction>();
+            InputActionAsset inputActions = playerInteraction != null ? playerInteraction.InputActions : null;
+            InputAction sourceExitAction = inputActions != null
+                ? inputActions.FindAction(FrameExitActionPath, false) : null;
+            frameExitAction = sourceExitAction != null ? sourceExitAction.Clone() : null;
+            if (frameExitAction == null)
             {
-                playerController = interactor.GetComponent<TopDownCharacterController>();
-                playerController?.SetMovementEnabled(false);
-                isOpen = true;
-                HidesExplorationHud = true;
+                Debug.LogWarning(MissingFrameExitActionWarning, this);
                 return;
             }
 
+            frameExitAction.Enable();
+            playerController?.SetMovementEnabled(false);
+            hasOpenedFrame = true;
+            GameManager.Instance?.MarkFamilyFrameInteractionUsed();
+            isOpen = true;
+            HidesExplorationHud = true;
+        }
+
+        private void CloseFrame()
+        {
             isOpen = false;
+            frameExitAction?.Disable();
+            frameExitAction?.Dispose();
+            frameExitAction = null;
             GameManager gameManager = GameManager.Instance;
             if (gameManager != null && !gameManager.IsTimelineTravelUnlocked && timelineUnlockSequence != null)
             {
@@ -128,21 +167,23 @@ namespace ReturnToTheEigth.Interaction
 
         private void DrawFrameScreen()
         {
-            if (frameRenderer.sprite != null)
-            {
-                Rect spriteRect = frameRenderer.sprite.rect;
-                float aspect = spriteRect.width / spriteRect.height;
-                float imageHeight = Mathf.Min(Screen.height * ImageHeightRatio, Screen.height - PanelMargin * 2f - TextHeight - ImageTextGap);
-                float imageWidth = Mathf.Min(Screen.width * ImageWidthRatio, imageHeight * aspect);
-                imageHeight = imageWidth / aspect;
-                float groupHeight = imageHeight + ImageTextGap + TextHeight;
-                float imageY = (Screen.height - groupHeight) * 0.5f;
-                Rect imageRect = new Rect((Screen.width - imageWidth) * 0.5f, imageY, imageWidth, imageHeight);
-                DrawFrameSprite(imageRect);
+            if (frameRenderer.sprite == null) return;
 
-                Rect textRect = new Rect(Screen.width * 0.08f, imageRect.yMax + ImageTextGap,
+            Rect spriteRect = frameRenderer.sprite.rect;
+            float aspect = spriteRect.width / spriteRect.height;
+            float imageHeight = Mathf.Min(Screen.height * ImageHeightRatio, Screen.height - PanelMargin * 2f);
+            float imageWidth = Mathf.Min(Screen.width * ImageWidthRatio, imageHeight * aspect);
+            imageHeight = imageWidth / aspect;
+            Rect imageRect = new Rect((Screen.width - imageWidth) * 0.5f,
+                (Screen.height - imageHeight) * 0.5f, imageWidth, imageHeight);
+            DrawFrameSprite(imageRect);
+
+            if (ShouldShowFrameExitHint)
+            {
+                Rect hintRect = new Rect(Screen.width * 0.08f, Screen.height - PanelMargin - TextHeight,
                     Screen.width * 0.84f, TextHeight);
-                GameTextGUI.DrawLabel(textRect, NarrativeText, TextAnchor.MiddleCenter);
+                string hint = string.Format("Pulsa {0} para salir del marco.", InputPromptUtility.PuzzleExitControlLabel);
+                GameTextGUI.DrawLabel(hintRect, hint, TextAnchor.MiddleCenter);
             }
         }
 
@@ -183,6 +224,7 @@ namespace ReturnToTheEigth.Interaction
 
         private void OnDisable()
         {
+            frameExitAction?.Disable();
             if (!isTimelineIntroPlaying) HidesExplorationHud = false;
             if (isOpen && !isEnding && playerController != null)
             {
@@ -192,6 +234,7 @@ namespace ReturnToTheEigth.Interaction
 
         private void OnDestroy()
         {
+            frameExitAction?.Dispose();
             if (solidTexture != null) Destroy(solidTexture);
         }
     }

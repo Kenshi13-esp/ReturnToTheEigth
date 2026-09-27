@@ -13,7 +13,7 @@ namespace ReturnToTheEigth.Interaction
     public sealed class TimelineUnlockSequence : MonoBehaviour
     {
         private const string FirstMessage = "Mi reloj está actuando raro.";
-        private static string RevealMessage => string.Format("Vaya, parece que si pulso {0} mi reloj vuelve al pasado, a cuando tenía 8 años.",
+        private static string RevealMessage => string.Format("Pulsa {0} para usar el poder del reloj.",
             InputPromptUtility.TimeShiftControlLabel);
         private const float FirstMessageDuration = 2.2f;
         private const float InitialFlashInterval = 1.25f;

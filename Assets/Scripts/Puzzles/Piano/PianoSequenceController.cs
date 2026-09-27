@@ -21,8 +21,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const string MissingNoteClipWarning = "PianoSequenceController is missing a note clip; that key will be silent.";
         private const string PianoActionPrefix = "Player/";
         private const string ConfirmActionPath = "Player/Interact";
-        private const string WrongSequenceText = "Secuencia incorrecta. Inténtalo de nuevo.";
-        private const string SolvedText = "Secuencia correcta.";
         private const string PianoRewardNotice = "Has conseguido un fragmento de la foto familiar.";
         private const int SequenceLength = 5;
         private const int KeyCount = 7;
@@ -33,16 +31,12 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const float DefaultFailureResetDelay = 0.5f;
         private const float Zero = 0f;
         private const float PanelWidth = 620f;
-        private const float PanelHeight = 330f;
-        private const float SceneArtPanelHeight = 126f;
-        private const float KeyboardTopOffset = 155f;
         private const float KeyboardHeight = 170f;
         private const float KeyGap = 4f;
         private const float PanelPadding = 18f;
         private static readonly Color PianoWhite = Color.white;
         private static readonly Color SelectionColor = new Color(0.95f, 0.62f, 0.12f, 1f);
-        private static readonly Color PanelColor = new Color(0.08f, 0.08f, 0.1f, 0.92f);
-        private static readonly string[] KeyLabels = { "A", "S", "D", "F", "G", "H", "J" };
+        private static readonly Color OutlineColor = Color.black;
         private static readonly string[] PianoActionNames = { "PianoLeft", "PianoRight" };
         private static readonly PianoKey[] TargetSequence =
         {
@@ -78,7 +72,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private Texture2D whiteTexture;
         private Texture2D blackTexture;
         private Texture2D selectionTexture;
-        private string statusText = string.Empty;
         private int selectedKeyIndex;
         private bool inputLocked;
 
@@ -144,8 +137,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private void Start()
         {
-            statusText = string.Format("Tecla seleccionada: {0}     {1}",
-                KeyLabels[selectedKeyIndex], GetProgressText());
             RefreshKeyVisuals();
             GameManager.Instance?.SetGameState(GameState.Puzzle);
         }
@@ -212,8 +203,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private void SetSelectedKey(int index)
         {
             selectedKeyIndex = Mathf.Clamp(index, FirstIndex, KeyCount - 1);
-            statusText = string.Format("Tecla seleccionada: {0}     {1}",
-                KeyLabels[selectedKeyIndex], GetProgressText());
             RefreshKeyVisuals();
         }
 
@@ -235,13 +224,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 return;
             }
 
-            statusText = string.Format("Tecla aceptada: {0}     {1}",
-                KeyLabels[selectedKeyIndex], GetProgressText());
-        }
-
-        private string GetProgressText()
-        {
-            return string.Format("{0}/{1}", enteredSequence.Count, SequenceLength);
         }
 
         private void ValidateSequence(AudioClip finalNoteClip)
@@ -257,7 +239,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
             IsSolved = true;
             inputLocked = true;
-            statusText = SolvedText;
             GameManager.Instance?.SetGameState(GameState.Puzzle);
             if (finalNoteClip != null && noteAudioSource != null && noteAudioSource.isPlaying)
             {
@@ -295,7 +276,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private void HandleWrongSequence()
         {
             inputLocked = true;
-            statusText = WrongSequenceText;
             Failed?.Invoke();
             if (cameraShake != null)
             {
@@ -314,7 +294,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
             yield return new WaitForSeconds(failureResetDelay);
             enteredSequence.Clear();
             selectedKeyIndex = FirstIndex;
-            statusText = string.Format("Tecla seleccionada: {0}     {1}", KeyLabels[selectedKeyIndex], GetProgressText());
             RefreshKeyVisuals();
             inputLocked = false;
             resetRoutine = null;
@@ -359,29 +338,16 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private void OnGUI()
         {
+            if (HasSceneKeyboardArt()) return;
+
             EnsureGuiTextures();
-            bool hasSceneKeyboardArt = HasSceneKeyboardArt();
             float panelWidth = Mathf.Min(PanelWidth, Screen.width - PanelPadding * 2f);
-            float panelHeight = hasSceneKeyboardArt ? SceneArtPanelHeight : PanelHeight;
-            float panelX = (Screen.width - panelWidth) * 0.5f;
-            float panelY = hasSceneKeyboardArt
-                ? PanelPadding
-                : Mathf.Max(PanelPadding, (Screen.height - panelHeight) * 0.5f);
-            GUI.DrawTexture(new Rect(panelX, panelY, panelWidth, panelHeight), blackTexture);
-
-            Rect headerRect = new Rect(panelX + PanelPadding, panelY + PanelPadding,
-                panelWidth - PanelPadding * 2f, 58f);
-            GameTextGUI.DrawLabel(headerRect, "PIANO", TextAnchor.MiddleCenter);
-            Rect statusRect = new Rect(panelX + PanelPadding, panelY + 82f,
-                panelWidth - PanelPadding * 2f, 82f);
-            GameTextGUI.DrawLabel(statusRect, statusText, TextAnchor.MiddleCenter);
-
-            if (hasSceneKeyboardArt) return;
-
             float keyboardWidth = panelWidth - PanelPadding * 2f;
             float keyWidth = (keyboardWidth - KeyGap * (KeyCount - 1)) / KeyCount;
-            float keyY = panelY + KeyboardTopOffset;
-            float keyHeight = Mathf.Min(KeyboardHeight, panelY + PanelHeight - PanelPadding - keyY);
+            float keyHeight = Mathf.Min(KeyboardHeight, Screen.height - PanelPadding * 2f);
+            float keyY = (Screen.height - keyHeight) * 0.5f;
+            float panelX = (Screen.width - panelWidth) * 0.5f;
+
             for (int index = FirstIndex; index < KeyCount; index++)
             {
                 float keyX = panelX + PanelPadding + index * (keyWidth + KeyGap);
@@ -398,8 +364,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
                     GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, 5f, keyRect.height), selectionTexture);
                     GUI.DrawTexture(new Rect(keyRect.xMax - 5f, keyRect.y, 5f, keyRect.height), selectionTexture);
                 }
-                Rect keyLabelRect = new Rect(keyRect.x, keyRect.yMax - 54f, keyRect.width, 48f);
-                GameTextGUI.DrawLabel(keyLabelRect, KeyLabels[index], TextAnchor.MiddleCenter);
             }
         }
 
@@ -450,7 +414,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
             if (blackTexture == null)
             {
                 blackTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-                blackTexture.SetPixel(0, 0, PanelColor);
+                blackTexture.SetPixel(0, 0, OutlineColor);
                 blackTexture.Apply();
             }
             if (selectionTexture == null)

@@ -138,7 +138,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.999, y: 1.053}
   m_EdgeRadius: 0
 --- !u!50 &1649662095776073421
 Rigidbody2D:
@@ -192,6 +192,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5809863250536029344}
   - component: {fileID: 995359890642149467}
+  - component: {fileID: 8830531284570008847}
   m_Layer: 0
   m_Name: BoxSpriteVisual
   m_TagString: Untagged
@@ -259,8 +260,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1209273915
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7950779874574826899, guid: ed99537a251458e4bb5f0b7b302a083c, type: 3}
@@ -274,6 +275,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &8830531284570008847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 749547252858018474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80139f56eb6c10545b1aaf879beb407a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Core.YSortedSprite
+  positionSource: {fileID: 6284263946379654444}
+  orderOffset: 0
 --- !u!1 &799508536610146538
 GameObject:
   m_ObjectHideFlags: 0
@@ -566,6 +581,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1931595989556365384}
   - component: {fileID: 7986979997742255089}
+  - component: {fileID: 5621685404808951417}
   m_Layer: 0
   m_Name: BoxSpriteVisual
   m_TagString: Untagged
@@ -633,8 +649,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1209273915
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7950779874574826899, guid: ed99537a251458e4bb5f0b7b302a083c, type: 3}
@@ -648,6 +664,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &5621685404808951417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062718789820927261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80139f56eb6c10545b1aaf879beb407a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Core.YSortedSprite
+  positionSource: {fileID: 9036829583199041769}
+  orderOffset: 0
 --- !u!1 &2575758038661166653
 GameObject:
   m_ObjectHideFlags: 0
@@ -658,6 +688,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7710264896763864139}
   - component: {fileID: 7283299586680396159}
+  - component: {fileID: 6379012787959330711}
   m_Layer: 0
   m_Name: BoxSpriteVisual
   m_TagString: Untagged
@@ -725,8 +756,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1209273915
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7950779874574826899, guid: ed99537a251458e4bb5f0b7b302a083c, type: 3}
@@ -740,6 +771,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &6379012787959330711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2575758038661166653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80139f56eb6c10545b1aaf879beb407a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Core.YSortedSprite
+  positionSource: {fileID: 6544621590966124120}
+  orderOffset: 0
 --- !u!1 &2791779992554918242
 GameObject:
   m_ObjectHideFlags: 0
@@ -912,7 +957,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.999, y: 1.053}
   m_EdgeRadius: 0
 --- !u!50 &6370652786267364012
 Rigidbody2D:
@@ -1240,6 +1285,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3659665658220691709}
   - component: {fileID: 4029085095489520109}
+  - component: {fileID: 3338897212761827248}
   m_Layer: 0
   m_Name: BoxSpriteVisual
   m_TagString: Untagged
@@ -1307,8 +1353,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1209273915
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7950779874574826899, guid: ed99537a251458e4bb5f0b7b302a083c, type: 3}
@@ -1322,6 +1368,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &3338897212761827248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4084840887180323906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80139f56eb6c10545b1aaf879beb407a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Core.YSortedSprite
+  positionSource: {fileID: 8704057749926083918}
+  orderOffset: 0
 --- !u!1 &5100207712932539231
 GameObject:
   m_ObjectHideFlags: 0
@@ -1460,7 +1520,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.999, y: 1.053}
   m_EdgeRadius: 0
 --- !u!50 &6831943561038092223
 Rigidbody2D:
@@ -1642,7 +1702,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.999, y: 1.053}
   m_EdgeRadius: 0
 --- !u!50 &200828399068041842
 Rigidbody2D:
@@ -1696,6 +1756,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3659366927193490023}
   - component: {fileID: 2089748833106673319}
+  - component: {fileID: 3980638880479685355}
   m_Layer: 0
   m_Name: BoxSpriteVisual
   m_TagString: Untagged
@@ -1763,8 +1824,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1209273915
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7950779874574826899, guid: ed99537a251458e4bb5f0b7b302a083c, type: 3}
@@ -1778,6 +1839,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &3980638880479685355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5746327337323511455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80139f56eb6c10545b1aaf879beb407a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Core.YSortedSprite
+  positionSource: {fileID: 8682267715214692234}
+  orderOffset: 0
 --- !u!1 &5806789584413957384
 GameObject:
   m_ObjectHideFlags: 0
@@ -1788,6 +1863,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1495821755907021069}
   - component: {fileID: 353377469011229868}
+  - component: {fileID: 553785137558059015}
   m_Layer: 0
   m_Name: BoxSpriteVisual
   m_TagString: Untagged
@@ -1855,8 +1931,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1209273915
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7950779874574826899, guid: ed99537a251458e4bb5f0b7b302a083c, type: 3}
@@ -1870,6 +1946,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &553785137558059015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5806789584413957384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80139f56eb6c10545b1aaf879beb407a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Core.YSortedSprite
+  positionSource: {fileID: 3871223598970023182}
+  orderOffset: 0
 --- !u!1 &7120149941969484574
 GameObject:
   m_ObjectHideFlags: 0
@@ -1880,6 +1970,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8587849685510695751}
   - component: {fileID: 3266469734405656103}
+  - component: {fileID: 1537691483769218837}
   m_Layer: 0
   m_Name: BoxSpriteVisual
   m_TagString: Untagged
@@ -1947,8 +2038,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1209273915
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7950779874574826899, guid: ed99537a251458e4bb5f0b7b302a083c, type: 3}
@@ -1962,6 +2053,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &1537691483769218837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7120149941969484574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80139f56eb6c10545b1aaf879beb407a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Core.YSortedSprite
+  positionSource: {fileID: 8701630085510153878}
+  orderOffset: 0
 --- !u!1 &7414729435426344380
 GameObject:
   m_ObjectHideFlags: 0
@@ -2100,7 +2205,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.999, y: 1.053}
   m_EdgeRadius: 0
 --- !u!50 &5604838421279027156
 Rigidbody2D:
@@ -2282,7 +2387,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.999, y: 1.053}
   m_EdgeRadius: 0
 --- !u!50 &295495237298183800
 Rigidbody2D:
@@ -2657,7 +2762,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.999, y: 1.053}
   m_EdgeRadius: 0
 --- !u!50 &3792835738278897850
 Rigidbody2D:

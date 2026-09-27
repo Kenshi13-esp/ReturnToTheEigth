@@ -20,8 +20,7 @@ namespace ReturnToTheEigth.Player
         private const float MinimumAxisThreshold = 0.05f;
         private const float MaximumAxisThreshold = 1f;
         private const float MinimumStepDuration = 0.01f;
-        private const float GrabAlignmentDuration = 0.16f;
-        private const float VisualReleaseDuration = 0.16f;
+        private const float GrabAlignmentDuration = 0.1f;
         private const float GrabAssistDistance = 0.18f;
         private const float InputBufferDuration = 0.30f;
         private const float BufferedInputGrace = 0.08f;
@@ -30,7 +29,6 @@ namespace ReturnToTheEigth.Player
         private const float BlockedRepeatDelay = 0.12f;
         private const float InputReleaseThreshold = 0.25f;
         private const float MinimumGrabDirectionSquared = 0.0001f;
-        private const float SpriteContactGap = 0.01f;
         private const float Zero = 0f;
         private const float One = 1f;
         private const int CardinalManhattanLength = 1;
@@ -40,18 +38,13 @@ namespace ReturnToTheEigth.Player
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField] private TimelineEventChannelSO timelineChangedChannel;
         [SerializeField] private PuzzleGrid grid;
-        [SerializeField] private Transform playerVisual;
         [SerializeField, Range(MinimumAxisThreshold, MaximumAxisThreshold)] private float axisThreshold = DefaultAxisThreshold;
         private Rigidbody2D body;
         private BoxCollider2D playerCollider;
         private TopDownCharacterController controller;
         private PlayerAnimationController animationController;
-        private SpriteRenderer playerSpriteRenderer;
-        private Vector3 defaultVisualLocalPosition;
-        private Vector3 grabbedVisualLocalPosition;
         private InputAction moveAction;
         private Coroutine stepRoutine;
-        private Coroutine visualReturnRoutine;
         private PuzzleExitZone puzzleExitZone;
         private Vector2Int playerCell;
         private Vector2Int dragAxis;
@@ -74,22 +67,7 @@ namespace ReturnToTheEigth.Player
             body = GetComponent<Rigidbody2D>();
             playerCollider = GetComponent<BoxCollider2D>();
             controller = GetComponent<TopDownCharacterController>();
-            if (playerVisual == null)
-            {
-                SpriteRenderer[] childRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-                foreach (SpriteRenderer childRenderer in childRenderers)
-                {
-                    if (childRenderer.transform != transform)
-                    {
-                        playerVisual = childRenderer.transform;
-                        break;
-                    }
-                }
-            }
-            playerSpriteRenderer = playerVisual != null ? playerVisual.GetComponent<SpriteRenderer>() : null;
             animationController = GetComponent<PlayerAnimationController>();
-            defaultVisualLocalPosition = Vector3.zero;
-            if (playerVisual != null) playerVisual.localPosition = defaultVisualLocalPosition;
             puzzleExitZone = FindAnyObjectByType<PuzzleExitZone>();
             InputAction sourceMove = inputActions != null ? inputActions.FindAction(MoveActionPath) : null;
             if (sourceMove == null)
@@ -258,14 +236,11 @@ namespace ReturnToTheEigth.Player
             return canPush || canPull;
         }
 
-        /// <summary>Grabs and smoothly aligns to a valid adjacent cell, then locks free movement.</summary>
         public bool TryGrab(PushableBox box)
         {
             if (!CanGrab(box) || !TryGetGrabPlan(box, out Vector2Int targetPlayerCell, out Vector2Int targetDragAxis)) return false;
-            StopVisualReturnRoutine();
             playerCell = targetPlayerCell;
             dragAxis = targetDragAxis;
-            AlignVisualToBoxSide(box, targetDragAxis, targetPlayerCell);
             controller.SetFacingDirection(targetDragAxis);
             animationController?.SetFacingDirection(targetDragAxis);
             GrabbedBox = box;
@@ -277,30 +252,11 @@ namespace ReturnToTheEigth.Player
             return true;
         }
 
-        private void AlignVisualToBoxSide(PushableBox box, Vector2Int directionToBox, Vector2Int targetPlayerCell)
-        {
-            Renderer boxRenderer = box.VisualRenderer;
-            if (playerVisual == null || playerSpriteRenderer == null || boxRenderer == null) return;
-
-            Bounds playerBounds = playerSpriteRenderer.bounds;
-            Bounds boxBounds = boxRenderer.bounds;
-            float boxExtent = directionToBox.x != 0 ? boxBounds.extents.x : boxBounds.extents.y;
-            float playerExtent = directionToBox.x != 0 ? playerBounds.extents.x : playerBounds.extents.y;
-            Vector3 direction = new Vector3(directionToBox.x, directionToBox.y, Zero);
-            Vector3 targetSpriteCenter = boxBounds.center - direction * (boxExtent + playerExtent + SpriteContactGap);
-            Vector3 targetPlayerPosition = grid.CellToWorld(targetPlayerCell);
-            targetPlayerPosition.z = transform.position.z;
-            Vector3 currentSpriteCenterAtTarget = playerBounds.center + targetPlayerPosition - transform.position;
-            Vector3 worldVisualOffset = targetSpriteCenter - currentSpriteCenterAtTarget;
-            Vector3 localVisualOffset = transform.InverseTransformVector(worldVisualOffset);
-            grabbedVisualLocalPosition = defaultVisualLocalPosition + localVisualOffset;
-        }
-
+        /// <summary>Smoothly snaps the player's rigidbody (and its collider, which moves rigidly with it) onto the grabbed cell, guaranteeing a consistent one-cell gap to the box before pushing/pulling starts.</summary>
         private IEnumerator AlignPlayerToCell()
         {
             Vector2 start = body.position;
             Vector2 target = grid.CellToWorld(playerCell);
-            Vector3 visualStart = playerVisual != null ? playerVisual.localPosition : defaultVisualLocalPosition;
             float elapsed = Zero;
             while (elapsed < GrabAlignmentDuration)
             {
@@ -309,69 +265,36 @@ namespace ReturnToTheEigth.Player
                 float progress = Mathf.Clamp01(elapsed / GrabAlignmentDuration);
                 float easedProgress = Mathf.SmoothStep(Zero, One, progress);
                 body.MovePosition(Vector2.Lerp(start, target, easedProgress));
-                if (playerVisual != null)
-                {
-                    playerVisual.localPosition = Vector3.Lerp(visualStart, grabbedVisualLocalPosition, easedProgress);
-                }
             }
             body.position = target;
-            if (playerVisual != null) playerVisual.localPosition = grabbedVisualLocalPosition;
             stepRoutine = null;
         }
 
-        /// <summary>Drops the held box (if any), finishing any step in progress by snapping to its target cell, and restores free movement.</summary>
+        /// <summary>Releases the held box without changing the player's collider or visual transform.</summary>
         public void Release()
         {
             ResetBufferedInput();
+            bool hasGrabbedBox = GrabbedBox != null;
             if (stepRoutine != null)
             {
+                bool boxStepInProgress = hasGrabbedBox && GrabbedBox.IsMoving;
                 StopCoroutine(stepRoutine);
                 stepRoutine = null;
-                if (grid != null && body != null) body.position = grid.CellToWorld(stepTargetCell);
-                playerCell = stepTargetCell;
+                if (boxStepInProgress && grid != null && body != null)
+                {
+                    body.position = grid.CellToWorld(stepTargetCell);
+                }
             }
-            if (GrabbedBox != null)
+
+            if (hasGrabbedBox)
             {
                 SetGrabbedBoxCollisionIgnored(false);
                 GrabbedBox.IsGrabbed = false;
                 GrabbedBox = null;
             }
-            if (playerVisual != null)
-            {
-                if (isActiveAndEnabled)
-                {
-                    StopVisualReturnRoutine();
-                    visualReturnRoutine = StartCoroutine(ReturnVisualToDefaultPosition());
-                }
-                else
-                {
-                    playerVisual.localPosition = defaultVisualLocalPosition;
-                }
-            }
+
+            if (grid != null && body != null) playerCell = grid.WorldToCell(body.position);
             if (controller != null) controller.SetMovementEnabled(true);
-        }
-
-        private IEnumerator ReturnVisualToDefaultPosition()
-        {
-            Vector3 start = playerVisual.localPosition;
-            float elapsed = Zero;
-            while (elapsed < VisualReleaseDuration)
-            {
-                yield return WaitForPhysicsStep;
-                elapsed += Time.fixedDeltaTime;
-                float progress = Mathf.Clamp01(elapsed / VisualReleaseDuration);
-                float easedProgress = Mathf.SmoothStep(Zero, One, progress);
-                playerVisual.localPosition = Vector3.Lerp(start, defaultVisualLocalPosition, easedProgress);
-            }
-            playerVisual.localPosition = defaultVisualLocalPosition;
-            visualReturnRoutine = null;
-        }
-
-        private void StopVisualReturnRoutine()
-        {
-            if (visualReturnRoutine == null) return;
-            StopCoroutine(visualReturnRoutine);
-            visualReturnRoutine = null;
         }
 
         private void SetGrabbedBoxCollisionIgnored(bool ignored)

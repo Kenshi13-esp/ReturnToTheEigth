@@ -20,7 +20,8 @@ namespace ReturnToTheEigth.Player
         private const float MinimumAxisThreshold = 0.05f;
         private const float MaximumAxisThreshold = 1f;
         private const float MinimumStepDuration = 0.01f;
-        private const float GrabAlignmentDuration = 0.08f;
+        private const float GrabAlignmentDuration = 0.16f;
+        private const float VisualReleaseDuration = 0.16f;
         private const float GrabAssistDistance = 0.18f;
         private const float InputBufferDuration = 0.30f;
         private const float BufferedInputGrace = 0.08f;
@@ -50,6 +51,7 @@ namespace ReturnToTheEigth.Player
         private Vector3 grabbedVisualLocalPosition;
         private InputAction moveAction;
         private Coroutine stepRoutine;
+        private Coroutine visualReturnRoutine;
         private PuzzleExitZone puzzleExitZone;
         private Vector2Int playerCell;
         private Vector2Int dragAxis;
@@ -260,6 +262,7 @@ namespace ReturnToTheEigth.Player
         public bool TryGrab(PushableBox box)
         {
             if (!CanGrab(box) || !TryGetGrabPlan(box, out Vector2Int targetPlayerCell, out Vector2Int targetDragAxis)) return false;
+            StopVisualReturnRoutine();
             playerCell = targetPlayerCell;
             dragAxis = targetDragAxis;
             AlignVisualToBoxSide(box, targetDragAxis, targetPlayerCell);
@@ -333,8 +336,42 @@ namespace ReturnToTheEigth.Player
                 GrabbedBox.IsGrabbed = false;
                 GrabbedBox = null;
             }
-            if (playerVisual != null) playerVisual.localPosition = defaultVisualLocalPosition;
+            if (playerVisual != null)
+            {
+                if (isActiveAndEnabled)
+                {
+                    StopVisualReturnRoutine();
+                    visualReturnRoutine = StartCoroutine(ReturnVisualToDefaultPosition());
+                }
+                else
+                {
+                    playerVisual.localPosition = defaultVisualLocalPosition;
+                }
+            }
             if (controller != null) controller.SetMovementEnabled(true);
+        }
+
+        private IEnumerator ReturnVisualToDefaultPosition()
+        {
+            Vector3 start = playerVisual.localPosition;
+            float elapsed = Zero;
+            while (elapsed < VisualReleaseDuration)
+            {
+                yield return WaitForPhysicsStep;
+                elapsed += Time.fixedDeltaTime;
+                float progress = Mathf.Clamp01(elapsed / VisualReleaseDuration);
+                float easedProgress = Mathf.SmoothStep(Zero, One, progress);
+                playerVisual.localPosition = Vector3.Lerp(start, defaultVisualLocalPosition, easedProgress);
+            }
+            playerVisual.localPosition = defaultVisualLocalPosition;
+            visualReturnRoutine = null;
+        }
+
+        private void StopVisualReturnRoutine()
+        {
+            if (visualReturnRoutine == null) return;
+            StopCoroutine(visualReturnRoutine);
+            visualReturnRoutine = null;
         }
 
         private void SetGrabbedBoxCollisionIgnored(bool ignored)

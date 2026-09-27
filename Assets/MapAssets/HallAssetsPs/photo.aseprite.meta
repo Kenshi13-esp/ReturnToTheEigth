@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2d189860584457842a83ea8a1a965e65
+guid: daf19758196b8a44eb4d592487769e47
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -127,7 +127,7 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: puerta_vertical
+  - name: photo
     originalName: 
     pivot: {x: 0.5, y: 0}
     alignment: 9
@@ -137,9 +137,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 35
-      height: 86
-    spriteID: 4fd01340ef400d247866917a5ae43356
+      width: 50
+      height: 61
+    spriteID: 5a8046c4835a5914eb33e4e03c459488
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,25 +153,25 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 2726615856
+      value0: 62577426
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: puerta_vertical
+    name: photo
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: puerta_vertical
+    - name: photo
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
         x: 0
         y: 0
-        width: 35
-        height: 86
-      spriteId: 4fd01340ef400d247866917a5ae43356
+        width: 50
+        height: 61
+      spriteId: 5a8046c4835a5914eb33e4e03c459488
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
@@ -181,4 +181,4 @@ ScriptedImporter:
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   previousTextureSize: {x: 64, y: 128}
-  canvasSize: {x: 35, y: 86}
+  canvasSize: {x: 50, y: 61}

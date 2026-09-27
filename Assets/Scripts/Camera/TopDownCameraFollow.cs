@@ -30,11 +30,13 @@ namespace ReturnToTheEigth.CameraSystem
         [SerializeField] private Vector2 gridOrigin = DefaultGridOrigin;
         [SerializeField] private Vector2Int roomCount = DefaultRoomCount;
         private Camera roomCamera;
+        private CameraShake cameraShake;
         public Vector2Int CurrentRoom { get; private set; }
 
         private void Awake()
         {
             roomCamera = GetComponent<Camera>();
+            cameraShake = GetComponent<CameraShake>();
         }
 
         private void OnEnable()
@@ -66,6 +68,7 @@ namespace ReturnToTheEigth.CameraSystem
         public void RefreshRoomFraming()
         {
             if (roomCamera == null) roomCamera = GetComponent<Camera>();
+            if (cameraShake == null) cameraShake = GetComponent<CameraShake>();
             if (target == null || roomCamera == null) return;
 
             float width = Mathf.Max(MinimumRoomDimension, roomSize.x);
@@ -75,8 +78,15 @@ namespace ReturnToTheEigth.CameraSystem
             int row = Mathf.Clamp(Mathf.FloorToInt((target.position.y - gridOrigin.y) / height),
                 FirstRoom, Mathf.Max(MinimumRoomCount, roomCount.y) - MinimumRoomCount);
             CurrentRoom = new Vector2Int(column, row);
-            transform.SetPositionAndRotation(new Vector3(gridOrigin.x + (column + Half) * width,
-                gridOrigin.y + (row + Half) * height, CameraDepth), Quaternion.identity);
+            Vector3 cameraPosition = new Vector3(gridOrigin.x + (column + Half) * width,
+                gridOrigin.y + (row + Half) * height, CameraDepth);
+            Quaternion cameraRotation = Quaternion.identity;
+            if (cameraShake != null)
+            {
+                cameraPosition += cameraShake.CurrentOffset;
+                cameraRotation *= Quaternion.Euler(Zero, Zero, cameraShake.CurrentRollDegrees);
+            }
+            transform.SetPositionAndRotation(cameraPosition, cameraRotation);
 
             roomCamera.orthographic = true;
             roomCamera.orthographicSize = height * Half;

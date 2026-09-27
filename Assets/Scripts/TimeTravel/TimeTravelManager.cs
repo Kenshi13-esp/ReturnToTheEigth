@@ -37,6 +37,10 @@ namespace ReturnToTheEigth.TimeTravel
         private bool isTransitioning;
         private bool isConfigured;
         public TimelineEra CurrentEra { get; private set; } = TimelineEra.Present;
+        /// <summary>Gets the currently configured Present-era visual and collision root.</summary>
+        public GameObject PresentMansionRoot => presentMansionRoot;
+        /// <summary>Gets the currently configured Past-era visual and collision root.</summary>
+        public GameObject PastMansionRoot => pastMansionRoot;
 
         private void Awake()
         {
@@ -84,6 +88,17 @@ namespace ReturnToTheEigth.TimeTravel
 
         private void OnDestroy() { collisionWorld?.Dispose(); }
 
+        /// <summary>Switches the visual and collision era during a locked narrative sequence and refreshes all era listeners without applying player clearance checks.</summary>
+        public void SetEraForCinematic(TimelineEra era)
+        {
+            if (!isConfigured || !System.Enum.IsDefined(typeof(TimelineEra), era)) return;
+
+            CurrentEra = era;
+            SetEraRootsActive(era);
+            Physics2D.SyncTransforms();
+            timelineChangedChannel?.RaiseTimelineChanged(era);
+        }
+
         /// <summary>Attempts a 2D era switch without changing XY position; blocked travel leaves both roots untouched.</summary>
         public bool TryShiftTime()
         {
@@ -91,8 +106,13 @@ namespace ReturnToTheEigth.TimeTravel
                 || Time.unscaledTime < nextTransitionTime
                 || (gameStateChannel != null && gameStateChannel.CurrentState != GameState.Exploration)) return false;
             GameManager gameManager = GameManager.Instance;
-            bool hasCompletedPiano = gameManager != null && gameManager.IsPuzzleCompleted(PianoPuzzleId);
-            bool hasCompletedElectricity = gameManager != null && gameManager.IsPuzzleCompleted(ElectricityPuzzleId);
+            if (gameManager == null || !gameManager.IsTimelineTravelUnlocked)
+            {
+                return false;
+            }
+
+            bool hasCompletedPiano = gameManager.IsPuzzleCompleted(PianoPuzzleId);
+            bool hasCompletedElectricity = gameManager.IsPuzzleCompleted(ElectricityPuzzleId);
             if (hasCompletedPiano && !hasCompletedElectricity)
             {
                 transitionBlockedChannel?.RaiseEvent();

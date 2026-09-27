@@ -24,17 +24,31 @@ namespace ReturnToTheEigth.CameraSystem
         private Coroutine shakeRoutine;
         private Vector3 restPosition;
         private Quaternion restRotation;
+        private TopDownCameraFollow topDownCameraFollow;
 
         public bool IsShaking => shakeRoutine != null;
+        public Vector3 CurrentOffset { get; private set; }
+        public float CurrentRollDegrees { get; private set; }
+
+        private void Awake()
+        {
+            topDownCameraFollow = GetComponent<TopDownCameraFollow>();
+        }
 
         /// <summary>Shakes the camera for <paramref name="duration"/> seconds with a peak XY offset of <paramref name="magnitude"/> units. Restarts if already shaking.</summary>
         public void Shake(float duration, float magnitude)
         {
-            if (duration <= Zero || magnitude <= Zero) return;
+            Shake(duration, magnitude, rollDegrees);
+        }
+
+        /// <summary>Shakes the camera with a custom peak XY offset and roll. Restarts if already shaking.</summary>
+        public void Shake(float duration, float magnitude, float rollMagnitude)
+        {
+            if (duration <= Zero || magnitude <= Zero || rollMagnitude < Zero) return;
             Stop();
             restPosition = transform.localPosition;
             restRotation = transform.localRotation;
-            shakeRoutine = StartCoroutine(ShakeRoutine(duration, magnitude));
+            shakeRoutine = StartCoroutine(ShakeRoutine(duration, magnitude, rollMagnitude));
         }
 
         /// <summary>Stops the current shake (if any) and restores the rest pose.</summary>
@@ -51,7 +65,7 @@ namespace ReturnToTheEigth.CameraSystem
             Stop();
         }
 
-        private IEnumerator ShakeRoutine(float duration, float magnitude)
+        private IEnumerator ShakeRoutine(float duration, float magnitude, float rollMagnitude)
         {
             float seed = Random.Range(Zero, MaxRandomSeed);
             float elapsed = Zero;
@@ -61,9 +75,18 @@ namespace ReturnToTheEigth.CameraSystem
                 float time = seed + elapsed * frequency;
                 float offsetX = SignedNoise(time, NoiseSeedX) * magnitude * falloff;
                 float offsetY = SignedNoise(time, NoiseSeedY) * magnitude * falloff;
-                float roll = SignedNoise(time, NoiseSeedRoll) * rollDegrees * falloff;
-                transform.localPosition = restPosition + new Vector3(offsetX, offsetY, Zero);
-                transform.localRotation = restRotation * Quaternion.Euler(Zero, Zero, roll);
+                float roll = SignedNoise(time, NoiseSeedRoll) * rollMagnitude * falloff;
+                Vector3 offset = new Vector3(offsetX, offsetY, Zero);
+                if (topDownCameraFollow != null)
+                {
+                    CurrentOffset = offset;
+                    CurrentRollDegrees = roll;
+                }
+                else
+                {
+                    transform.localPosition = restPosition + offset;
+                    transform.localRotation = restRotation * Quaternion.Euler(Zero, Zero, roll);
+                }
                 elapsed += Time.deltaTime;
                 yield return null;
             }
@@ -73,6 +96,9 @@ namespace ReturnToTheEigth.CameraSystem
 
         private void RestorePose()
         {
+            CurrentOffset = Vector3.zero;
+            CurrentRollDegrees = Zero;
+            if (topDownCameraFollow != null) return;
             transform.localPosition = restPosition;
             transform.localRotation = restRotation;
         }

@@ -973,6 +973,7 @@ GameObject:
   - component: {fileID: 1605944834}
   - component: {fileID: 1605944835}
   - component: {fileID: 1605944836}
+  - component: {fileID: 1605944837}
   m_Layer: 0
   m_Name: PianoPuzzleController
   m_TagString: Untagged
@@ -1138,6 +1139,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Puzzles.Piano.PianoPuzzleFeedback
   sequenceController: {fileID: 1605944835}
   melodyClip: {fileID: 8300000, guid: 56c5a4712edb6274ea5cc7a64028c9f0, type: 3}
+--- !u!114 &1605944837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605944832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ffceb504350fd849942a2876bcdd71f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Puzzles.PuzzleSceneExit
+  inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &1914685790
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using ReturnToTheEigth.CameraSystem;
 using ReturnToTheEigth.Puzzles;
+using ReturnToTheEigth.UI;
 using ReturnToTheEigth.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,8 +21,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const string MissingNoteClipWarning = "PianoSequenceController is missing a note clip; that key will be silent.";
         private const string PianoActionPrefix = "Player/";
         private const string ConfirmActionPath = "Player/Interact";
-        private const string ConfirmPrompt = "A/D: mover selector · E: aceptar tecla";
-        private const string InputPrompt = "A/D: mover selector · E: aceptar tecla";
         private const string WrongSequenceText = "Secuencia incorrecta. Inténtalo de nuevo.";
         private const string SolvedText = "Secuencia correcta.";
         private const string PianoRewardNotice = "Has conseguido un fragmento de la foto familiar.";
@@ -40,12 +39,8 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const float KeyboardHeight = 170f;
         private const float KeyGap = 4f;
         private const float PanelPadding = 18f;
-        private const int HeaderFontSize = 22;
-        private const int KeyFontSize = 26;
-        private const int StatusFontSize = 17;
         private static readonly Color PianoWhite = Color.white;
         private static readonly Color SelectionColor = new Color(0.95f, 0.62f, 0.12f, 1f);
-        private static readonly Color TextColor = new Color(0.08f, 0.08f, 0.08f, 1f);
         private static readonly Color PanelColor = new Color(0.08f, 0.08f, 0.1f, 0.92f);
         private static readonly string[] KeyLabels = { "A", "S", "D", "F", "G", "H", "J" };
         private static readonly string[] PianoActionNames = { "PianoLeft", "PianoRight" };
@@ -80,13 +75,10 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private readonly InputAction[] navigationActions = new InputAction[NavigationActionCount];
         private InputAction confirmAction;
         private Coroutine resetRoutine;
-        private GUIStyle headerStyle;
-        private GUIStyle statusStyle;
-        private GUIStyle keyLabelStyle;
         private Texture2D whiteTexture;
         private Texture2D blackTexture;
         private Texture2D selectionTexture;
-        private string statusText = InputPrompt;
+        private string statusText = string.Empty;
         private int selectedKeyIndex;
         private bool inputLocked;
 
@@ -249,7 +241,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private string GetProgressText()
         {
-            return string.Format("{0}/{1}     {2}", enteredSequence.Count, SequenceLength, ConfirmPrompt);
+            return string.Format("{0}/{1}", enteredSequence.Count, SequenceLength);
         }
 
         private void ValidateSequence(AudioClip finalNoteClip)
@@ -367,7 +359,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private void OnGUI()
         {
-            EnsureGuiStyles();
+            EnsureGuiTextures();
             bool hasSceneKeyboardArt = HasSceneKeyboardArt();
             float panelWidth = Mathf.Min(PanelWidth, Screen.width - PanelPadding * 2f);
             float panelHeight = hasSceneKeyboardArt ? SceneArtPanelHeight : PanelHeight;
@@ -378,16 +370,13 @@ namespace ReturnToTheEigth.Puzzles.Piano
             GUI.DrawTexture(new Rect(panelX, panelY, panelWidth, panelHeight), blackTexture);
 
             Rect headerRect = new Rect(panelX + PanelPadding, panelY + PanelPadding,
-                panelWidth - PanelPadding * 2f, 36f);
-            GUI.Label(headerRect, "PIANO", headerStyle);
-            Rect statusRect = new Rect(panelX + PanelPadding, panelY + 58f,
-                panelWidth - PanelPadding * 2f, 48f);
-            GUI.Label(statusRect, statusText, statusStyle);
+                panelWidth - PanelPadding * 2f, 58f);
+            GameTextGUI.DrawLabel(headerRect, "PIANO", TextAnchor.MiddleCenter);
+            Rect statusRect = new Rect(panelX + PanelPadding, panelY + 82f,
+                panelWidth - PanelPadding * 2f, 82f);
+            GameTextGUI.DrawLabel(statusRect, statusText, TextAnchor.MiddleCenter);
 
-            if (hasSceneKeyboardArt)
-            {
-                return;
-            }
+            if (hasSceneKeyboardArt) return;
 
             float keyboardWidth = panelWidth - PanelPadding * 2f;
             float keyWidth = (keyboardWidth - KeyGap * (KeyCount - 1)) / KeyCount;
@@ -409,7 +398,8 @@ namespace ReturnToTheEigth.Puzzles.Piano
                     GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, 5f, keyRect.height), selectionTexture);
                     GUI.DrawTexture(new Rect(keyRect.xMax - 5f, keyRect.y, 5f, keyRect.height), selectionTexture);
                 }
-                GUI.Label(new Rect(keyRect.x, keyRect.yMax - 42f, keyRect.width, 36f), KeyLabels[index], keyLabelStyle);
+                Rect keyLabelRect = new Rect(keyRect.x, keyRect.yMax - 54f, keyRect.width, 48f);
+                GameTextGUI.DrawLabel(keyLabelRect, KeyLabels[index], TextAnchor.MiddleCenter);
             }
         }
 
@@ -449,7 +439,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
             }
         }
 
-        private void EnsureGuiStyles()
+        private void EnsureGuiTextures()
         {
             if (whiteTexture == null)
             {
@@ -468,36 +458,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 selectionTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
                 selectionTexture.SetPixel(0, 0, SelectionColor);
                 selectionTexture.Apply();
-            }
-            if (headerStyle == null)
-            {
-                headerStyle = new GUIStyle(GUI.skin.label)
-                {
-                    alignment = TextAnchor.MiddleCenter,
-                    fontSize = HeaderFontSize,
-                    fontStyle = FontStyle.Bold
-                };
-                headerStyle.normal.textColor = PianoWhite;
-            }
-            if (statusStyle == null)
-            {
-                statusStyle = new GUIStyle(GUI.skin.label)
-                {
-                    alignment = TextAnchor.MiddleCenter,
-                    fontSize = StatusFontSize,
-                    wordWrap = true
-                };
-                statusStyle.normal.textColor = PianoWhite;
-            }
-            if (keyLabelStyle == null)
-            {
-                keyLabelStyle = new GUIStyle(GUI.skin.label)
-                {
-                    alignment = TextAnchor.MiddleCenter,
-                    fontSize = KeyFontSize,
-                    fontStyle = FontStyle.Bold
-                };
-                keyLabelStyle.normal.textColor = TextColor;
             }
         }
     }

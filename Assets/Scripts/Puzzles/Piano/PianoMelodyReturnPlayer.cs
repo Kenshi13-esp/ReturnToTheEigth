@@ -22,9 +22,10 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const float BlackoutDuration = 1f;
         private const int BlackoutCanvasSortingOrder = 10000;
         private const int FirstShakeIndex = 0;
-        private const int ShakeCount = 5;
-        private static readonly float[] EarthquakeShakeDurations = { 0.22f, 0.28f, 0.34f, 0.42f, 0.85f };
-        private static readonly float[] EarthquakeShakeMagnitudes = { 0.12f, 0.22f, 0.38f, 0.68f, 1.6f };
+        private const int ShakeCount = 7;
+        private static readonly float[] EarthquakeShakeDurations = { 0.28f, 0.36f, 0.48f, 0.65f, 1.1f, 0.72f, 0.48f };
+        private static readonly float[] EarthquakeShakeMagnitudes = { 0.25f, 0.5f, 0.9f, 1.4f, 2.4f, 1.8f, 0.85f };
+        private static readonly float[] EarthquakeShakeRolls = { 1.5f, 2.5f, 4f, 7f, 12f, 8f, 4f };
         private static readonly Vector3 ElectricInteractionArrivalPosition = new Vector3(-3.8f, 5.32f, 0f);
         private static readonly Color TransparentBlack = new Color(0f, 0f, 0f, 0f);
         private static readonly Color OpaqueBlack = Color.black;
@@ -123,10 +124,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
             playerController ??= FindAnyObjectByType<TopDownCharacterController>();
             cameraFollow = FindAnyObjectByType<TopDownCameraFollow>();
             Camera mainCamera = Camera.main;
-            if (cameraFollow != null)
-            {
-                cameraFollow.enabled = false;
-            }
 
             if (mainCamera != null)
             {
@@ -139,7 +136,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
             for (int index = FirstShakeIndex; index < ShakeCount; index++)
             {
-                earthquakeCameraShake?.Shake(EarthquakeShakeDurations[index], EarthquakeShakeMagnitudes[index]);
+                earthquakeCameraShake?.Shake(EarthquakeShakeDurations[index], EarthquakeShakeMagnitudes[index], EarthquakeShakeRolls[index]);
                 yield return new WaitForSecondsRealtime(EarthquakeShakeDurations[index]);
                 while (earthquakeCameraShake != null && earthquakeCameraShake.IsShaking)
                 {
@@ -154,7 +151,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
             if (cameraFollow != null)
             {
-                cameraFollow.enabled = true;
                 cameraFollow.RefreshRoomFraming();
             }
 

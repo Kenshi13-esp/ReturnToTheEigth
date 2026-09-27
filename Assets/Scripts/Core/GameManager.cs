@@ -29,6 +29,8 @@ namespace ReturnToTheEigth.Core
         /// <summary>Gets the session door-state channel used by door controllers.</summary>
         public DoorStateEventChannelSO DoorStateChannel => doorStateChannel;
         public GameState CurrentGameState { get; private set; } = GameState.Exploration;
+        /// <summary>Gets whether the player has examined the family portrait and unlocked timeline travel this session.</summary>
+        public bool IsTimelineTravelUnlocked { get; private set; }
         private GameState stateBeforePause = GameState.Exploration;
         private Vector3 pendingPlayerReturnPosition;
         private TimelineEra pendingPlayerReturnEra = TimelineEra.Present;
@@ -95,6 +97,12 @@ namespace ReturnToTheEigth.Core
 
             Time.timeScale = RunningTimeScale;
             Instance = null;
+        }
+
+        /// <summary>Unlocks timeline travel after the player first examines the family portrait.</summary>
+        public void UnlockTimelineTravel()
+        {
+            IsTimelineTravelUnlocked = true;
         }
 
         /// <summary>Returns whether the puzzle with the supplied stable identifier has been completed this session.</summary>

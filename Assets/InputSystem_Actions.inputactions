@@ -567,6 +567,17 @@
                 },
                 {
                     "name": "",
+                    "id": "2a21bd2c-6f0b-4d12-9305-2474aa1dd481",
+                    "path": "<Keyboard>/leftArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "PianoLeft",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "92c8805e-11f1-4ef7-a27c-15b49fd4a102",
                     "path": "<Keyboard>/d",
                     "interactions": "",
@@ -583,6 +594,17 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
+                    "action": "PianoRight",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bb19f20c-d983-4e2e-9f77-3960ceeb36cb",
+                    "path": "<Keyboard>/rightArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "PianoRight",
                     "isComposite": false,
                     "isPartOfComposite": false

@@ -13,7 +13,7 @@ namespace ReturnToTheEigth.Puzzles
         private const string GrabPrompt = "Agarrar caja";
         private const string ReleasePrompt = "Soltar caja";
         private const string MissingGridWarning = "PushableBox could not find a PuzzleGrid in the scene.";
-        public const float InteractionRadius = 0.6f;
+        public const float InteractionRadius = 0.45f;
         private const float DefaultStepDuration = 0.2f;
         private const float MinimumStepDuration = 0.01f;
         private const float Zero = 0f;

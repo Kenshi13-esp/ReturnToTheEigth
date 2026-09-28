@@ -20,8 +20,7 @@ namespace ReturnToTheEigth.Interaction
         private const int Capacity = 64;
         private const int FirstIndex = 0;
         private const int AllLayers = -1;
-        private static readonly Color InteractionHighlightColor = new Color(1f, 0.82f, 0.42f, 1f);
-        private const float InteractionHighlightBlend = 0.42f;
+        private const float BoxHighlightReleaseDelay = 0.12f;
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField] private LayerMask interactableLayers = AllLayers;
@@ -34,6 +33,7 @@ namespace ReturnToTheEigth.Interaction
         private InteractableBase highlightedInteractable;
         private SpriteRenderer[] highlightedRenderers = System.Array.Empty<SpriteRenderer>();
         private Color[] originalRendererColors = System.Array.Empty<Color>();
+        private float lastInteractableHighlightTime;
         public InteractableBase CurrentInteractable { get; private set; }
         /// <summary>Gets the configured input-action asset used by the player interaction controls.</summary>
         public InputActionAsset InputActions => inputActions;
@@ -58,7 +58,7 @@ namespace ReturnToTheEigth.Interaction
         {
             interactAction?.Disable();
             CurrentInteractable = null;
-            SetHighlightedInteractable(null);
+            SetHighlightedInteractable(null, true);
         }
         private void OnDestroy() { interactAction?.Dispose(); }
         private void FixedUpdate() { FindNearestInteractable(); }
@@ -68,7 +68,7 @@ namespace ReturnToTheEigth.Interaction
             if (!AllowsGameplay)
             {
                 CurrentInteractable = null;
-                SetHighlightedInteractable(null);
+                SetHighlightedInteractable(null, true);
                 return;
             }
             if (interactAction != null && interactAction.WasPerformedThisFrame())
@@ -88,7 +88,7 @@ namespace ReturnToTheEigth.Interaction
             CurrentInteractable = null;
             if (!AllowsGameplay)
             {
-                SetHighlightedInteractable(null);
+                SetHighlightedInteractable(null, true);
                 return;
             }
             Physics2D.SyncTransforms();
@@ -142,7 +142,7 @@ namespace ReturnToTheEigth.Interaction
                 }
                 else if (candidate is PushableBox pushableBox)
                 {
-                    candidateRadius = Mathf.Max(candidateRadius, PushableBox.InteractionRadius);
+                    candidateRadius = PushableBox.InteractionRadius;
                     BoxDragController dragController = GetComponent<BoxDragController>();
                     if (dragController != null)
                     {
@@ -185,8 +185,19 @@ namespace ReturnToTheEigth.Interaction
             SetHighlightedInteractable(CurrentInteractable);
         }
 
-        private void SetHighlightedInteractable(InteractableBase interactable)
+        private void SetHighlightedInteractable(InteractableBase interactable, bool forceClear = false)
         {
+            if (interactable != null)
+            {
+                lastInteractableHighlightTime = Time.unscaledTime;
+            }
+            else if (!forceClear
+                     && highlightedInteractable is PushableBox
+                     && Time.unscaledTime - lastInteractableHighlightTime < BoxHighlightReleaseDelay)
+            {
+                return;
+            }
+
             if (highlightedInteractable == interactable) return;
 
             if (highlightedInteractable is IInteractionHighlightTarget previousHighlightTarget)
@@ -221,9 +232,7 @@ namespace ReturnToTheEigth.Interaction
                 if (renderer == null) continue;
                 Color originalColor = renderer.color;
                 originalRendererColors[index] = originalColor;
-                Color targetColor = new Color(InteractionHighlightColor.r, InteractionHighlightColor.g,
-                    InteractionHighlightColor.b, originalColor.a);
-                renderer.color = Color.Lerp(originalColor, targetColor, InteractionHighlightBlend);
+                renderer.color = PuzzleInteractionPalette.GetHighlightedColor(originalColor);
             }
         }
 

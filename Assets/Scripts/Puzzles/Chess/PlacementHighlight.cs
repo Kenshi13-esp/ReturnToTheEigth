@@ -41,6 +41,7 @@ namespace ReturnToTheEigth.Puzzles
 
         private void Awake()
         {
+            highlightColor = PuzzleInteractionPalette.GetHighlightedColor(new Color(1f, 1f, 1f, highlightColor.a));
             if (board == null) board = FindAnyObjectByType<KnightPlacementBoard>();
             if (board == null) Debug.LogWarning(MissingBoardWarning, this);
             if (grid == null) grid = board != null ? board.Grid : FindAnyObjectByType<PuzzleGrid>();

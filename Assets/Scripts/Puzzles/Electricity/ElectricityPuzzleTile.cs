@@ -36,9 +36,9 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         };
         private static readonly int[] PortBits = { 1, 2, 4, 8 };
         private static readonly Color FrameColor = new Color(0.08f, 0.08f, 0.055f, 1f);
-        private static readonly Color PoweredFrameColor = new Color(1f, 0.68f, 0.08f, 1f);
+        private static readonly Color PoweredFrameColor = PuzzleInteractionPalette.GetHighlightedColor(Color.white);
         private static readonly Color UnpoweredWireColor = new Color(0.08f, 0.085f, 0.075f, 1f);
-        private static readonly Color PoweredWireColor = new Color(1f, 0.78f, 0.08f, 1f);
+        private static readonly Color PoweredWireColor = PuzzleInteractionPalette.GetHighlightedColor(Color.white);
         private static readonly Vector2 ZeroPoint = Vector2.zero;
         private static Material sharedLineMaterial;
 

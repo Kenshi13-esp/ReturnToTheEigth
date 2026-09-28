@@ -18,7 +18,7 @@ namespace ReturnToTheEigth.Interaction
         private const string ChessAssetObjectName = "Chess";
         private const string PastTableObjectName = "pasttable";
         private const float HalfExtent = 0.3f;
-        private const float ChessInteractionRadius = 0.9f;
+        private const float ChessInteractionRadius = 0.5f;
         private const float HighlightBlend = 0.42f;
         private const int ChessSortingOrderOffset = 2;
         private const int PortalSortingOrderOffset = 1;

@@ -61,7 +61,6 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         [SerializeField] private string puzzleId = PuzzleId;
 
         private ElectricityPuzzleTile[,] tilesByCell;
-        private bool[,] energizedCells;
         private LineRenderer inputTerminal;
         private LineRenderer outputTerminal;
         private Material inputTerminalMaterial;
@@ -86,10 +85,6 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         {
             ResolveGrid();
             BuildTileLookup();
-            if (grid != null)
-            {
-                energizedCells = new bool[grid.Size.x, grid.Size.y];
-            }
         }
 
         private void Start()
@@ -169,9 +164,8 @@ namespace ReturnToTheEigth.Puzzles.Electricity
                         continue;
                     }
 
-                    energizedCells[x, y] |= powered[x, y];
-                    tile.SetPowered(energizedCells[x, y]);
-                    if (energizedCells[x, y])
+                    tile.SetPowered(powered[x, y]);
+                    if (powered[x, y])
                     {
                         PoweredTileCount++;
                     }

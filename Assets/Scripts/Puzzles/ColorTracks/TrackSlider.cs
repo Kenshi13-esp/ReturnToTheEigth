@@ -12,7 +12,6 @@ namespace ReturnToTheEigth.Puzzles
         private const float DefaultSelectedScale = 1.15f;
         private const float MinimumSlideSpeed = 0.1f;
         private const float MinimumScale = 0.1f;
-        private const float SelectedBrighten = 0.3f;
         private const float One = 1f;
         private static readonly int BaseColorProperty = Shader.PropertyToID("_BaseColor");
 
@@ -105,7 +104,7 @@ namespace ReturnToTheEigth.Puzzles
         {
             if (meshRenderer == null) return;
             Color color = PuzzleColorPalette.GetColor(colorId);
-            if (isSelected) color = Color.Lerp(color, Color.white, SelectedBrighten);
+            if (isSelected) color = PuzzleInteractionPalette.GetHighlightedColor(color);
             meshRenderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetColor(BaseColorProperty, color);
             meshRenderer.SetPropertyBlock(propertyBlock);

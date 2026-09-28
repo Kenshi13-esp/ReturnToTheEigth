@@ -29,13 +29,24 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const float DefaultFailureShakeDuration = 0.5f;
         private const float DefaultFailureShakeMagnitude = 0.18f;
         private const float DefaultFailureResetDelay = 0.5f;
+        private const float DefaultDemonstrationNoteDuration = 0.45f;
+        private const float MinimumDemonstrationNoteDuration = 0.1f;
+        private const float DemonstrationNoteGap = 0.15f;
+        private const int FailureToneSampleRate = 44100;
+        private const int FailureToneChannelCount = 1;
+        private const float FailureToneDuration = 0.45f;
+        private const float FailureToneFrequency = 185f;
+        private const float FailureToneSecondFrequency = 147f;
+        private const float FailureToneAmplitude = 0.16f;
+        private const float TwoPi = Mathf.PI * 2f;
         private const float Zero = 0f;
         private const float PanelWidth = 620f;
         private const float KeyboardHeight = 170f;
         private const float KeyGap = 4f;
         private const float PanelPadding = 18f;
         private static readonly Color PianoWhite = Color.white;
-        private static readonly Color SelectionColor = new Color(0.95f, 0.62f, 0.12f, 1f);
+        private static readonly Color SelectionColor = PuzzleInteractionPalette.GetHighlightedColor(Color.white);
+        private static readonly Color DemonstrationColor = PuzzleInteractionPalette.GetHighlightedColor(Color.white);
         private static readonly Color OutlineColor = Color.black;
         private static readonly string[] PianoActionNames = { "PianoLeft", "PianoRight" };
         private static readonly PianoKey[] TargetSequence =
@@ -69,11 +80,15 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private readonly InputAction[] navigationActions = new InputAction[NavigationActionCount];
         private InputAction confirmAction;
         private Coroutine resetRoutine;
+        private Coroutine demonstrationRoutine;
+        private AudioClip failureClip;
         private Texture2D whiteTexture;
         private Texture2D blackTexture;
         private Texture2D selectionTexture;
         private int selectedKeyIndex;
+        private int demonstrationKeyIndex = -1;
         private bool inputLocked;
+        private bool isDemonstrating;
 
         /// <summary>Raised once after the player confirms the correct sequence.</summary>
         public event Action Solved;
@@ -133,12 +148,40 @@ namespace ReturnToTheEigth.Puzzles.Piano
             {
                 cameraShake = FindAnyObjectByType<CameraShake>();
             }
+            failureClip = CreateFailureClip();
         }
 
         private void Start()
         {
+            inputLocked = true;
+            isDemonstrating = true;
             RefreshKeyVisuals();
             GameManager.Instance?.SetGameState(GameState.Puzzle);
+            demonstrationRoutine = StartCoroutine(PlayTargetSequence());
+        }
+
+        private IEnumerator PlayTargetSequence()
+        {
+            for (int index = FirstIndex; index < TargetSequence.Length; index++)
+            {
+                PianoKey key = TargetSequence[index];
+                demonstrationKeyIndex = (int)key;
+                RefreshKeyVisuals();
+                AudioClip playedClip = PlayKeySound(key, index);
+                float noteDuration = playedClip != null
+                    ? Mathf.Max(MinimumDemonstrationNoteDuration, playedClip.length)
+                    : DefaultDemonstrationNoteDuration;
+                yield return new WaitForSeconds(noteDuration);
+                demonstrationKeyIndex = -1;
+                RefreshKeyVisuals();
+                yield return new WaitForSeconds(DemonstrationNoteGap);
+            }
+
+            demonstrationKeyIndex = -1;
+            isDemonstrating = false;
+            RefreshKeyVisuals();
+            inputLocked = false;
+            demonstrationRoutine = null;
         }
 
         private void OnEnable()
@@ -157,6 +200,15 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 navigationActions[index]?.Disable();
             }
             confirmAction?.Disable();
+            if (demonstrationRoutine != null)
+            {
+                StopCoroutine(demonstrationRoutine);
+                demonstrationRoutine = null;
+                demonstrationKeyIndex = -1;
+                isDemonstrating = false;
+                RefreshKeyVisuals();
+                inputLocked = false;
+            }
             if (resetRoutine != null)
             {
                 StopCoroutine(resetRoutine);
@@ -172,6 +224,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 navigationActions[index]?.Dispose();
             }
             confirmAction?.Dispose();
+            if (failureClip != null) Destroy(failureClip);
             if (whiteTexture != null) Destroy(whiteTexture);
             if (blackTexture != null) Destroy(blackTexture);
             if (selectionTexture != null) Destroy(selectionTexture);
@@ -215,9 +268,14 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
             PianoKey selectedKey = (PianoKey)selectedKeyIndex;
             int sequenceIndex = enteredSequence.Count;
+            if (selectedKey != TargetSequence[sequenceIndex])
+            {
+                HandleWrongSequence();
+                return;
+            }
+
             AudioClip playedClip = PlayKeySound(selectedKey, sequenceIndex);
             enteredSequence.Add(selectedKey);
-
             if (enteredSequence.Count == SequenceLength)
             {
                 ValidateSequence(playedClip);
@@ -276,7 +334,9 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private void HandleWrongSequence()
         {
             inputLocked = true;
+            demonstrationKeyIndex = -1;
             Failed?.Invoke();
+            PlayFailureSound();
             if (cameraShake != null)
             {
                 cameraShake.Shake(failureShakeDuration, failureShakeMagnitude);
@@ -291,12 +351,47 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private IEnumerator ResetAfterFailure()
         {
-            yield return new WaitForSeconds(failureResetDelay);
+            float failureFeedbackDuration = Mathf.Max(failureResetDelay, Mathf.Max(FailureToneDuration, failureShakeDuration));
+            yield return new WaitForSeconds(failureFeedbackDuration);
             enteredSequence.Clear();
             selectedKeyIndex = FirstIndex;
+            demonstrationKeyIndex = -1;
+            isDemonstrating = true;
             RefreshKeyVisuals();
-            inputLocked = false;
             resetRoutine = null;
+            demonstrationRoutine = StartCoroutine(PlayTargetSequence());
+        }
+
+        private void PlayFailureSound()
+        {
+            if (noteAudioSource != null && failureClip != null)
+            {
+                noteAudioSource.PlayOneShot(failureClip);
+            }
+        }
+
+        private static AudioClip CreateFailureClip()
+        {
+            int sampleCount = Mathf.CeilToInt(FailureToneSampleRate * FailureToneDuration);
+            float[] samples = new float[sampleCount];
+            for (int sampleIndex = FirstIndex; sampleIndex < sampleCount; sampleIndex++)
+            {
+                float time = sampleIndex / (float)FailureToneSampleRate;
+                float progress = sampleIndex / (float)sampleCount;
+                float envelope = 1f - progress;
+                float lowTone = Mathf.Sin(TwoPi * FailureToneFrequency * time);
+                float highTone = Mathf.Sin(TwoPi * FailureToneSecondFrequency * time);
+                samples[sampleIndex] = (lowTone + highTone) * FailureToneAmplitude * envelope;
+            }
+
+            AudioClip clip = AudioClip.Create(
+                "PianoPuzzleError",
+                sampleCount,
+                FailureToneChannelCount,
+                FailureToneSampleRate,
+                false);
+            clip.SetData(samples, FirstIndex);
+            return clip;
         }
 
         private AudioClip PlayKeySound(PianoKey key, int sequenceIndex)
@@ -357,12 +452,16 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 GUI.DrawTexture(new Rect(keyRect.x, keyRect.yMax - 2f, keyRect.width, 2f), blackTexture);
                 GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, 2f, keyRect.height), blackTexture);
                 GUI.DrawTexture(new Rect(keyRect.xMax - 2f, keyRect.y, 2f, keyRect.height), blackTexture);
-                if (index == selectedKeyIndex)
+                if (index == demonstrationKeyIndex || (!isDemonstrating && index == selectedKeyIndex))
                 {
-                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, keyRect.width, 5f), selectionTexture);
-                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.yMax - 5f, keyRect.width, 5f), selectionTexture);
-                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, 5f, keyRect.height), selectionTexture);
-                    GUI.DrawTexture(new Rect(keyRect.xMax - 5f, keyRect.y, 5f, keyRect.height), selectionTexture);
+                    bool isDemonstrationKey = index == demonstrationKeyIndex;
+                    Texture2D highlightTexture = isDemonstrationKey ? whiteTexture : selectionTexture;
+                    GUI.color = isDemonstrationKey ? DemonstrationColor : Color.white;
+                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, keyRect.width, 5f), highlightTexture);
+                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.yMax - 5f, keyRect.width, 5f), highlightTexture);
+                    GUI.DrawTexture(new Rect(keyRect.x, keyRect.y, 5f, keyRect.height), highlightTexture);
+                    GUI.DrawTexture(new Rect(keyRect.xMax - 5f, keyRect.y, 5f, keyRect.height), highlightTexture);
+                    GUI.color = Color.white;
                 }
             }
         }
@@ -398,7 +497,9 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 SpriteRenderer keyVisual = keyVisuals[index];
                 if (keyVisual != null)
                 {
-                    keyVisual.color = index == selectedKeyIndex ? SelectionColor : PianoWhite;
+                    keyVisual.color = index == demonstrationKeyIndex
+                        ? DemonstrationColor
+                        : !isDemonstrating && index == selectedKeyIndex ? SelectionColor : PianoWhite;
                 }
             }
         }

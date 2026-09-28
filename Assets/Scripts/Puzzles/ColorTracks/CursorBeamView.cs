@@ -45,6 +45,8 @@ namespace ReturnToTheEigth.Puzzles
 
         private void Awake()
         {
+            beamColor = PuzzleInteractionPalette.GetHighlightedColor(new Color(1f, 1f, 1f, beamColor.a));
+            selectedColor = PuzzleInteractionPalette.GetHighlightedColor(new Color(1f, 1f, 1f, selectedColor.a));
             highlightMaterial = ConfigureTransparent(cellHighlight);
             columnMaterial = ConfigureTransparent(beamColumn);
         }

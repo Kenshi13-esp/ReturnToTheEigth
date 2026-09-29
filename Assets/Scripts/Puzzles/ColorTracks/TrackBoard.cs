@@ -152,6 +152,7 @@ namespace ReturnToTheEigth.Puzzles
                 if (occupant == null || occupant.IsMoving || occupant.ColorId != target.ColorId) return;
             }
             IsSolved = true;
+            PuzzleVictoryAudio.Play();
             GameManager gameManager = GameManager.Instance;
             if (gameManager != null)
             {

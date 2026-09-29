@@ -13,7 +13,12 @@ namespace ReturnToTheEigth.Player
         private const string MoveActionPath = "Player/Move";
         private const string TimeShiftActionPath = "Player/TimeShift";
         private const string MissingInputError = "The 2D player requires Player/Move and Player/TimeShift actions.";
+        private const string FootstepResourcePath = "Sounds/X/Steps";
+        private const string MissingFootstepClipWarning = "TopDownCharacterController could not load Resources/Sounds/X/Steps.";
         private const float DefaultMovementSpeed = 0.3f;
+        private const float FootstepDistance = 0.42f;
+        private const float FootstepVolume = 0.35f;
+        private const float FootstepPlaybackSpeed = 1.25f;
         private const float InputThreshold = 0.0001f;
         private const float UnitMagnitude = 1f;
         private const float Zero = 0f;
@@ -23,6 +28,10 @@ namespace ReturnToTheEigth.Player
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField, Min(Zero)] private float movementSpeed = DefaultMovementSpeed;
         private Rigidbody2D body;
+        private AudioSource footstepAudioSource;
+        private AudioClip footstepClip;
+        private Vector2 previousFootstepPosition;
+        private float distanceSinceLastFootstep;
         private InputAction moveAction;
         private InputAction timeShiftAction;
         private bool movementEnabled = true;
@@ -34,6 +43,24 @@ namespace ReturnToTheEigth.Player
             body = GetComponent<Rigidbody2D>();
             body.gravityScale = Zero;
             body.constraints = RigidbodyConstraints2D.FreezeRotation;
+            footstepClip = Resources.Load<AudioClip>(FootstepResourcePath);
+            if (footstepClip != null)
+            {
+                footstepAudioSource = GetComponent<AudioSource>();
+                if (footstepAudioSource == null)
+                {
+                    footstepAudioSource = gameObject.AddComponent<AudioSource>();
+                }
+                footstepAudioSource.playOnAwake = false;
+                footstepAudioSource.spatialBlend = Zero;
+                footstepAudioSource.volume = FootstepVolume;
+                footstepAudioSource.pitch = FootstepPlaybackSpeed;
+            }
+            else
+            {
+                Debug.LogWarning(MissingFootstepClipWarning, this);
+            }
+            previousFootstepPosition = body.position;
             InputAction sourceMove = inputActions != null ? inputActions.FindAction(MoveActionPath) : null;
             InputAction sourceShift = inputActions != null ? inputActions.FindAction(TimeShiftActionPath) : null;
             if (sourceMove == null || sourceShift == null)
@@ -67,6 +94,7 @@ namespace ReturnToTheEigth.Player
             if (body != null)
             {
                 body.linearVelocity = Vector2.zero;
+                ResetFootstepDistanceTracking();
             }
         }
 
@@ -78,19 +106,20 @@ namespace ReturnToTheEigth.Player
 
         private void Start()
         {
-            if (GameManager.Instance == null
-                || !GameManager.Instance.TryConsumePendingPlayerReturnPosition(out Vector3 returnPosition))
+            if (GameManager.Instance != null
+                && GameManager.Instance.TryConsumePendingPlayerReturnPosition(out Vector3 returnPosition))
             {
-                return;
+                body.position = new Vector2(returnPosition.x, returnPosition.y);
+                body.linearVelocity = Vector2.zero;
+                Physics2D.SyncTransforms();
             }
 
-            body.position = new Vector2(returnPosition.x, returnPosition.y);
-            body.linearVelocity = Vector2.zero;
-            Physics2D.SyncTransforms();
+            ResetFootstepDistanceTracking();
         }
 
         private void FixedUpdate()
         {
+            UpdateFootstepAudio();
             Vector2 direction = movementEnabled && AllowsGameplay && moveAction != null
                 ? Vector2.ClampMagnitude(moveAction.ReadValue<Vector2>(), UnitMagnitude) : Vector2.zero;
             if (direction.sqrMagnitude > InputThreshold)
@@ -98,6 +127,35 @@ namespace ReturnToTheEigth.Player
                 FacingDirection = direction.normalized;
             }
             body.linearVelocity = direction * movementSpeed;
+        }
+
+        private void UpdateFootstepAudio()
+        {
+            Vector2 currentPosition = body.position;
+            distanceSinceLastFootstep += Vector2.Distance(previousFootstepPosition, currentPosition);
+            previousFootstepPosition = currentPosition;
+
+            if (footstepAudioSource == null || footstepClip == null)
+            {
+                return;
+            }
+
+            while (distanceSinceLastFootstep >= FootstepDistance)
+            {
+                distanceSinceLastFootstep -= FootstepDistance;
+                footstepAudioSource.PlayOneShot(footstepClip);
+            }
+        }
+
+        private void ResetFootstepDistanceTracking()
+        {
+            if (body == null)
+            {
+                return;
+            }
+
+            previousFootstepPosition = body.position;
+            distanceSinceLastFootstep = Zero;
         }
 
         /// <summary>Sets the direction retained by idle animation and interaction systems.</summary>

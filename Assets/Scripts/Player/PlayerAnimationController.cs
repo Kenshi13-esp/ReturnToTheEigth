@@ -30,6 +30,7 @@ namespace ReturnToTheEigth.Player
         private const string BaseLayerName = "Base Layer";
         private const int BaseLayerIndex = 0;
         private const float StartAtBeginning = 0f;
+        private const float WalkStartNormalizedTime = 0.08f;
 
         [SerializeField] private TopDownCharacterController characterController;
         [SerializeField] private Animator animator;
@@ -145,7 +146,8 @@ namespace ReturnToTheEigth.Player
                 : currentEra == TimelineEra.Present ? PresentIdlePlaybackSpeed : IdlePlaybackSpeed;
             if (forceRestart || controllerChanged || lastController != controller || lastStateHash != stateHash
                 || lastIsMoving != isMoving)
-                animator.Play(stateHash, BaseLayerIndex, StartAtBeginning);
+                animator.Play(stateHash, BaseLayerIndex,
+                    isMoving ? WalkStartNormalizedTime : StartAtBeginning);
 
             lastController = controller;
             lastStateHash = stateHash;

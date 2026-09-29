@@ -13,10 +13,12 @@ namespace ReturnToTheEigth.Interaction
     {
         private const string InteractActionPath = "Player/Interact";
         private const string MissingInputError = "PlayerInteraction requires Player/Interact.";
+        private const string InteractionResourcePath = "Sounds/X/Interactuable";
         private const float DefaultRadius = 0.45f;
         private const float MinimumInteractionRadius = DefaultRadius;
         private const float MinimumDistanceSquared = 0.0001f;
         private const float Zero = 0f;
+        private const float FullVolume = 1f;
         private const int Capacity = 64;
         private const int FirstIndex = 0;
         private const int AllLayers = -1;
@@ -29,6 +31,8 @@ namespace ReturnToTheEigth.Interaction
         private readonly Collider2D[] nearbyColliders = new Collider2D[Capacity];
         private readonly RaycastHit2D[] sightHits = new RaycastHit2D[Capacity];
         private InputAction interactAction;
+        private AudioClip interactionClip;
+        private AudioSource interactionAudioSource;
         private TopDownCharacterController controller;
         private InteractableBase highlightedInteractable;
         private SpriteRenderer[] highlightedRenderers = System.Array.Empty<SpriteRenderer>();
@@ -42,6 +46,14 @@ namespace ReturnToTheEigth.Interaction
         private void Awake()
         {
             controller = GetComponent<TopDownCharacterController>();
+            interactionClip = Resources.Load<AudioClip>(InteractionResourcePath);
+            if (interactionClip != null)
+            {
+                interactionAudioSource = gameObject.AddComponent<AudioSource>();
+                interactionAudioSource.playOnAwake = false;
+                interactionAudioSource.spatialBlend = Zero;
+                interactionAudioSource.volume = FullVolume;
+            }
             DoorController.EnsureHallKeyDoor();
             InputAction source = inputActions != null ? inputActions.FindAction(InteractActionPath) : null;
             if (source == null)
@@ -76,6 +88,7 @@ namespace ReturnToTheEigth.Interaction
                 FindNearestInteractable();
                 if (CurrentInteractable != null && CurrentInteractable.isActiveAndEnabled)
                 {
+                    interactionAudioSource?.PlayOneShot(interactionClip);
                     CurrentInteractable.Interact(gameObject);
                 }
             }

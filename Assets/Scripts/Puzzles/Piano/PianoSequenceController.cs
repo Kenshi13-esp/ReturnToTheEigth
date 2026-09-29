@@ -319,6 +319,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private void CompleteSolvedSequence()
         {
+            PuzzleVictoryAudio.Play();
             GameManager gameManager = GameManager.Instance;
             if (gameManager != null)
             {

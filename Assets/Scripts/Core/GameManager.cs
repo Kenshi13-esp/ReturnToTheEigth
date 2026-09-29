@@ -18,12 +18,15 @@ namespace ReturnToTheEigth.Core
         private const string InvalidStateWarning = "Ignored an unsupported game state.";
         private const string InvalidInventoryOperationWarning = "Rejected an invalid inventory item ID or quantity.";
         private const string InvalidPuzzleRewardWarning = "Rejected invalid rewards for puzzle ID '{0}'.";
+        private const string PuzzleVictoryResourcePath = "Sounds/X/PuzleWin";
 
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField] private VoidEventChannelSO pauseRequestedChannel;
         [SerializeField] private VoidEventChannelSO resumeRequestedChannel;
         [SerializeField] private DoorStateEventChannelSO doorStateChannel;
         [SerializeField] private bool persistAcrossScenes = true;
+        private AudioClip puzzleVictoryClip;
+        private AudioSource puzzleVictoryAudioSource;
 
         public static GameManager Instance { get; private set; }
         /// <summary>Gets the session door-state channel used by door controllers.</summary>
@@ -57,6 +60,18 @@ namespace ReturnToTheEigth.Core
             {
                 transform.SetParent(null);
                 DontDestroyOnLoad(gameObject);
+            }
+
+            puzzleVictoryClip = Resources.Load<AudioClip>(PuzzleVictoryResourcePath);
+            if (puzzleVictoryClip != null)
+            {
+                puzzleVictoryAudioSource = GetComponent<AudioSource>();
+                if (puzzleVictoryAudioSource == null)
+                {
+                    puzzleVictoryAudioSource = gameObject.AddComponent<AudioSource>();
+                }
+                puzzleVictoryAudioSource.playOnAwake = false;
+                puzzleVictoryAudioSource.spatialBlend = 0f;
             }
 
             doorStateChannel?.ResetSession();
@@ -127,12 +142,17 @@ namespace ReturnToTheEigth.Core
             return !string.IsNullOrWhiteSpace(puzzleId) && completedPuzzleIds.Contains(puzzleId);
         }
 
-        /// <summary>Marks the puzzle with the supplied stable identifier as completed for the rest of this session.</summary>
+        /// <summary>Marks a puzzle completed once per session and plays its victory sound on its first completion.</summary>
         public void MarkPuzzleCompleted(string puzzleId)
         {
-            if (!string.IsNullOrWhiteSpace(puzzleId))
+            if (string.IsNullOrWhiteSpace(puzzleId) || !completedPuzzleIds.Add(puzzleId))
             {
-                completedPuzzleIds.Add(puzzleId);
+                return;
+            }
+
+            if (puzzleVictoryAudioSource != null && puzzleVictoryClip != null)
+            {
+                puzzleVictoryAudioSource.PlayOneShot(puzzleVictoryClip);
             }
         }
 

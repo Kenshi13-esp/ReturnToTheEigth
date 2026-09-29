@@ -129,7 +129,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: wire_1
     originalName: 
-    pivot: {x: 0.5, y: -0.7692307}
+    pivot: {x: 0.49999997, y: -0.8}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,8 +137,8 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 46
-      height: 26
+      width: 44
+      height: 25
     spriteID: ed4f9c8fa5c936148946799885554223
     spriteBone: []
     spriteOutline: []
@@ -167,10 +167,10 @@ ScriptedImporter:
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
-        x: 0
+        x: 1
         y: 20
-        width: 46
-        height: 26
+        width: 44
+        height: 25
       spriteId: ed4f9c8fa5c936148946799885554223
     linkedCells: []
     tileCells: []

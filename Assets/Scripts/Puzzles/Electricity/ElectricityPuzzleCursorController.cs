@@ -19,22 +19,11 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         private const float MinimumThreshold = 0.05f;
         private const float MaximumThreshold = 1f;
         private const float Zero = 0f;
-        private const float CursorHalfSize = 0.47f;
-        private const float CursorLineWidth = 0.075f;
-        private const int FirstIndex = 0;
-        private const int FramePointCount = 4;
-        private const int SortingOrder = 25;
-        private const string CursorObjectName = "ElectricityCursorOutline";
-        private const string LineShaderName = "Universal Render Pipeline/Unlit";
-        private const string FallbackLineShaderName = "Sprites/Default";
-        private static readonly Color CursorColor = new Color(1f, 0.1f, 0.8f, 1f);
         private static readonly Vector2Int ZeroCell = Vector2Int.zero;
-        private static Material sharedCursorMaterial;
 
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField] private ElectricityPuzzleBoard board;
-        [SerializeField] private Transform cursorVisual;
         [SerializeField] private Vector2Int startCell = ZeroCell;
         [SerializeField, Range(MinimumThreshold, MaximumThreshold)] private float inputThreshold = DefaultInputThreshold;
         [SerializeField, Min(Zero)] private float repeatDelay = DefaultRepeatDelay;
@@ -101,7 +90,6 @@ namespace ReturnToTheEigth.Puzzles.Electricity
                 return;
             }
 
-            CreateCursorVisual();
             SetCursorCell(startCell);
             GameManager.Instance?.SetGameState(GameState.Puzzle);
         }
@@ -133,16 +121,13 @@ namespace ReturnToTheEigth.Puzzles.Electricity
                 return;
             }
 
+            if (board.Grid.IsInside(CursorCell))
+            {
+                board.SetTileSelected(CursorCell, false);
+            }
+
             CursorCell = cell;
-            if (cursorVisual != null)
-            {
-                Vector2 worldPosition = board.Grid.CellToWorld(CursorCell);
-                cursorVisual.position = new Vector3(worldPosition.x, worldPosition.y, -0.1f);
-            }
-            else
-            {
-                CreateCursorVisual();
-            }
+            board.SetTileSelected(CursorCell, true);
         }
 
         private void MoveCursor(Vector2Int step)
@@ -180,54 +165,5 @@ namespace ReturnToTheEigth.Puzzles.Electricity
             return input.y > Zero ? Vector2Int.up : Vector2Int.down;
         }
 
-        private void CreateCursorVisual()
-        {
-            if (cursorVisual == null)
-            {
-                GameObject cursorObject = new GameObject(CursorObjectName);
-                cursorVisual = cursorObject.transform;
-                cursorVisual.SetParent(transform, false);
-            }
-
-            LineRenderer renderer = cursorVisual.GetComponent<LineRenderer>();
-            if (renderer == null)
-            {
-                renderer = cursorVisual.gameObject.AddComponent<LineRenderer>();
-            }
-            renderer.useWorldSpace = false;
-            renderer.loop = true;
-            renderer.positionCount = FramePointCount;
-            renderer.startWidth = CursorLineWidth;
-            renderer.endWidth = CursorLineWidth;
-            renderer.sortingOrder = SortingOrder;
-            renderer.sharedMaterial = GetCursorMaterial();
-            renderer.startColor = CursorColor;
-            renderer.endColor = CursorColor;
-            renderer.enabled = true;
-            renderer.SetPosition(0, new Vector3(-CursorHalfSize, -CursorHalfSize, 0f));
-            renderer.SetPosition(1, new Vector3(-CursorHalfSize, CursorHalfSize, 0f));
-            renderer.SetPosition(2, new Vector3(CursorHalfSize, CursorHalfSize, 0f));
-            renderer.SetPosition(3, new Vector3(CursorHalfSize, -CursorHalfSize, 0f));
-        }
-
-        private static Material GetCursorMaterial()
-        {
-            if (sharedCursorMaterial != null)
-            {
-                return sharedCursorMaterial;
-            }
-
-            Shader shader = Shader.Find(LineShaderName);
-            if (shader == null)
-            {
-                shader = Shader.Find(FallbackLineShaderName);
-            }
-            if (shader != null)
-            {
-                sharedCursorMaterial = new Material(shader);
-                sharedCursorMaterial.color = CursorColor;
-            }
-            return sharedCursorMaterial;
-        }
     }
 }

@@ -129,7 +129,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: Piano Fondo
     originalName: 
-    pivot: {x: 0.36851212, y: 0}
+    pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -137,7 +137,7 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 578
+      width: 426
       height: 240
     spriteID: 9ac881c24be0b18418c64c292d051a25
     spriteBone: []
@@ -169,7 +169,7 @@ ScriptedImporter:
       cellRect:
         x: 0
         y: 0
-        width: 578
+        width: 426
         height: 240
       spriteId: 9ac881c24be0b18418c64c292d051a25
     linkedCells: []
@@ -180,5 +180,5 @@ ScriptedImporter:
   platformSettings: []
   generatePhysicsShape: 0
   secondarySpriteTextures: []
-  previousTextureSize: {x: 1024, y: 256}
+  previousTextureSize: {x: 512, y: 256}
   canvasSize: {x: 426, y: 240}

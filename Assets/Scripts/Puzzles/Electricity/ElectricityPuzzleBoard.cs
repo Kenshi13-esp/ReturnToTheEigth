@@ -14,15 +14,8 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         private const string MissingTileWarning = "ElectricityPuzzleBoard has no tile at cell {0}.";
         private const string PuzzleId = "ElectricityPuzzle";
         private const string ElectricityRewardNotice = "Has conseguido un fragmento de la foto familiar.";
-        private const float TerminalReach = 0.92f;
-        private const float TerminalEdgeInset = 0.5f;
-        private const float TerminalLineWidth = 0.075f;
         private const float Zero = 0f;
         private const int FirstIndex = 0;
-        private const int LinePointCount = 2;
-        private const int SortingOrder = 4;
-        private const string LineShaderName = "Universal Render Pipeline/Unlit";
-        private const string FallbackLineShaderName = "Sprites/Default";
         private static readonly ElectricityPorts[] PortDirections =
         {
             ElectricityPorts.North,
@@ -48,23 +41,18 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         {
             new PuzzleReward(PuzzleItemIds.ElectricityPuzzlePaintingFragment, 1)
         };
-        private static readonly Color InputColor = new Color(0.2f, 0.95f, 0.25f, 1f);
-        private static readonly Color OutputColor = new Color(1f, 0.16f, 0.12f, 1f);
-        private static Material terminalMaterial;
 
         [SerializeField] private PuzzleGrid grid;
         [SerializeField] private ElectricityPuzzleTile[] tiles;
         [SerializeField] private Vector2Int inputCell = new Vector2Int(0, 0);
         [SerializeField] private Vector2Int outputCell = new Vector2Int(3, 3);
-        [SerializeField] private Transform inputTerminalAnchor;
-        [SerializeField] private Transform outputTerminalAnchor;
+        [SerializeField] private GameObject straightWirePrefab;
+        [SerializeField] private GameObject cornerWirePrefab;
+        [SerializeField] private GameObject teeWirePrefab;
+        [SerializeField] private GameObject crossWirePrefab;
         [SerializeField] private string puzzleId = PuzzleId;
 
         private ElectricityPuzzleTile[,] tilesByCell;
-        private LineRenderer inputTerminal;
-        private LineRenderer outputTerminal;
-        private Material inputTerminalMaterial;
-        private Material outputTerminalMaterial;
 
         /// <summary>Raised once when every tile belongs to one closed electrical network from A to B.</summary>
         public event System.Action Solved;
@@ -85,31 +73,31 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         {
             ResolveGrid();
             BuildTileLookup();
+            ConfigureTileWireVisuals();
         }
 
         private void Start()
         {
             IsSolved = GameManager.Instance != null && GameManager.Instance.IsPuzzleCompleted(puzzleId);
-            CreateTerminalVisuals();
             RefreshPowerAndSolveState();
-        }
-
-        private void OnDestroy()
-        {
-            if (inputTerminalMaterial != null)
-            {
-                Destroy(inputTerminalMaterial);
-            }
-            if (outputTerminalMaterial != null)
-            {
-                Destroy(outputTerminalMaterial);
-            }
         }
 
         /// <summary>Returns whether the supplied cell is inside the configured board.</summary>
         public bool IsInside(Vector2Int cell)
         {
             return grid != null && grid.IsInside(cell);
+        }
+
+        /// <summary>Sets the selection highlight on the tile at the supplied board cell.</summary>
+        public void SetTileSelected(Vector2Int cell, bool selected)
+        {
+            if (!IsInside(cell) || tilesByCell == null)
+            {
+                return;
+            }
+
+            ElectricityPuzzleTile tile = tilesByCell[cell.x, cell.y];
+            tile?.SetSelected(selected);
         }
 
         /// <summary>Rotates the tile at the given cell and reevaluates the complete network.</summary>
@@ -172,7 +160,6 @@ namespace ReturnToTheEigth.Puzzles.Electricity
                 }
             }
 
-            UpdateTerminalColors();
             if (!IsSolved && IsSolvedConfiguration())
             {
                 IsSolved = true;
@@ -237,6 +224,19 @@ namespace ReturnToTheEigth.Puzzles.Electricity
             return true;
         }
 
+        private void ConfigureTileWireVisuals()
+        {
+            if (tilesByCell == null)
+            {
+                return;
+            }
+
+            foreach (ElectricityPuzzleTile tile in tilesByCell)
+            {
+                tile?.ConfigureWireVisuals(straightWirePrefab, cornerWirePrefab, teeWirePrefab, crossWirePrefab);
+            }
+        }
+
         private void BuildTileLookup()
         {
             if (grid == null)
@@ -286,150 +286,9 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         }
 
 
-        private void OnDrawGizmos()
-        {
-            if (grid == null)
-            {
-                grid = GetComponent<PuzzleGrid>();
-            }
-            if (grid == null || !grid.IsInside(inputCell) || !grid.IsInside(outputCell))
-            {
-                return;
-            }
-
-            Vector2 inputCenter = grid.CellToWorld(inputCell);
-            Vector2 outputCenter = grid.CellToWorld(outputCell);
-            Vector3 inputStart = inputTerminalAnchor != null
-                ? inputTerminalAnchor.position
-                : new Vector3(inputCenter.x - TerminalReach, inputCenter.y, -0.03f);
-            Vector3 inputEdge = new Vector3(inputCenter.x - TerminalEdgeInset, inputCenter.y, inputStart.z);
-            Vector3 outputStart = outputTerminalAnchor != null
-                ? outputTerminalAnchor.position
-                : new Vector3(outputCenter.x + TerminalReach, outputCenter.y, -0.03f);
-            Vector3 outputEdge = new Vector3(outputCenter.x + TerminalEdgeInset, outputCenter.y, outputStart.z);
-            Gizmos.color = InputColor;
-            Gizmos.DrawLine(inputStart, inputEdge);
-            Gizmos.color = OutputColor;
-            Gizmos.DrawLine(outputEdge, outputStart);
-        }
-
-        private void CreateTerminalVisuals()
-        {
-            if (grid == null)
-            {
-                return;
-            }
-
-            Vector2 inputCenter = grid.CellToWorld(inputCell);
-            Vector2 outputCenter = grid.CellToWorld(outputCell);
-            Vector3 inputStart = inputTerminalAnchor != null
-                ? inputTerminalAnchor.position
-                : new Vector3(inputCenter.x - TerminalReach, inputCenter.y, -0.03f);
-            Vector3 inputEdge = new Vector3(inputCenter.x - TerminalEdgeInset, inputCenter.y, inputStart.z);
-            Vector3 outputStart = outputTerminalAnchor != null
-                ? outputTerminalAnchor.position
-                : new Vector3(outputCenter.x + TerminalReach, outputCenter.y, -0.03f);
-            Vector3 outputEdge = new Vector3(outputCenter.x + TerminalEdgeInset, outputCenter.y, outputStart.z);
-            inputTerminal = ConfigureTerminalLine(inputTerminal, inputTerminalAnchor, "InputA", inputStart, inputEdge, InputColor);
-            outputTerminal = ConfigureTerminalLine(outputTerminal, outputTerminalAnchor, "OutputB", outputStart, outputEdge, OutputColor);
-        }
-
-        private LineRenderer ConfigureTerminalLine(
-            LineRenderer renderer, Transform anchor, string objectName, Vector3 start, Vector3 end, Color color)
-        {
-            if (renderer == null)
-            {
-                if (anchor != null)
-                {
-                    renderer = anchor.GetComponent<LineRenderer>();
-                    if (renderer == null)
-                    {
-                        renderer = anchor.gameObject.AddComponent<LineRenderer>();
-                    }
-                }
-                else
-                {
-                    GameObject terminalObject = new GameObject(objectName);
-                    terminalObject.transform.SetParent(transform, false);
-                    renderer = terminalObject.AddComponent<LineRenderer>();
-                }
-            }
-
-            renderer.useWorldSpace = true;
-            renderer.positionCount = LinePointCount;
-            renderer.startWidth = TerminalLineWidth;
-            renderer.endWidth = TerminalLineWidth;
-            renderer.sortingOrder = SortingOrder;
-            Material material = new Material(GetTerminalMaterial());
-            renderer.sharedMaterial = material;
-            material.color = color;
-            if (objectName == "InputA")
-            {
-                inputTerminalMaterial = material;
-            }
-            else
-            {
-                outputTerminalMaterial = material;
-            }
-            renderer.startColor = color;
-            renderer.endColor = color;
-            renderer.enabled = true;
-            renderer.SetPosition(FirstIndex, start);
-            renderer.SetPosition(FirstIndex + 1, end);
-            return renderer;
-        }
-
-        private void UpdateTerminalColors()
-        {
-            ElectricityPuzzleTile inputTile = tilesByCell[inputCell.x, inputCell.y];
-            ElectricityPuzzleTile outputTile = tilesByCell[outputCell.x, outputCell.y];
-            Color inputColor = inputTile != null && HasPort(inputTile.CurrentPorts, ElectricityPorts.West)
-                ? InputColor : InputColor * 0.25f;
-            Color outputColor = outputTile != null && HasPort(outputTile.CurrentPorts, ElectricityPorts.East)
-                ? OutputColor : OutputColor * 0.25f;
-            if (inputTerminal != null)
-            {
-                inputTerminal.startColor = inputColor;
-                inputTerminal.endColor = inputColor;
-            }
-            if (inputTerminalMaterial != null)
-            {
-                inputTerminalMaterial.color = inputColor;
-            }
-            if (outputTerminal != null)
-            {
-                outputTerminal.startColor = outputColor;
-                outputTerminal.endColor = outputColor;
-            }
-            if (outputTerminalMaterial != null)
-            {
-                outputTerminalMaterial.color = outputColor;
-            }
-        }
-
         private static bool HasPort(ElectricityPorts ports, ElectricityPorts port)
         {
             return (ports & port) != 0;
-        }
-
-        private static Material GetTerminalMaterial()
-        {
-            if (terminalMaterial != null)
-            {
-                return terminalMaterial;
-            }
-
-            Shader shader = Shader.Find(LineShaderName);
-            if (shader == null)
-            {
-                shader = Shader.Find(FallbackLineShaderName);
-            }
-            if (shader != null)
-            {
-                terminalMaterial = new Material(shader);
-                terminalMaterial.color = Color.white;
-            }
-            return terminalMaterial;
         }
     }
 }

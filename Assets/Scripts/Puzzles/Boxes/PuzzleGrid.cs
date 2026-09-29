@@ -32,17 +32,19 @@ namespace ReturnToTheEigth.Puzzles
         public Vector2 Origin => origin;
         public Vector2Int Size => new Vector2Int(columns, rows);
 
+        private Vector2 WorldOrigin => (Vector2)transform.position + origin;
+
         /// <summary>Returns the cell containing the supplied world position (may lie outside the grid).</summary>
         public Vector2Int WorldToCell(Vector2 worldPosition)
         {
-            Vector2 local = (worldPosition - origin) / cellSize;
+            Vector2 local = (worldPosition - WorldOrigin) / cellSize;
             return new Vector2Int(Mathf.FloorToInt(local.x), Mathf.FloorToInt(local.y));
         }
 
         /// <summary>Returns the world-space center of the supplied cell.</summary>
         public Vector2 CellToWorld(Vector2Int cell)
         {
-            return origin + new Vector2((cell.x + HalfCell) * cellSize, (cell.y + HalfCell) * cellSize);
+            return WorldOrigin + new Vector2((cell.x + HalfCell) * cellSize, (cell.y + HalfCell) * cellSize);
         }
 
         /// <summary>True when the cell lies within the configured columns and rows.</summary>

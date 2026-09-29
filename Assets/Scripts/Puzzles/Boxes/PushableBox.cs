@@ -16,6 +16,10 @@ namespace ReturnToTheEigth.Puzzles
         public const float InteractionRadius = 0.45f;
         private const float DefaultStepDuration = 0.2f;
         private const float MinimumStepDuration = 0.01f;
+        private const float DefaultCellSize = 0.48f;
+        private const float BoxVisualCellFill = 0.92f;
+        private const float ColliderVisualFill = 0.9f;
+        private const float MinimumScale = 0.0001f;
         private const float Zero = 0f;
         private const float One = 1f;
         private static readonly WaitForFixedUpdate WaitForPhysicsStep = new WaitForFixedUpdate();
@@ -45,6 +49,9 @@ namespace ReturnToTheEigth.Puzzles
             body.constraints = RigidbodyConstraints2D.FreezeRotation;
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
             if (grid == null) grid = FindAnyObjectByType<PuzzleGrid>();
+            float cellSize = grid != null ? grid.CellSize : DefaultCellSize;
+            ConfigureBoxSizeAndCollider(transform, cellSize);
+            ConfigureBoxSizeAndCollider(pastCounterpart, cellSize);
             if (grid == null)
             {
                 Debug.LogWarning(MissingGridWarning, this);
@@ -109,6 +116,62 @@ namespace ReturnToTheEigth.Puzzles
             body.position = center;
             transform.position = new Vector3(center.x, center.y, transform.position.z);
             SyncPastCounterpart();
+        }
+
+        private static void ConfigureBoxSizeAndCollider(Transform boxTransform, float cellSize)
+        {
+            if (boxTransform == null) return;
+
+            SpriteRenderer spriteRenderer = boxTransform.GetComponentInChildren<SpriteRenderer>(true);
+            Vector3 visualSize = Vector3.one;
+            Vector3 visualCenter = Vector3.zero;
+            bool hasSprite = spriteRenderer != null && spriteRenderer.sprite != null;
+            if (hasSprite)
+            {
+                Bounds spriteBounds = spriteRenderer.sprite.bounds;
+                visualSize = spriteBounds.size;
+                visualCenter = spriteBounds.center;
+            }
+            else
+            {
+                MeshFilter meshFilter = boxTransform.GetComponent<MeshFilter>();
+                if (meshFilter != null && meshFilter.sharedMesh != null)
+                {
+                    Bounds meshBounds = meshFilter.sharedMesh.bounds;
+                    visualSize = meshBounds.size;
+                    visualCenter = meshBounds.center;
+                }
+            }
+
+            Vector3 parentScale = boxTransform.parent != null ? boxTransform.parent.lossyScale : Vector3.one;
+            float scaleX = cellSize * BoxVisualCellFill
+                / Mathf.Max(MinimumScale, visualSize.x * Mathf.Abs(parentScale.x));
+            float scaleY = cellSize * BoxVisualCellFill
+                / Mathf.Max(MinimumScale, visualSize.y * Mathf.Abs(parentScale.y));
+            Vector3 localScale = boxTransform.localScale;
+            localScale.x = hasSprite ? Mathf.Min(scaleX, scaleY) : scaleX;
+            localScale.y = hasSprite ? Mathf.Min(scaleX, scaleY) : scaleY;
+            boxTransform.localScale = localScale;
+
+            if (hasSprite && spriteRenderer.transform != boxTransform)
+            {
+                Transform visualTransform = spriteRenderer.transform;
+                visualTransform.localScale = Vector3.one;
+                Vector3 visualPosition = visualTransform.localPosition;
+                visualPosition.x = -visualCenter.x;
+                visualPosition.y = -visualCenter.y;
+                visualTransform.localPosition = visualPosition;
+            }
+
+            BoxCollider2D boxCollider = boxTransform.GetComponent<BoxCollider2D>();
+            if (boxCollider == null) return;
+
+            Vector3 worldScale = boxTransform.lossyScale;
+            boxCollider.size = new Vector2(
+                cellSize * ColliderVisualFill / Mathf.Max(MinimumScale, Mathf.Abs(worldScale.x)),
+                cellSize * ColliderVisualFill / Mathf.Max(MinimumScale, Mathf.Abs(worldScale.y)));
+            boxCollider.offset = Vector2.zero;
+            boxCollider.isTrigger = false;
         }
 
         private void SyncPastCounterpart()

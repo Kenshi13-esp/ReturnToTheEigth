@@ -12,8 +12,8 @@ namespace ReturnToTheEigth.Interaction
     [DisallowMultipleComponent]
     public sealed class TimelineUnlockSequence : MonoBehaviour
     {
-        private const string FirstMessage = "Mi reloj está actuando raro.";
-        private static string RevealMessage => string.Format("Pulsa {0} para usar el poder del reloj.",
+        private const string FirstMessage = "My watch is acting strange.";
+        private static string RevealMessage => string.Format("Press {0} to use the watch's power.",
             InputPromptUtility.TimeShiftControlLabel);
         private const float FirstMessageDuration = 2.2f;
         private const float InitialFlashInterval = 1.25f;

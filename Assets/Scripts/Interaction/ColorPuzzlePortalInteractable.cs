@@ -12,7 +12,7 @@ namespace ReturnToTheEigth.Interaction
     {
         private const string PuzzleSceneName = "ColorTrackPuzzle";
         private const string PuzzleId = "ColorTrackPuzzle";
-        private const string InteractionPromptText = "Entrar al puzle de colores";
+        private const string InteractionPromptText = "Enter the color puzzle";
         private const float DefaultInteractionRadius = 0.9f;
         private const float TriggerPadding = 0.1f;
 

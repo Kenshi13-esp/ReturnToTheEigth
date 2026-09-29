@@ -2603,7 +2603,7 @@ MonoBehaviour:
     amount: 1
   - itemId: PianoSheetMusic
     amount: 1
-  rewardNotification: Has obtenido la llave de la cocina izquierda, un fragmento de pintura y una partitura para el piano.
+  rewardNotification: You received the key to the left kitchen door, a family portrait fragment, and the piano sheet music.
 --- !u!114 &906110773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2617,7 +2617,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Puzzles.KnightPuzzleFeedback
   board: {fileID: 906110772}
-  cursorController: {fileID: 1686831764}
 --- !u!114 &906110774
 MonoBehaviour:
   m_ObjectHideFlags: 0

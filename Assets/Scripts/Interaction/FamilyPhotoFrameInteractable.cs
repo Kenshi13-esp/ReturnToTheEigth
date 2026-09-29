@@ -11,7 +11,7 @@ namespace ReturnToTheEigth.Interaction
     [DisallowMultipleComponent]
     public sealed class FamilyPhotoFrameInteractable : InteractableBase
     {
-        private const string OpenPrompt = "Ver el marco familiar";
+        private const string OpenPrompt = "View the family portrait";
         private const string FrameExitActionPath = "Player/PuzzleExit";
         private const string MissingFrameExitActionWarning = "FamilyPhotoFrameInteractable could not find Player/PuzzleExit.";
         private const int PanelMargin = 24;
@@ -182,7 +182,7 @@ namespace ReturnToTheEigth.Interaction
             {
                 Rect hintRect = new Rect(Screen.width * 0.08f, Screen.height - PanelMargin - TextHeight,
                     Screen.width * 0.84f, TextHeight);
-                string hint = string.Format("Pulsa {0} para salir del marco.", InputPromptUtility.PuzzleExitControlLabel);
+                string hint = string.Format("Press {0} to leave the portrait.", InputPromptUtility.PuzzleExitControlLabel);
                 GameTextGUI.DrawLabel(hintRect, hint, TextAnchor.MiddleCenter);
             }
         }
@@ -202,7 +202,7 @@ namespace ReturnToTheEigth.Interaction
         private void DrawEndingScreen()
         {
             Rect rect = new Rect(Screen.width * 0.08f, Screen.height * 0.36f, Screen.width * 0.84f, Screen.height * 0.28f);
-            GameTextGUI.DrawLabel(rect, "El retrato vuelve a estar completo.\nGracias por jugar.", TextAnchor.MiddleCenter);
+            GameTextGUI.DrawLabel(rect, "The family portrait is complete again.\nThank you for playing.", TextAnchor.MiddleCenter);
         }
 
         private bool HasAllFragments()

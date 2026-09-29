@@ -9,17 +9,17 @@ namespace ReturnToTheEigth.Puzzles
 {
     /// <summary>A permanently opening, channel-driven door with an independently animated visual hinge.</summary>
     [DisallowMultipleComponent]
-    public sealed class DoorController : InteractableBase, ITimelineObstacle
+    public sealed class DoorController : InteractableBase, ITimelineObstacle, IProximityDescription
     {
         private const string DefaultDoorIdentifier = "HallDoor";
-        private const string OpenPrompt = "Puerta abierta";
-        private const string LockedPrompt = "Cerrada - usa la palanca";
-        private const string OneSidedPromptFormat = "Puerta unidireccional: solo se abre desde {0}";
-        private const string RequiredItemPromptFormat = "Usa {0} para abrir la puerta";
-        private const string MissingItemPromptFormat = "Cerrada: requiere {0}";
+        private const string OpenPrompt = "Door open";
+        private const string LockedPrompt = "Locked - use the lever";
+        private const string OneSidedPromptFormat = "One-way door: only opens from {0}";
+        private const string RequiredItemPromptFormat = "Use {0} to open the door";
+        private const string MissingItemPromptFormat = "Locked: requires {0}";
         private const string WrongSidePrompt = "Does not open from this side";
         private const string DiningDoorAuthorizedPrompt = "This door can be opened from this side.";
-        private const string DefaultSideLabel = "el lado autorizado";
+        private const string DefaultSideLabel = "the authorized side";
         private const string InvalidSetupErrorFormat = "DoorController '{0}' requires an identifier, channel, blocking collider, valid access configuration, and dedicated door asset root.";
         private const string InvalidAssetRootError = "DoorController asset root must be a dedicated non-scene-root object containing this door and its blocking collider, and must not contain another DoorController.";
         private const float DefaultOpenAngle = -100f;
@@ -32,8 +32,9 @@ namespace ReturnToTheEigth.Puzzles
         private const string HallKeyDoorObjectName = "DoorH";
         private const string HallKeyDoorIdentifier = "DoorH";
         private const string HallKeyDoorLockedPrompt = "This door is locked.";
-        private const string HallKeyDoorItemDisplayName = "la llave del puzle de ajedrez";
+        private const string HallKeyDoorItemDisplayName = "the chess puzzle key";
         private const float HallKeyDoorInteractionRadius = 0.45f;
+        private const float DescriptiveDoorInteractionRadius = 0.45f;
         public const float DoorInteractionRadius = 0.25f;
         private const float InteractionOutlineWidth = 0.02f;
         private const float DoubleDoorHorizontalInset = 0.04f;
@@ -63,6 +64,7 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField] private float openAngleDegrees = DefaultOpenAngle;
         [SerializeField, Min(Zero)] private float animationSpeedDegrees = DefaultAnimationSpeed;
         [SerializeField] private PlayerInteraction playerInteraction;
+        [SerializeField, TextArea] private string proximityDescription;
 
         private Quaternion closedRotation;
         private Quaternion targetRotation;
@@ -76,10 +78,15 @@ namespace ReturnToTheEigth.Puzzles
         public bool IsOpen { get; private set; }
 
         /// <summary>Gets the radius used for this door's nearby interaction and outline checks.</summary>
-        public float InteractionRadius => string.Equals(gameObject.name, HallKeyDoorObjectName, StringComparison.Ordinal)
-            ? HallKeyDoorInteractionRadius : DoorInteractionRadius;
+        public float InteractionRadius => !string.IsNullOrWhiteSpace(proximityDescription)
+            ? DescriptiveDoorInteractionRadius
+            : string.Equals(gameObject.name, HallKeyDoorObjectName, StringComparison.Ordinal)
+                ? HallKeyDoorInteractionRadius : DoorInteractionRadius;
 
         private float InteractionHighlightRadius => InteractionRadius;
+
+        /// <summary>Gets an optional narrative description shown while the player is near this door.</summary>
+        public string ProximityDescription => proximityDescription;
 
         /// <summary>Gets whether the nearby player is standing on the side from which this door opens.</summary>
         public bool IsPlayerOnWrongSide => accessMode == DoorAccessMode.OneSided

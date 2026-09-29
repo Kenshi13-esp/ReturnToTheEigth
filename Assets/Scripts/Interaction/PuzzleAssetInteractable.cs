@@ -10,8 +10,8 @@ namespace ReturnToTheEigth.Interaction
     [DisallowMultipleComponent]
     public sealed class PuzzleAssetInteractable : InteractableBase
     {
-        private const string DefaultPrompt = "Entrar al puzle";
-        private const string MissingRequiredItemPrompt = "Necesitas la partitura del piano";
+        private const string DefaultPrompt = "Enter the puzzle";
+        private const string MissingRequiredItemPrompt = "You need the piano sheet music";
         private const string DefaultPuzzleSceneName = "ColorTrackPuzzle";
         private const string DefaultPuzzleId = "ColorTrackPuzzle";
         private const string OutlineShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";

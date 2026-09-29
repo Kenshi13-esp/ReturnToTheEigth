@@ -21,7 +21,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const string MissingNoteClipWarning = "PianoSequenceController is missing a note clip; that key will be silent.";
         private const string PianoActionPrefix = "Player/";
         private const string ConfirmActionPath = "Player/Interact";
-        private const string PianoRewardNotice = "Has conseguido un fragmento de la foto familiar.";
+        private const string PianoRewardNotice = "You received a family portrait fragment.";
         private const int SequenceLength = 5;
         private const int KeyCount = 7;
         private const int NavigationActionCount = 2;

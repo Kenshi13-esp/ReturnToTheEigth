@@ -10,12 +10,12 @@ namespace ReturnToTheEigth.Puzzles
     public sealed class TrackBoard : MonoBehaviour
     {
         private const char TrackCharacter = '#';
-        private const string SolvedLog = "Puzzle de colores resuelto: todas las ollas están sobre su círculo.";
+        private const string SolvedLog = "Color puzzle solved: all pots are on their targets.";
         private const string RowSizeWarning = "TrackBoard: trackRows must contain grid.rows strings of grid.columns characters each.";
         private const string SliderOffTrackWarning = "TrackBoard: slider '{0}' starts on a cell that is not passable for its color.";
         private const string DuplicateTargetWarning = "TrackBoard: target '{0}' shares a cell or color with another target.";
         private const string MissingRewardManagerWarning = "The color puzzle was solved, but its reward was not granted because no GameManager exists.";
-        private const string ChessPieceNotice = "Has obtenido la pieza de caballo necesaria para activar el puzle de ajedrez y un fragmento de pintura.";
+        private const string ChessPieceNotice = "You received the knight piece needed to activate the chess puzzle and a family portrait fragment.";
         private const int FirstIndex = 0;
         private const int LastOffset = 1;
         private const float GizmoDepth = 0f;

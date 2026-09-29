@@ -9,15 +9,15 @@ namespace ReturnToTheEigth.UI
     {
         private const float ActivityMagnitudeThreshold = 0.0001f;
         private const string KeyboardMoveLabel = "WASD";
-        private const string GamepadMoveLabel = "Joystick / cruceta";
+        private const string GamepadMoveLabel = "Joystick / D-pad";
         private const string KeyboardInteractLabel = "E";
         private const string GamepadInteractLabel = "X";
         private const string KeyboardTimeShiftLabel = "R";
-        private const string GamepadTimeShiftLabel = "Cuadrado";
+        private const string GamepadTimeShiftLabel = "Square";
         private const string KeyboardPuzzleExitLabel = "Q";
-        private const string GamepadPuzzleExitLabel = "Círculo";
+        private const string GamepadPuzzleExitLabel = "Circle";
         private const string KeyboardNavigationLabel = "A/D";
-        private const string GamepadNavigationLabel = "Cruceta izquierda/derecha";
+        private const string GamepadNavigationLabel = "D-pad Left/Right";
         private static bool isInitialized;
         private static InputDevice lastUsedDevice;
         private static bool isGamepadActive;

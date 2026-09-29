@@ -10,8 +10,8 @@ namespace ReturnToTheEigth.Puzzles
     [DisallowMultipleComponent]
     public sealed class PushableBox : InteractableBase
     {
-        private const string GrabPrompt = "Agarrar caja";
-        private const string ReleasePrompt = "Soltar caja";
+        private const string GrabPrompt = "Pick up box";
+        private const string ReleasePrompt = "Drop box";
         private const string MissingGridWarning = "PushableBox could not find a PuzzleGrid in the scene.";
         public const float InteractionRadius = 0.45f;
         private const float DefaultStepDuration = 0.2f;

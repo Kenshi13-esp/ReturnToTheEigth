@@ -13,8 +13,8 @@ namespace ReturnToTheEigth.Interaction
     {
         private const string PuzzleSceneName = "ChessPuzle";
         private const string PuzzleId = "KnightPuzzle";
-        private const string InteractionPromptText = "Entrar al puzle de ajedrez";
-        private const string MissingChessPiecePromptText = "Necesitas la pieza de caballo del puzle de color";
+        private const string InteractionPromptText = "Enter the chess puzzle";
+        private const string MissingChessPiecePromptText = "You need the knight piece from the color puzzle";
         private const string ChessAssetObjectName = "Chess";
         private const string PastTableObjectName = "pasttable";
         private const float HalfExtent = 0.3f;

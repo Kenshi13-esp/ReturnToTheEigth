@@ -13,7 +13,7 @@ namespace ReturnToTheEigth.Puzzles.Electricity
         private const string DuplicateTileWarning = "ElectricityPuzzleBoard has duplicate tiles at cell {0}.";
         private const string MissingTileWarning = "ElectricityPuzzleBoard has no tile at cell {0}.";
         private const string PuzzleId = "ElectricityPuzzle";
-        private const string ElectricityRewardNotice = "Has conseguido un fragmento de la foto familiar.";
+        private const string ElectricityRewardNotice = "You received a family portrait fragment.";
         private const float Zero = 0f;
         private const int FirstIndex = 0;
         private static readonly ElectricityPorts[] PortDirections =

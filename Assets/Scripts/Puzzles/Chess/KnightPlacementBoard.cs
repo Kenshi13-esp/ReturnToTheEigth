@@ -18,7 +18,7 @@ namespace ReturnToTheEigth.Puzzles
         private const string CorrectCellNotLitWarning = "KnightPlacementBoard: correctCell {0} has no PlacementHighlight; the puzzle cannot be solved.";
         private const string DuplicateHighlightWarning = "Two PlacementHighlights share cell {0}.";
         private const string MissingRewardManagerWarning = "The Chess puzzle was solved, but its rewards were not granted because no GameManager exists.";
-        private const string ChessRewardNotice = "Has obtenido la llave de la cocina izquierda, un fragmento de pintura y una partitura para el piano.";
+        private const string ChessRewardNotice = "You received the key to the left kitchen door, a family portrait fragment, and the piano sheet music.";
         private const string DefaultPuzzleId = "KnightPuzzle";
         private const float DefaultEvaluationDelay = 0.35f;
         private const float DefaultShakeDuration = 0.5f;

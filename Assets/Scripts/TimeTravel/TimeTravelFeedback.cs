@@ -9,8 +9,8 @@ namespace ReturnToTheEigth.TimeTravel
     /// <summary>Shows first-time family-frame guidance, pending reward notices and blocked time-travel feedback.</summary>
     public sealed class TimeTravelFeedback : MonoBehaviour
     {
-        private const string BlockedText = "Viaje bloqueado: el destino está ocupado.";
-        private const string FrameInteractionInstruction = "Pulsa {0} para interactuar con el cuadro.";
+        private const string BlockedText = "Time travel blocked: the destination is occupied.";
+        private const string FrameInteractionInstruction = "Press {0} to interact with the family portrait.";
         private const float FeedbackDuration = 2f;
         private const float RewardNoticeDuration = 3.5f;
         private const float PanelWidthRatio = 0.82f;
@@ -50,7 +50,10 @@ namespace ReturnToTheEigth.TimeTravel
             InteractableBase target = playerInteraction != null ? playerInteraction.CurrentInteractable : null;
             bool showingFrameInteractionInstruction = target is FamilyPhotoFrameInteractable frame
                 && frame.isActiveAndEnabled && frame.ShouldShowInitialInteractionHint;
-            if (!blocked && !rewardNoticeActive && !showingFrameInteractionInstruction) return;
+            bool showingProximityDescription = target is IProximityDescription descriptionSource
+                && target.isActiveAndEnabled
+                && !string.IsNullOrWhiteSpace(descriptionSource.ProximityDescription);
+            if (!blocked && !rewardNoticeActive && !showingFrameInteractionInstruction && !showingProximityDescription) return;
 
             string message;
             if (blocked)
@@ -61,9 +64,13 @@ namespace ReturnToTheEigth.TimeTravel
             {
                 message = activeRewardNotice;
             }
-            else
+            else if (showingFrameInteractionInstruction)
             {
                 message = string.Format(FrameInteractionInstruction, InputPromptUtility.InteractControlLabel);
+            }
+            else
+            {
+                message = ((IProximityDescription)target).ProximityDescription;
             }
 
             float panelWidth = Screen.width * PanelWidthRatio;

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: dc5cfd255373f0f4ca7283b6ac52e225
+guid: 10dd4be64f1b35147a984108cab1b7f1
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -127,7 +127,7 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: LegendControler
+  - name: MenuControls1
     originalName: 
     pivot: {x: 0.5, y: -0.17514125}
     alignment: 9
@@ -139,7 +139,7 @@ ScriptedImporter:
       y: 4
       width: 362
       height: 177
-    spriteID: 98871799567d0ca4aab8e03cc57b9547
+    spriteID: 0689dbed70389c645b014be87923374c
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,17 +153,17 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 233622833
+      value0: 865818302
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: LegendControler
+    name: MenuControls1
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: LegendControler
+    - name: MenuControls1
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
@@ -171,7 +171,7 @@ ScriptedImporter:
         y: 31
         width: 362
         height: 177
-      spriteId: 98871799567d0ca4aab8e03cc57b9547
+      spriteId: 0689dbed70389c645b014be87923374c
     linkedCells: []
     tileCells: []
     tileSetIndex: 0

@@ -16,9 +16,10 @@ namespace ReturnToTheEigth.UI
         private const int FirstVariantIndex = 0;
         private const int SecondVariantIndex = 1;
         private const int ThirdVariantIndex = 2;
-        private const float AnimationDurationSeconds = 0.3f;
+        private const float AnimationDurationSeconds = 0.4f;
         private const float AnimationOverlayOpacity = 0.75f;
-        private const float HoverScaleMultiplier = 1.3f;
+        private const float HoverScaleMultiplier = 1.12f;
+       
 
         [SerializeField] private Button button;
         [SerializeField] private Image animationOverlay;
@@ -27,9 +28,15 @@ namespace ReturnToTheEigth.UI
         [SerializeField] private Sprite[] glassBreakageButton03Frames;
         [SerializeField] private UnityEvent onAnimationFinished = new UnityEvent();
         [SerializeField] private string sceneToLoadAfterAnimation;
+        [SerializeField] private bool enablePointerHoverFeedback;
 
         private Coroutine playbackCoroutine;
+        private RectTransform animationOverlayRectTransform;
+        private Image buttonImage;
+        private Vector2 originalOverlaySizeDelta;
+
         private int originalSiblingIndex;
+        private bool isPointerOverButton;
         private bool hasOriginalSiblingIndex;
         private bool isSiblingIndexRestorePending;
         private Vector3 originalLocalScale;
@@ -48,8 +55,13 @@ namespace ReturnToTheEigth.UI
                 return;
             }
 
+            animationOverlayRectTransform = animationOverlay.rectTransform;
+            originalOverlaySizeDelta = animationOverlayRectTransform.sizeDelta;
+            buttonImage = button.GetComponent<Image>();
             animationOverlay.raycastTarget = false;
-            animationOverlay.preserveAspect = false;
+            // Previous fixed button-rectangle behavior retained for rollback:
+            // animationOverlayRectTransform.sizeDelta = originalOverlaySizeDelta;
+            animationOverlay.preserveAspect = true;
             Color overlayColor = animationOverlay.color;
             overlayColor.a = AnimationOverlayOpacity;
             animationOverlay.color = overlayColor;
@@ -76,7 +88,9 @@ namespace ReturnToTheEigth.UI
             }
 
             RestoreButtonSiblingIndex();
+            RestoreAnimationOverlaySize();
             transform.localScale = originalLocalScale;
+            isPointerOverButton = false;
 
             if (animationOverlay != null)
                 animationOverlay.enabled = false;
@@ -84,11 +98,20 @@ namespace ReturnToTheEigth.UI
 
         void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData)
         {
-            transform.localScale = originalLocalScale * HoverScaleMultiplier;
+            if (!enablePointerHoverFeedback)
+                return;
+
+            isPointerOverButton = true;
+            if (playbackCoroutine == null)
+                transform.localScale = originalLocalScale * HoverScaleMultiplier;
         }
 
         void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
         {
+            if (!enablePointerHoverFeedback)
+                return;
+
+            isPointerOverButton = false;
             transform.localScale = originalLocalScale;
         }
 
@@ -111,8 +134,21 @@ namespace ReturnToTheEigth.UI
                 hasOriginalSiblingIndex = true;
             }
 
+            transform.localScale = originalLocalScale;
             transform.SetAsLastSibling();
+            KeepGamepadCursorAboveButton();
             playbackCoroutine = StartCoroutine(PlayFrameSequence(frames));
+        }
+
+        private void KeepGamepadCursorAboveButton()
+        {
+            Canvas parentCanvas = GetComponentInParent<Canvas>();
+            if (parentCanvas == null)
+                return;
+
+            Transform gamepadCursor = parentCanvas.transform.Find("GamepadCursor");
+            if (gamepadCursor != null)
+                gamepadCursor.SetAsLastSibling();
         }
 
         private Sprite[] SelectRandomFrameSequence()
@@ -132,10 +168,18 @@ namespace ReturnToTheEigth.UI
             animationOverlay.enabled = true;
             animationOverlay.sprite = null;
             float frameDurationSeconds = AnimationDurationSeconds / frames.Length;
+            Vector2 displayedButtonSize = CalculateDisplayedButtonSize();
+            float referenceFrameHeight = frames[0].rect.height;
+            float uiUnitsPerSourcePixel = referenceFrameHeight > 0
+                ? displayedButtonSize.y / referenceFrameHeight
+                : 0;
 
+            // Previous fixed overlay sizing retained for rollback:
+            // animationOverlayRectTransform.sizeDelta = originalOverlaySizeDelta;
             for (int frameIndex = 0; frameIndex < frames.Length; frameIndex++)
             {
                 animationOverlay.sprite = frames[frameIndex];
+                SetOverlaySizeForFrame(frames[frameIndex], uiUnitsPerSourcePixel);
                 yield return new WaitForSecondsRealtime(frameDurationSeconds);
             }
 
@@ -146,6 +190,14 @@ namespace ReturnToTheEigth.UI
                 AsyncOperation sceneLoad = SceneManager.LoadSceneAsync(sceneToLoadAfterAnimation, LoadSceneMode.Single);
                 if (sceneLoad != null)
                 {
+                    while (!sceneLoad.isDone)
+                        yield return null;
+                }
+
+                /* Previous behavior retained for rollback: it replayed the same break frames
+                   repeatedly while the destination scene was loading.
+                if (sceneLoad != null)
+                {
                     int transitionFrameIndex = 0;
                     while (!sceneLoad.isDone)
                     {
@@ -154,12 +206,58 @@ namespace ReturnToTheEigth.UI
                         transitionFrameIndex = (transitionFrameIndex + 1) % frames.Length;
                     }
                 }
+                */
             }
 
             animationOverlay.enabled = false;
             animationOverlay.sprite = null;
+            RestoreAnimationOverlaySize();
             RestoreButtonSiblingIndex();
+            transform.localScale = enablePointerHoverFeedback && isPointerOverButton
+                ? originalLocalScale * HoverScaleMultiplier
+                : originalLocalScale;
             playbackCoroutine = null;
+        }
+
+        private Vector2 CalculateDisplayedButtonSize()
+        {
+            RectTransform buttonRectTransform = button.transform as RectTransform;
+            if (buttonRectTransform == null)
+                return Vector2.zero;
+
+            Vector2 displayedSize = buttonRectTransform.rect.size;
+            if (buttonImage == null || buttonImage.sprite == null || !buttonImage.preserveAspect)
+                return displayedSize;
+
+            Rect spriteRect = buttonImage.sprite.rect;
+            if (spriteRect.width <= 0 || spriteRect.height <= 0 || displayedSize.x <= 0 || displayedSize.y <= 0)
+                return displayedSize;
+
+            float spriteAspectRatio = spriteRect.width / spriteRect.height;
+            float rectAspectRatio = displayedSize.x / displayedSize.y;
+
+            if (rectAspectRatio > spriteAspectRatio)
+                displayedSize.x = displayedSize.y * spriteAspectRatio;
+            else
+                displayedSize.y = displayedSize.x / spriteAspectRatio;
+
+            return displayedSize;
+        }
+
+        private void SetOverlaySizeForFrame(Sprite frame, float uiUnitsPerSourcePixel)
+        {
+            if (animationOverlayRectTransform == null || frame == null || uiUnitsPerSourcePixel <= 0)
+                return;
+
+            Vector2 frameSize = frame.rect.size * uiUnitsPerSourcePixel;
+            animationOverlayRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, frameSize.x);
+            animationOverlayRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, frameSize.y);
+        }
+
+        private void RestoreAnimationOverlaySize()
+        {
+            if (animationOverlayRectTransform != null)
+                animationOverlayRectTransform.sizeDelta = originalOverlaySizeDelta;
         }
 
         private void RestoreButtonSiblingIndex()

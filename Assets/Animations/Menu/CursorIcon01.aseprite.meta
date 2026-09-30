@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2d23dd6f9d1f1d24996d0713b155c482
+guid: f0cb334cd452604478ddd371838938c1
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -103,7 +103,7 @@ ScriptedImporter:
     addShadowCasters: 0
     generateIndividualEvents: 1
     generateSpriteAtlas: 1
-  platformSettingsDirtyTick: 639262510811199165
+  platformSettingsDirtyTick: 639262510769855920
   singleSpriteImportData:
   - name: 
     originalName: 
@@ -127,7 +127,7 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: CursorIcon02
+  - name: CursorIcon01
     originalName: 
     pivot: {x: 0.5, y: 0}
     alignment: 9
@@ -139,7 +139,7 @@ ScriptedImporter:
       y: 4
       width: 16
       height: 21
-    spriteID: 8d480fed3e848674386791bd9c9434ee
+    spriteID: eb0de2490adcf2648acf4dbdf4603572
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,17 +153,17 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 1731494675
+      value0: 165410734
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: CursorIcon02
+    name: CursorIcon01
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: CursorIcon02
+    - name: CursorIcon01
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
@@ -171,7 +171,7 @@ ScriptedImporter:
         y: 0
         width: 16
         height: 21
-      spriteId: 8d480fed3e848674386791bd9c9434ee
+      spriteId: eb0de2490adcf2648acf4dbdf4603572
     linkedCells: []
     tileCells: []
     tileSetIndex: 0

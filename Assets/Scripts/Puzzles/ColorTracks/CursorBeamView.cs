@@ -27,11 +27,13 @@ namespace ReturnToTheEigth.Puzzles
         private const float DefaultFollowSmoothing = 20f;
         private const float Half = 0.5f;
         private const float One = 1f;
+        private const float OpaqueCursorAlpha = 1f;
         private const float Zero = 0f;
         private static readonly int BaseColorProperty = Shader.PropertyToID("_BaseColor");
 
         [SerializeField] private MeshRenderer cellHighlight;
         [SerializeField] private MeshRenderer beamColumn;
+        [SerializeField] private SpriteRenderer cursorSprite;
         [SerializeField] private float beamTopY = DefaultBeamTopY;
         [SerializeField] private Color beamColor = new Color(1f, 0.95f, 0.7f, 0.35f);
         [SerializeField] private Color selectedColor = new Color(0.6f, 1f, 0.8f, 0.45f);
@@ -74,6 +76,7 @@ namespace ReturnToTheEigth.Puzzles
         public void SetSelected(bool selected)
         {
             isSelected = selected;
+            if (cursorSprite != null) cursorSprite.enabled = !selected;
         }
 
         private void LateUpdate()
@@ -107,6 +110,7 @@ namespace ReturnToTheEigth.Puzzles
             tint.a = Mathf.Clamp01(tint.a * pulse);
             if (highlightMaterial != null) highlightMaterial.SetColor(BaseColorProperty, tint);
             if (columnMaterial != null) columnMaterial.SetColor(BaseColorProperty, tint);
+            if (cursorSprite != null) cursorSprite.color = new Color(tint.r, tint.g, tint.b, OpaqueCursorAlpha);
         }
 
         private static Material ConfigureTransparent(MeshRenderer renderer)

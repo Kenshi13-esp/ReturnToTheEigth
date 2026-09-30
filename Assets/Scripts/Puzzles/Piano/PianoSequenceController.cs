@@ -32,13 +32,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const float DefaultDemonstrationNoteDuration = 0.45f;
         private const float MinimumDemonstrationNoteDuration = 0.1f;
         private const float DemonstrationNoteGap = 0.15f;
-        private const int FailureToneSampleRate = 44100;
-        private const int FailureToneChannelCount = 1;
-        private const float FailureToneDuration = 0.45f;
-        private const float FailureToneFrequency = 185f;
-        private const float FailureToneSecondFrequency = 147f;
-        private const float FailureToneAmplitude = 0.16f;
-        private const float TwoPi = Mathf.PI * 2f;
+
         private const float Zero = 0f;
         private const float PanelWidth = 620f;
         private const float KeyboardHeight = 170f;
@@ -81,7 +75,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private InputAction confirmAction;
         private Coroutine resetRoutine;
         private Coroutine demonstrationRoutine;
-        private AudioClip failureClip;
         private Texture2D whiteTexture;
         private Texture2D blackTexture;
         private Texture2D selectionTexture;
@@ -148,7 +141,6 @@ namespace ReturnToTheEigth.Puzzles.Piano
             {
                 cameraShake = FindAnyObjectByType<CameraShake>();
             }
-            failureClip = CreateFailureClip();
         }
 
         private void Start()
@@ -224,7 +216,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 navigationActions[index]?.Dispose();
             }
             confirmAction?.Dispose();
-            if (failureClip != null) Destroy(failureClip);
+
             if (whiteTexture != null) Destroy(whiteTexture);
             if (blackTexture != null) Destroy(blackTexture);
             if (selectionTexture != null) Destroy(selectionTexture);
@@ -352,7 +344,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private IEnumerator ResetAfterFailure()
         {
-            float failureFeedbackDuration = Mathf.Max(failureResetDelay, Mathf.Max(FailureToneDuration, failureShakeDuration));
+            float failureFeedbackDuration = Mathf.Max(failureResetDelay, Mathf.Max(PuzzleFailureAudio.ToneDuration, failureShakeDuration));
             yield return new WaitForSeconds(failureFeedbackDuration);
             enteredSequence.Clear();
             selectedKeyIndex = FirstIndex;
@@ -365,34 +357,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private void PlayFailureSound()
         {
-            if (noteAudioSource != null && failureClip != null)
-            {
-                noteAudioSource.PlayOneShot(failureClip);
-            }
-        }
-
-        private static AudioClip CreateFailureClip()
-        {
-            int sampleCount = Mathf.CeilToInt(FailureToneSampleRate * FailureToneDuration);
-            float[] samples = new float[sampleCount];
-            for (int sampleIndex = FirstIndex; sampleIndex < sampleCount; sampleIndex++)
-            {
-                float time = sampleIndex / (float)FailureToneSampleRate;
-                float progress = sampleIndex / (float)sampleCount;
-                float envelope = 1f - progress;
-                float lowTone = Mathf.Sin(TwoPi * FailureToneFrequency * time);
-                float highTone = Mathf.Sin(TwoPi * FailureToneSecondFrequency * time);
-                samples[sampleIndex] = (lowTone + highTone) * FailureToneAmplitude * envelope;
-            }
-
-            AudioClip clip = AudioClip.Create(
-                "PianoPuzzleError",
-                sampleCount,
-                FailureToneChannelCount,
-                FailureToneSampleRate,
-                false);
-            clip.SetData(samples, FirstIndex);
-            return clip;
+            PuzzleFailureAudio.Play(noteAudioSource);
         }
 
         private AudioClip PlayKeySound(PianoKey key, int sequenceIndex)

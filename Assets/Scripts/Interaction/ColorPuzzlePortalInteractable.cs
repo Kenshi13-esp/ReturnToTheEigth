@@ -10,7 +10,7 @@ namespace ReturnToTheEigth.Interaction
     [DisallowMultipleComponent]
     public sealed class ColorPuzzlePortalInteractable : InteractableBase
     {
-        private const string PuzzleSceneName = "ColorTrackPuzzle";
+        private const string PuzzleSceneName = "ColorPuzzle";
         private const string PuzzleId = "ColorTrackPuzzle";
         private const string InteractionPromptText = "Enter the color puzzle";
         private const float DefaultInteractionRadius = 0.9f;

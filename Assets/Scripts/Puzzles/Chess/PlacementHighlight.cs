@@ -32,10 +32,12 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField] private PuzzleGrid grid;
         [SerializeField] private Vector2Int cell;
         [SerializeField] private MeshRenderer highlightRenderer;
+        [SerializeField] private bool showVisual = true;
         [SerializeField] private Color highlightColor = new Color(1f, 0.95f, 0.6f, 0.45f);
         [SerializeField, Min(Zero)] private float pulseSpeed = DefaultPulseSpeed;
         [SerializeField, Range(Zero, One)] private float pulseAmplitude = DefaultPulseAmplitude;
         private Material highlightMaterial;
+        private bool isVisible = true;
 
         public Vector2Int Cell => cell;
 
@@ -47,11 +49,18 @@ namespace ReturnToTheEigth.Puzzles
             if (grid == null) grid = board != null ? board.Grid : FindAnyObjectByType<PuzzleGrid>();
             if (highlightRenderer == null) highlightRenderer = GetComponentInChildren<MeshRenderer>();
             highlightMaterial = ConfigureTransparent(highlightRenderer);
+            ApplyVisibility();
             if (grid != null)
             {
                 Vector2 center = grid.CellToWorld(cell);
                 transform.position = new Vector3(center.x, center.y, transform.position.z);
             }
+        }
+
+        private void OnValidate()
+        {
+            if (highlightRenderer == null) highlightRenderer = GetComponentInChildren<MeshRenderer>();
+            ApplyVisibility();
         }
 
         private void OnEnable()
@@ -81,7 +90,13 @@ namespace ReturnToTheEigth.Puzzles
         /// <summary>Shows or hides the light without unregistering the cell from the board.</summary>
         public void SetVisible(bool visible)
         {
-            if (highlightRenderer != null) highlightRenderer.enabled = visible;
+            isVisible = visible;
+            ApplyVisibility();
+        }
+
+        private void ApplyVisibility()
+        {
+            if (highlightRenderer != null) highlightRenderer.enabled = showVisual && isVisible;
         }
 
         private static Material ConfigureTransparent(MeshRenderer renderer)

@@ -175,6 +175,7 @@ namespace ReturnToTheEigth.Puzzles
                 Solved?.Invoke();
                 yield break;
             }
+            PuzzleFailureAudio.Play();
             Failed?.Invoke();
             if (cameraShake != null) cameraShake.Shake(shakeDuration, shakeMagnitude);
             yield return new WaitForSeconds(Mathf.Max(shakeDuration, restartDelay));

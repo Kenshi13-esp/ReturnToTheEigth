@@ -97,8 +97,7 @@ namespace ReturnToTheEigth.Interaction
 
         private void ConfigureChessAssetSorting()
         {
-            Transform[] sceneTransforms = FindObjectsByType<Transform>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Transform[] sceneTransforms = FindObjectsByType<Transform>(FindObjectsInactive.Include);
             Transform chessTransform = null;
             Transform tableTransform = null;
 

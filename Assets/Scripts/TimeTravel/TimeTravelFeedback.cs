@@ -19,6 +19,7 @@ namespace ReturnToTheEigth.TimeTravel
         [SerializeField] private TimelineEventChannelSO timelineChangedChannel;
         [SerializeField] private VoidEventChannelSO transitionBlockedChannel;
         [SerializeField] private PlayerInteraction playerInteraction;
+        [SerializeField] private Sprite dialogueBoxBackground;
         private float blockedUntil = float.NegativeInfinity;
         private float rewardNoticeUntil = float.NegativeInfinity;
         private string activeRewardNotice;
@@ -48,9 +49,11 @@ namespace ReturnToTheEigth.TimeTravel
             bool rewardNoticeActive = Time.unscaledTime < rewardNoticeUntil
                 && !string.IsNullOrWhiteSpace(activeRewardNotice);
             InteractableBase target = playerInteraction != null ? playerInteraction.CurrentInteractable : null;
-            bool showingFrameInteractionInstruction = target is FamilyPhotoFrameInteractable frame
+            bool showingFrameInteractionInstruction = target != null
+                && target is FamilyPhotoFrameInteractable frame
                 && frame.isActiveAndEnabled && frame.ShouldShowInitialInteractionHint;
-            bool showingProximityDescription = target is IProximityDescription descriptionSource
+            bool showingProximityDescription = target != null
+                && target is IProximityDescription descriptionSource
                 && target.isActiveAndEnabled
                 && !string.IsNullOrWhiteSpace(descriptionSource.ProximityDescription);
             if (!blocked && !rewardNoticeActive && !showingFrameInteractionInstruction && !showingProximityDescription) return;
@@ -76,7 +79,7 @@ namespace ReturnToTheEigth.TimeTravel
             float panelWidth = Screen.width * PanelWidthRatio;
             Rect panelRect = new Rect((Screen.width - panelWidth) * 0.5f,
                 Screen.height - PanelHeight - PanelBottomInset, panelWidth, PanelHeight);
-            GameTextGUI.DrawLabel(panelRect, message, TextAnchor.MiddleCenter);
+            GameTextGUI.DrawLabel(panelRect, message, dialogueBoxBackground, TextAnchor.MiddleCenter);
         }
 
         private void HandleTimelineChanged(TimelineEra era) { blockedUntil = float.NegativeInfinity; }

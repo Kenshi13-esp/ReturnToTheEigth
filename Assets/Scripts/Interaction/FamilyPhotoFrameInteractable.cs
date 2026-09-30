@@ -19,6 +19,7 @@ namespace ReturnToTheEigth.Interaction
         private const float ColliderPadding = 0.4f;
         private const float ImageWidthRatio = 0.54f;
         private const float ImageHeightRatio = 0.66f;
+        private const float FrameVerticalOffset = 32f;
         private const float TextHeight = 76f;
         private const float Zero = 0f;
         private static readonly string[] FragmentIds =
@@ -36,6 +37,7 @@ namespace ReturnToTheEigth.Interaction
         private TimelineUnlockSequence timelineUnlockSequence;
         private InputAction frameExitAction;
         private Texture2D solidTexture;
+        [SerializeField] private Sprite dialogueBoxBackground;
         private bool isOpen;
         private bool isEnding;
         private bool isTimelineIntroPlaying;
@@ -175,7 +177,7 @@ namespace ReturnToTheEigth.Interaction
             float imageWidth = Mathf.Min(Screen.width * ImageWidthRatio, imageHeight * aspect);
             imageHeight = imageWidth / aspect;
             Rect imageRect = new Rect((Screen.width - imageWidth) * 0.5f,
-                (Screen.height - imageHeight) * 0.5f, imageWidth, imageHeight);
+                (Screen.height - imageHeight) * 0.5f - FrameVerticalOffset, imageWidth, imageHeight);
             DrawFrameSprite(imageRect);
 
             if (ShouldShowFrameExitHint)
@@ -183,7 +185,7 @@ namespace ReturnToTheEigth.Interaction
                 Rect hintRect = new Rect(Screen.width * 0.08f, Screen.height - PanelMargin - TextHeight,
                     Screen.width * 0.84f, TextHeight);
                 string hint = string.Format("Press {0} to leave the portrait.", InputPromptUtility.PuzzleExitControlLabel);
-                GameTextGUI.DrawLabel(hintRect, hint, TextAnchor.MiddleCenter);
+                GameTextGUI.DrawLabel(hintRect, hint, dialogueBoxBackground, TextAnchor.MiddleCenter);
             }
         }
 
@@ -202,7 +204,7 @@ namespace ReturnToTheEigth.Interaction
         private void DrawEndingScreen()
         {
             Rect rect = new Rect(Screen.width * 0.08f, Screen.height * 0.36f, Screen.width * 0.84f, Screen.height * 0.28f);
-            GameTextGUI.DrawLabel(rect, "The family portrait is complete again.\nThank you for playing.", TextAnchor.MiddleCenter);
+            GameTextGUI.DrawLabel(rect, "The family portrait is complete again.\nThank you for playing.", dialogueBoxBackground, TextAnchor.MiddleCenter);
         }
 
         private bool HasAllFragments()

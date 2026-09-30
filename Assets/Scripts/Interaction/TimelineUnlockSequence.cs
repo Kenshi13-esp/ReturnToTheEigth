@@ -31,6 +31,7 @@ namespace ReturnToTheEigth.Interaction
         private const int FirstIndex = 0;
 
         [SerializeField] private CameraShake cameraShake;
+        [SerializeField] private Sprite dialogueBoxBackground;
 
         private TimeTravelManager timeTravelManager;
         private Coroutine sequenceRoutine;
@@ -120,7 +121,7 @@ namespace ReturnToTheEigth.Interaction
             float panelWidth = Screen.width * PanelWidthRatio;
             Rect panelRect = new Rect((Screen.width - panelWidth) * 0.5f,
                 Screen.height - PanelHeight - PanelBottom, panelWidth, PanelHeight);
-            GameTextGUI.DrawLabel(panelRect, currentMessage, TextAnchor.MiddleCenter);
+            GameTextGUI.DrawLabel(panelRect, currentMessage, dialogueBoxBackground, TextAnchor.MiddleCenter);
         }
 
         private void OnDisable()

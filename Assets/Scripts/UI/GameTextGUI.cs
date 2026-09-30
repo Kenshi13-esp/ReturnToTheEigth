@@ -2,40 +2,80 @@ using UnityEngine;
 
 namespace ReturnToTheEigth.UI
 {
-    /// <summary>Draws consistent 32-pixel white TypographySilver text over a black rectangle for the game's IMGUI screens.</summary>
+    /// <summary>Draws white game text over the dialogue-box sprite at twice its native pixel size.</summary>
     public static class GameTextGUI
     {
         private const string TypographyFontName = "TypographySilver";
-        private const float BackgroundAlpha = 0.92f;
-        private const int FontSize = 32;
-        private static readonly Color BackgroundColor = new Color(0f, 0f, 0f, BackgroundAlpha);
+        private const int BaseFontSize = 32;
+        private const int MinimumFontSize = 12;
+        private const float BackgroundScale = 2f;
+        private const float BackgroundVerticalOffset = 40f;
+        private const float HorizontalTextInsetRatio = 0.08f;
+        private const float VerticalTextInsetRatio = 0.18f;
         private static readonly Color TextColor = Color.white;
         private static GUIStyle labelStyle;
-        private static Texture2D rectangleTexture;
         private static Font typographyFont;
 
-        /// <summary>Draws a black-backed, white TypographySilver label at the standard game font size.</summary>
-        public static void DrawLabel(Rect rect, string text, TextAnchor alignment = TextAnchor.MiddleCenter)
+        /// <summary>Draws the dialogue-box sprite at twice its native size and fits the label inside its frame.</summary>
+        public static void DrawLabel(Rect rect, string text, Sprite backgroundSprite, TextAnchor alignment = TextAnchor.MiddleCenter)
         {
             EnsureResources();
             Color previousColor = GUI.color;
-            GUI.color = BackgroundColor;
-            GUI.DrawTexture(rect, rectangleTexture, ScaleMode.StretchToFill, false);
-            GUI.color = previousColor;
+            Rect labelRect = rect;
+            if (backgroundSprite != null)
+            {
+                Rect spriteRect = backgroundSprite.textureRect;
+                float width = spriteRect.width * BackgroundScale;
+                float height = spriteRect.height * BackgroundScale;
+                Rect backgroundRect = new Rect(
+                    rect.center.x - width * 0.5f,
+                    rect.center.y - height * 0.5f - BackgroundVerticalOffset,
+                    width,
+                    height);
+                Rect textureCoordinates = new Rect(
+                    spriteRect.x / backgroundSprite.texture.width,
+                    spriteRect.y / backgroundSprite.texture.height,
+                    spriteRect.width / backgroundSprite.texture.width,
+                    spriteRect.height / backgroundSprite.texture.height);
+
+                GUI.color = Color.white;
+                GUI.DrawTextureWithTexCoords(backgroundRect, backgroundSprite.texture, textureCoordinates, true);
+
+                float horizontalInset = width * HorizontalTextInsetRatio;
+                float verticalInset = height * VerticalTextInsetRatio;
+                labelRect = new Rect(
+                    backgroundRect.x + horizontalInset,
+                    backgroundRect.y + verticalInset,
+                    backgroundRect.width - horizontalInset * 2f,
+                    backgroundRect.height - verticalInset * 2f);
+            }
 
             labelStyle.alignment = alignment;
-            GUI.Label(rect, text, labelStyle);
+            labelStyle.fontSize = GetFittingFontSize(text, labelRect.width, labelRect.height);
+            GUI.color = TextColor;
+            GUI.Label(labelRect, text, labelStyle);
+            GUI.color = previousColor;
+        }
+
+        private static int GetFittingFontSize(string text, float width, float height)
+        {
+            string displayText = text ?? string.Empty;
+            GUIContent displayContent = new GUIContent(displayText);
+            int maximumFontSize = Mathf.RoundToInt(BaseFontSize * BackgroundScale);
+            for (int fontSize = maximumFontSize; fontSize > MinimumFontSize * BackgroundScale; fontSize--)
+            {
+                labelStyle.fontSize = fontSize;
+                if (labelStyle.CalcHeight(displayContent, width) <= height)
+                {
+                    return fontSize;
+                }
+            }
+
+            return Mathf.RoundToInt(MinimumFontSize * BackgroundScale);
         }
 
         private static void EnsureResources()
         {
-            if (rectangleTexture == null)
-            {
-                rectangleTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-                rectangleTexture.SetPixel(0, 0, Color.white);
-                rectangleTexture.Apply();
-            }
-
             if (typographyFont == null)
             {
                 typographyFont = Resources.Load<Font>(TypographyFontName);
@@ -45,7 +85,7 @@ namespace ReturnToTheEigth.UI
             {
                 labelStyle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = FontSize,
+                    fontSize = Mathf.RoundToInt(BaseFontSize * BackgroundScale),
                     wordWrap = true,
                     clipping = TextClipping.Clip,
                     normal = { textColor = TextColor },
@@ -60,7 +100,6 @@ namespace ReturnToTheEigth.UI
             }
 
             labelStyle.font = typographyFont;
-            labelStyle.fontSize = FontSize;
             labelStyle.normal.textColor = TextColor;
             labelStyle.hover.textColor = TextColor;
             labelStyle.active.textColor = TextColor;

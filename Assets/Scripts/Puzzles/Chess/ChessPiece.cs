@@ -44,6 +44,7 @@ namespace ReturnToTheEigth.Puzzles
 
         private void OnValidate()
         {
+            if (!Application.isPlaying) isVisible = visibleAtStart;
             ApplyArt();
         }
 

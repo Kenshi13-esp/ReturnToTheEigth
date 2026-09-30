@@ -12,7 +12,7 @@ namespace ReturnToTheEigth.Interaction
     {
         private const string DefaultPrompt = "Enter the puzzle";
         private const string MissingRequiredItemPrompt = "You need the piano sheet music";
-        private const string DefaultPuzzleSceneName = "ColorTrackPuzzle";
+        private const string DefaultPuzzleSceneName = "ColorPuzzle";
         private const string DefaultPuzzleId = "ColorTrackPuzzle";
         private const string OutlineShaderName = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
         private const float DefaultInteractionRadius = 0.9f;

@@ -37,6 +37,7 @@ namespace ReturnToTheEigth.Puzzles
 
         public Vector2Int CursorCell { get; private set; }
         public TrackSlider SelectedSlider { get; private set; }
+        private TrackSlider HoveredSlider { get; set; }
         public bool HasSelection => SelectedSlider != null;
         private PuzzleGrid Grid => board != null ? board.Grid : null;
         private bool AllowsGameplay => gameStateChannel == null
@@ -74,6 +75,7 @@ namespace ReturnToTheEigth.Puzzles
         {
             moveAction?.Disable();
             interactAction?.Disable();
+            ClearHoveredSlider();
             Deselect();
         }
 
@@ -92,18 +94,28 @@ namespace ReturnToTheEigth.Puzzles
                     Mathf.Clamp(startCell.x, FirstIndex, size.x - LastOffset),
                     Mathf.Clamp(startCell.y, FirstIndex, size.y - LastOffset));
                 beamView?.MoveTo(Grid.CellToWorld(CursorCell));
+                UpdateHoveredSlider();
             }
             if (GameManager.Instance != null) GameManager.Instance.SetGameState(GameState.Puzzle);
         }
 
         private void Update()
         {
-            if (!AllowsGameplay || Grid == null || board.IsSolved) return;
+            if (!AllowsGameplay || Grid == null || board.IsSolved)
+            {
+                ClearHoveredSlider();
+                return;
+            }
+
             if (interactAction != null && interactAction.WasPerformedThisFrame()) ToggleSelection();
             Vector2Int step = ReadStep();
-            if (step == Vector2Int.zero) return;
-            if (HasSelection) TrySlide(step);
-            else MoveCursor(step);
+            if (step != Vector2Int.zero)
+            {
+                if (HasSelection) TrySlide(step);
+                else MoveCursor(step);
+            }
+
+            UpdateHoveredSlider();
         }
 
         /// <summary>Drops the selected piece (if any) and returns the beam to the cursor cell.</summary>
@@ -114,6 +126,7 @@ namespace ReturnToTheEigth.Puzzles
                 SelectedSlider.IsSelected = false;
                 SelectedSlider = null;
             }
+            ClearHoveredSlider();
             beamView?.SetSelected(false);
             if (beamView != null && Grid != null) beamView.MoveTo(Grid.CellToWorld(CursorCell));
         }
@@ -127,9 +140,27 @@ namespace ReturnToTheEigth.Puzzles
             }
             TrackSlider candidate = board.GetSliderAt(CursorCell);
             if (candidate == null || candidate.IsMoving) return;
+            ClearHoveredSlider();
             SelectedSlider = candidate;
             candidate.IsSelected = true;
             beamView?.SetSelected(true);
+        }
+
+        private void UpdateHoveredSlider()
+        {
+            TrackSlider candidate = HasSelection ? null : board.GetSliderAt(CursorCell);
+            if (candidate != null && candidate.IsMoving) candidate = null;
+            if (HoveredSlider == candidate) return;
+
+            ClearHoveredSlider();
+            HoveredSlider = candidate;
+            if (HoveredSlider != null) HoveredSlider.IsHovered = true;
+        }
+
+        private void ClearHoveredSlider()
+        {
+            if (HoveredSlider != null) HoveredSlider.IsHovered = false;
+            HoveredSlider = null;
         }
 
         private void MoveCursor(Vector2Int step)

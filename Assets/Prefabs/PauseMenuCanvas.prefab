@@ -786,10 +786,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
+    m_Mode: 4
+    m_WrapAround: 1
+    m_SelectOnUp: {fileID: 8121591056131539260}
+    m_SelectOnDown: {fileID: 1138327926565805746}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
@@ -859,7 +859,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   sceneToLoadAfterAnimation: 
-  enablePointerHoverFeedback: 0
+  enablePointerHoverFeedback: 1
 --- !u!1 &1841106541069999791
 GameObject:
   m_ObjectHideFlags: 0
@@ -1070,11 +1070,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnUp: {fileID: 1138327926565805746}
+    m_SelectOnDown: {fileID: 921589365977460193}
+    m_SelectOnLeft: {fileID: 8894765468967859357}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
@@ -1193,10 +1193,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
+    m_Mode: 4
+    m_WrapAround: 1
+    m_SelectOnUp: {fileID: 8317464585443715396}
+    m_SelectOnDown: {fileID: 1638864654232586272}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
@@ -1266,7 +1266,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   sceneToLoadAfterAnimation: 
-  enablePointerHoverFeedback: 0
+  enablePointerHoverFeedback: 1
 --- !u!1 &2488206034463964169
 GameObject:
   m_ObjectHideFlags: 0
@@ -1581,12 +1581,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnUp: {fileID: 684424964529875380}
+    m_SelectOnDown: {fileID: 8121591056131539260}
+    m_SelectOnLeft: {fileID: 8121591056131539260}
+    m_SelectOnRight: {fileID: 4589884501031658243}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1738,12 +1738,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnUp: {fileID: 1138327926565805746}
+    m_SelectOnDown: {fileID: 4589884501031658243}
+    m_SelectOnLeft: {fileID: 684424964529875380}
+    m_SelectOnRight: {fileID: 8894765468967859357}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1940,12 +1940,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
+    m_Mode: 4
+    m_WrapAround: 1
+    m_SelectOnUp: {fileID: 3740994535776492871}
+    m_SelectOnDown: {fileID: 8317464585443715396}
     m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnRight: {fileID: 684424964529875380}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.6431373, g: 0.61960787, b: 0.61960787, a: 1}
@@ -2013,7 +2013,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   sceneToLoadAfterAnimation: 
-  enablePointerHoverFeedback: 0
+  enablePointerHoverFeedback: 1
 --- !u!1 &5014023008477712728
 GameObject:
   m_ObjectHideFlags: 0
@@ -2103,12 +2103,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnUp: {fileID: 8742764145641344448}
+    m_SelectOnDown: {fileID: 8121591056131539260}
+    m_SelectOnLeft: {fileID: 1638864654232586272}
+    m_SelectOnRight: {fileID: 8472063769348773236}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2377,12 +2377,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnUp: {fileID: 1138327926565805746}
+    m_SelectOnDown: {fileID: 1638864654232586272}
+    m_SelectOnLeft: {fileID: 1138327926565805746}
+    m_SelectOnRight: {fileID: 8742764145641344448}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2781,12 +2781,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnUp: {fileID: 8894765468967859357}
+    m_SelectOnDown: {fileID: 8121591056131539260}
+    m_SelectOnLeft: {fileID: 4589884501031658243}
+    m_SelectOnRight: {fileID: 921589365977460193}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2901,12 +2901,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnUp: {fileID: 1138327926565805746}
+    m_SelectOnDown: {fileID: 8472063769348773236}
+    m_SelectOnLeft: {fileID: 8742764145641344448}
+    m_SelectOnRight: {fileID: 5426767598101505542}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -3171,11 +3171,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnUp: {fileID: 5426767598101505542}
+    m_SelectOnDown: {fileID: 8121591056131539260}
+    m_SelectOnLeft: {fileID: 8472063769348773236}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
@@ -3355,10 +3355,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
+    m_Mode: 4
+    m_WrapAround: 1
+    m_SelectOnUp: {fileID: 1138327926565805746}
+    m_SelectOnDown: {fileID: 8121591056131539260}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
@@ -3428,7 +3428,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   sceneToLoadAfterAnimation: 
-  enablePointerHoverFeedback: 0
+  enablePointerHoverFeedback: 1
 --- !u!1 &8602673925877583288
 GameObject:
   m_ObjectHideFlags: 0
@@ -3548,6 +3548,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1126612678397275219, guid: aa707366c2d748f488c2e18cfb94fc97, type: 3}
       propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1592805171659223553, guid: aa707366c2d748f488c2e18cfb94fc97, type: 3}
+      propertyPath: m_Navigation.m_Mode
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1592805171659223553, guid: aa707366c2d748f488c2e18cfb94fc97, type: 3}
+      propertyPath: m_Navigation.m_WrapAround
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1592805171659223553, guid: aa707366c2d748f488c2e18cfb94fc97, type: 3}
@@ -3804,7 +3812,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   sceneToLoadAfterAnimation: 
-  enablePointerHoverFeedback: 0
+  enablePointerHoverFeedback: 1
 --- !u!1001 &4907565779811286700
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3813,6 +3821,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 185944279318559447}
     m_Modifications:
+    - target: {fileID: 1116049019317846505, guid: 5a548cebd33b15c47a0575d1d2c6dff1, type: 3}
+      propertyPath: m_Navigation.m_Mode
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1116049019317846505, guid: 5a548cebd33b15c47a0575d1d2c6dff1, type: 3}
+      propertyPath: m_Navigation.m_WrapAround
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2890064324513302106, guid: 5a548cebd33b15c47a0575d1d2c6dff1, type: 3}
       propertyPath: m_Name
       value: ControlsPanel
@@ -3820,6 +3836,10 @@ PrefabInstance:
     - target: {fileID: 2890064324513302106, guid: 5a548cebd33b15c47a0575d1d2c6dff1, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5282460211835917578, guid: 5a548cebd33b15c47a0575d1d2c6dff1, type: 3}
+      propertyPath: enablePointerHoverFeedback
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5282460211835917578, guid: 5a548cebd33b15c47a0575d1d2c6dff1, type: 3}
       propertyPath: onAnimationFinished.m_PersistentCalls.m_Calls.Array.size

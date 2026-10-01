@@ -72,6 +72,7 @@ namespace ReturnToTheEigth.Core
                 }
                 puzzleVictoryAudioSource.playOnAwake = false;
                 puzzleVictoryAudioSource.spatialBlend = 0f;
+                AudioSettingsController.RegisterSoundSource(puzzleVictoryAudioSource);
             }
 
             doorStateChannel?.ResetSession();

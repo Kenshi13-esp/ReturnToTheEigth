@@ -53,6 +53,7 @@ namespace ReturnToTheEigth.Interaction
                 interactionAudioSource.playOnAwake = false;
                 interactionAudioSource.spatialBlend = Zero;
                 interactionAudioSource.volume = FullVolume;
+                AudioSettingsController.RegisterSoundSource(interactionAudioSource);
             }
             DoorController.EnsureHallKeyDoor();
             InputAction source = inputActions != null ? inputActions.FindAction(InteractActionPath) : null;

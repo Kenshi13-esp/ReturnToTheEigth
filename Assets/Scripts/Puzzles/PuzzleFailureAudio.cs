@@ -1,3 +1,5 @@
+using ReturnToTheEigth.Core;
+
 using UnityEngine;
 
 namespace ReturnToTheEigth.Puzzles
@@ -24,6 +26,7 @@ namespace ReturnToTheEigth.Puzzles
             AudioClip clip = GetFailureClip();
             if (audioSource != null)
             {
+                AudioSettingsController.RegisterSoundSource(audioSource);
                 audioSource.PlayOneShot(clip);
                 return;
             }
@@ -37,6 +40,7 @@ namespace ReturnToTheEigth.Puzzles
                 sharedAudioSource.playOnAwake = false;
                 sharedAudioSource.spatialBlend = 0f;
                 sharedAudioSource.ignoreListenerPause = true;
+                AudioSettingsController.RegisterSoundSource(sharedAudioSource);
             }
 
             sharedAudioSource.PlayOneShot(clip);

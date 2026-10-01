@@ -10,7 +10,7 @@ namespace ReturnToTheEigth.UI
     /// <summary>Plays one random glass-break animation over a menu button after each click.</summary>
     [RequireComponent(typeof(Button))]
     [DisallowMultipleComponent]
-    public sealed class MenuButtonBreakageAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public sealed class MenuButtonBreakageAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
     {
         private const int AnimationVariantCount = 3;
         private const int FirstVariantIndex = 0;
@@ -37,6 +37,7 @@ namespace ReturnToTheEigth.UI
 
         private int originalSiblingIndex;
         private bool isPointerOverButton;
+        private bool isSelected;
         private bool hasOriginalSiblingIndex;
         private bool isSiblingIndexRestorePending;
         private Vector3 originalLocalScale;
@@ -91,6 +92,7 @@ namespace ReturnToTheEigth.UI
             RestoreAnimationOverlaySize();
             transform.localScale = originalLocalScale;
             isPointerOverButton = false;
+            isSelected = false;
 
             if (animationOverlay != null)
                 animationOverlay.enabled = false;
@@ -102,8 +104,7 @@ namespace ReturnToTheEigth.UI
                 return;
 
             isPointerOverButton = true;
-            if (playbackCoroutine == null)
-                transform.localScale = originalLocalScale * HoverScaleMultiplier;
+            ApplyFocusFeedback();
         }
 
         void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
@@ -112,7 +113,30 @@ namespace ReturnToTheEigth.UI
                 return;
 
             isPointerOverButton = false;
-            transform.localScale = originalLocalScale;
+            ApplyFocusFeedback();
+        }
+
+        void ISelectHandler.OnSelect(BaseEventData eventData)
+        {
+            isSelected = true;
+            ApplyFocusFeedback();
+        }
+
+        void IDeselectHandler.OnDeselect(BaseEventData eventData)
+        {
+            isSelected = false;
+            ApplyFocusFeedback();
+        }
+
+        private void ApplyFocusFeedback()
+        {
+            if (playbackCoroutine != null)
+                return;
+
+            bool isFocused = isSelected || enablePointerHoverFeedback && isPointerOverButton;
+            transform.localScale = isFocused
+                ? originalLocalScale * HoverScaleMultiplier
+                : originalLocalScale;
         }
 
         private void PlayRandomBreakageAnimation()
@@ -213,10 +237,8 @@ namespace ReturnToTheEigth.UI
             animationOverlay.sprite = null;
             RestoreAnimationOverlaySize();
             RestoreButtonSiblingIndex();
-            transform.localScale = enablePointerHoverFeedback && isPointerOverButton
-                ? originalLocalScale * HoverScaleMultiplier
-                : originalLocalScale;
             playbackCoroutine = null;
+            ApplyFocusFeedback();
         }
 
         private Vector2 CalculateDisplayedButtonSize()

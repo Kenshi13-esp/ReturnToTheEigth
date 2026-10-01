@@ -58,6 +58,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
             audioSource.playOnAwake = false;
             audioSource.loop = false;
             audioSource.spatialBlend = Zero;
+            AudioSettingsController.RegisterMusicSource(audioSource);
             StartCoroutine(LoadHallAndPlayMelody());
         }
 

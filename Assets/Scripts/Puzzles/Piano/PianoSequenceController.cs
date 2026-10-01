@@ -137,6 +137,10 @@ namespace ReturnToTheEigth.Puzzles.Piano
             {
                 Debug.LogWarning(MissingAudioSourceWarning, this);
             }
+            else
+            {
+                AudioSettingsController.RegisterSoundSource(noteAudioSource);
+            }
             if (cameraShake == null)
             {
                 cameraShake = FindAnyObjectByType<CameraShake>();

@@ -364,12 +364,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnUp: {fileID: 2073700410109219390}
+    m_SelectOnDown: {fileID: 1814142917449423451}
+    m_SelectOnLeft: {fileID: 6282719952563229463}
+    m_SelectOnRight: {fileID: 5369672328256568893}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -817,11 +817,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnUp: {fileID: 6282719952563229463}
+    m_SelectOnDown: {fileID: 1592805171659223553}
+    m_SelectOnLeft: {fileID: 1814142917449423451}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
@@ -1681,12 +1681,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
+    m_SelectOnUp: {fileID: 1592805171659223553}
+    m_SelectOnDown: {fileID: 6282719952563229463}
+    m_SelectOnLeft: {fileID: 1592805171659223553}
+    m_SelectOnRight: {fileID: 7482627093100442959}
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2710,11 +2710,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnUp: {fileID: 1592805171659223553}
+    m_SelectOnDown: {fileID: 5369672328256568893}
+    m_SelectOnLeft: {fileID: 2073700410109219390}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
@@ -3482,10 +3482,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 2
-    m_WrapAround: 1
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
+    m_Mode: 4
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 1814142917449423451}
+    m_SelectOnDown: {fileID: 2073700410109219390}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
@@ -3543,7 +3543,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   sceneToLoadAfterAnimation: 
-  enablePointerHoverFeedback: 0
+  enablePointerHoverFeedback: 1
 --- !u!1 &7199935669318726533
 GameObject:
   m_ObjectHideFlags: 0
@@ -4093,11 +4093,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnUp: {fileID: 7482627093100442959}
+    m_SelectOnDown: {fileID: 1814142917449423451}
+    m_SelectOnLeft: {fileID: 6282719952563229463}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:

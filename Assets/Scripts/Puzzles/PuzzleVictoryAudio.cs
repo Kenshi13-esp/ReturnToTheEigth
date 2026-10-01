@@ -1,3 +1,5 @@
+using ReturnToTheEigth.Core;
+
 using UnityEngine;
 
 namespace ReturnToTheEigth.Puzzles
@@ -41,6 +43,7 @@ namespace ReturnToTheEigth.Puzzles
                 victorySource.playOnAwake = false;
                 victorySource.spatialBlend = 0f;
                 victorySource.ignoreListenerPause = true;
+                AudioSettingsController.RegisterSoundSource(victorySource);
             }
 
             victorySource.PlayOneShot(victoryClip);

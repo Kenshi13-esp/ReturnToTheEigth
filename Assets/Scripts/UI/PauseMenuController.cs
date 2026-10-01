@@ -36,12 +36,27 @@ namespace ReturnToTheEigth.UI
 
         private void Update()
         {
-            if (isPauseMenuVisible || SceneManager.GetActiveScene().name == MainMenuSceneName)
+            bool qPressed = Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
+            bool escapePressed = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+            bool controllerBackPressed = Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame;
+
+            if (isPauseMenuVisible)
+            {
+                if (!qPressed && !escapePressed && !controllerBackPressed)
+                    return;
+
+                if (IsPauseSubmenuVisible())
+                    ReturnToPauseMenu();
+                else
+                    ResumeGame();
+                return;
+            }
+
+            if (SceneManager.GetActiveScene().name == MainMenuSceneName)
                 return;
 
-            bool escapePressed = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
             bool gamepadStartPressed = Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame;
-            if (!escapePressed && !gamepadStartPressed)
+            if (!qPressed && !escapePressed && !gamepadStartPressed)
                 return;
 
             if (GameManager.Instance == null || GameManager.Instance.CurrentGameState == GameState.GameOver)
@@ -177,6 +192,12 @@ namespace ReturnToTheEigth.UI
                 pauseEventSystem.SetSelectedGameObject(selectable.gameObject);
                 return;
             }
+        }
+
+        private bool IsPauseSubmenuVisible()
+        {
+            return optionsPanel != null && optionsPanel.activeSelf
+                || controlsPanel != null && controlsPanel.activeSelf;
         }
 
         private void KeepGamepadCursorOnTop()

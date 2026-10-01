@@ -55,6 +55,7 @@ namespace ReturnToTheEigth.Player
                 footstepAudioSource.spatialBlend = Zero;
                 footstepAudioSource.volume = FootstepVolume;
                 footstepAudioSource.pitch = FootstepPlaybackSpeed;
+                AudioSettingsController.RegisterSoundSource(footstepAudioSource);
             }
             else
             {

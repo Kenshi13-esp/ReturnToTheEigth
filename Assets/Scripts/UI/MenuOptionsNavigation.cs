@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace ReturnToTheEigth.UI
@@ -13,6 +14,25 @@ namespace ReturnToTheEigth.UI
         [SerializeField] private GameObject controlsPanel;
         [SerializeField] private GameObject creditsPanel;
         [SerializeField] private GameObject backgroundDimmer;
+
+        private void Update()
+        {
+            bool keyboardBackPressed = Keyboard.current != null
+                && (Keyboard.current.qKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame);
+            bool controllerBackPressed = Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame;
+            if (!keyboardBackPressed && !controllerBackPressed)
+                return;
+
+            if (IsSecondaryPanelOpen())
+                ReturnToSourceMenu();
+        }
+
+        private bool IsSecondaryPanelOpen()
+        {
+            return optionsPanel != null && optionsPanel.activeSelf
+                || controlsPanel != null && controlsPanel.activeSelf
+                || creditsPanel != null && creditsPanel.activeSelf;
+        }
 
         /// <summary>Opens the options panel from the main menu.</summary>
         public void OpenOptions()

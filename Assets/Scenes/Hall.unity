@@ -14499,6 +14499,7 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
 <<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     x: 0
     y: 0.0006085932
@@ -14511,10 +14512,15 @@ Camera:
     height: 1
 >>>>>>> Stashed changes
 =======
+=======
+>>>>>>> parent of 0181cfa (Past_corrections)
     x: 0.00053966045
     y: 0
     width: 0.9989207
     height: 1
+<<<<<<< HEAD
+>>>>>>> parent of 0181cfa (Past_corrections)
+=======
 >>>>>>> parent of 0181cfa (Past_corrections)
   near clip plane: 0.1
   far clip plane: 30

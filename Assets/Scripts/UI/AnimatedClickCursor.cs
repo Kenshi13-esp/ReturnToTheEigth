@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,6 +14,14 @@ namespace ReturnToTheEigth.UI
     {
         private const float DefaultFrameDurationSeconds = 0.1f;
         private const float MinimumFrameDurationSeconds = 0.01f;
+        private const float MouseIdleHideDelaySeconds = 1.5f;
+        private const float GamepadNavigationDeadzone = 0.25f;
+
+        /// <summary>Gets whether pointer input currently owns menu focus.</summary>
+        public static bool IsMouseModeActive { get; private set; } = true;
+
+        /// <summary>Raised when mouse or keyboard navigation changes the active menu input mode.</summary>
+        public static event Action<bool> MouseModeChanged;
 
         [SerializeField] private Sprite idleCursorSprite;
         [SerializeField] private Sprite[] clickAnimationSprites;
@@ -29,6 +38,9 @@ namespace ReturnToTheEigth.UI
         private Coroutine clickAnimationCoroutine;
         private bool hardwareCursorWasVisible;
         private bool hasCapturedHardwareCursorVisibility;
+        private Vector2 previousVirtualMousePosition;
+        private bool hasPreviousVirtualMousePosition;
+        private float lastMouseActivityTime;
 
         private void Awake()
         {
@@ -60,6 +72,8 @@ namespace ReturnToTheEigth.UI
 
         private void OnEnable()
         {
+            SetMouseModeActive(false);
+            lastMouseActivityTime = Time.unscaledTime;
             hardwareCursorWasVisible = Cursor.visible;
             hasCapturedHardwareCursorVisibility = true;
 
@@ -78,6 +92,12 @@ namespace ReturnToTheEigth.UI
                 hasPreviousHardwareMousePosition = true;
             }
 
+            if (virtualMouseInput != null && virtualMouseInput.virtualMouse != null)
+            {
+                previousVirtualMousePosition = virtualMouseInput.virtualMouse.position.ReadValue();
+                hasPreviousVirtualMousePosition = true;
+            }
+
             SynchronizeSoftwareCursorWithMouse(ClampToScreen(cursorScreenPosition));
         }
 
@@ -90,25 +110,50 @@ namespace ReturnToTheEigth.UI
                 softwareCursorCanvasCamera,
                 softwareCursorTransform.position);
             InputState.Change(virtualMouseInput.virtualMouse.position, screenPosition);
+            previousVirtualMousePosition = screenPosition;
+            hasPreviousVirtualMousePosition = true;
         }
 
         private void Update()
         {
             Mouse hardwareMouse = GetCurrentHardwareMouse();
+            bool hardwareMouseMoved = false;
+            bool hardwareMouseActivity = false;
             if (hardwareMouse != null)
             {
                 Vector2 hardwareMousePosition = hardwareMouse.position.ReadValue();
-                if (!hasPreviousHardwareMousePosition || hardwareMousePosition != previousHardwareMousePosition)
-                {
-                    previousHardwareMousePosition = hardwareMousePosition;
-                    hasPreviousHardwareMousePosition = true;
-                    if (usesSoftwareCursor)
-                        SynchronizeSoftwareCursorWithMouse(ClampToScreen(hardwareMousePosition));
-                }
+                hardwareMouseMoved = !hasPreviousHardwareMousePosition
+                    || hardwareMousePosition != previousHardwareMousePosition;
+                hardwareMouseActivity = hardwareMouseMoved
+                    || hardwareMouse.leftButton.wasPressedThisFrame
+                    || hardwareMouse.rightButton.wasPressedThisFrame
+                    || hardwareMouse.middleButton.wasPressedThisFrame
+                    || hardwareMouse.scroll.ReadValue() != Vector2.zero;
 
-                if (hardwareMouse.leftButton.wasPressedThisFrame)
-                    PlayClickAnimation();
+                previousHardwareMousePosition = hardwareMousePosition;
+                hasPreviousHardwareMousePosition = true;
             }
+
+            bool virtualMouseMoved = HasVirtualMouseMoved();
+            if (hardwareMouseActivity || virtualMouseMoved)
+            {
+                lastMouseActivityTime = Time.unscaledTime;
+                SetMouseModeActive(true);
+                if (hardwareMouseMoved && hardwareMouse != null && usesSoftwareCursor)
+                    SynchronizeSoftwareCursorWithMouse(ClampToScreen(hardwareMouse.position.ReadValue()));
+            }
+            else if (WasKeyboardNavigationPressed() || WasGamepadNavigationPressed())
+            {
+                SetMouseModeActive(false);
+            }
+            else if (IsMouseModeActive
+                && Time.unscaledTime - lastMouseActivityTime >= MouseIdleHideDelaySeconds)
+            {
+                SetMouseModeActive(false);
+            }
+
+            if (hardwareMouse != null && hardwareMouse.leftButton.wasPressedThisFrame)
+                PlayClickAnimation();
 
             if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame)
                 PlayClickAnimation();
@@ -125,6 +170,7 @@ namespace ReturnToTheEigth.UI
             if (softwareCursorGraphic != null && idleCursorSprite != null)
                 softwareCursorGraphic.sprite = idleCursorSprite;
 
+            SetMouseModeActive(true);
             if (hasCapturedHardwareCursorVisibility)
             {
                 Cursor.visible = hardwareCursorWasVisible;
@@ -132,6 +178,62 @@ namespace ReturnToTheEigth.UI
             }
 
             hasPreviousHardwareMousePosition = false;
+            hasPreviousVirtualMousePosition = false;
+        }
+
+        private bool HasVirtualMouseMoved()
+        {
+            if (virtualMouseInput == null || virtualMouseInput.virtualMouse == null)
+                return false;
+
+            Vector2 virtualMousePosition = virtualMouseInput.virtualMouse.position.ReadValue();
+            bool hasMoved = hasPreviousVirtualMousePosition
+                && virtualMousePosition != previousVirtualMousePosition;
+            previousVirtualMousePosition = virtualMousePosition;
+            hasPreviousVirtualMousePosition = true;
+            return hasMoved;
+        }
+
+        private static bool WasKeyboardNavigationPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && (
+                keyboard.wKey.wasPressedThisFrame
+                || keyboard.aKey.wasPressedThisFrame
+                || keyboard.sKey.wasPressedThisFrame
+                || keyboard.dKey.wasPressedThisFrame
+                || keyboard.upArrowKey.wasPressedThisFrame
+                || keyboard.downArrowKey.wasPressedThisFrame
+                || keyboard.leftArrowKey.wasPressedThisFrame
+                || keyboard.rightArrowKey.wasPressedThisFrame
+                || keyboard.enterKey.wasPressedThisFrame
+                || keyboard.spaceKey.wasPressedThisFrame
+                || keyboard.escapeKey.wasPressedThisFrame
+                || keyboard.eKey.wasPressedThisFrame
+                || keyboard.qKey.wasPressedThisFrame);
+        }
+
+        private static bool WasGamepadNavigationPressed()
+        {
+            Gamepad gamepad = Gamepad.current;
+            return gamepad != null && (
+                gamepad.dpad.up.wasPressedThisFrame
+                || gamepad.dpad.down.wasPressedThisFrame
+                || gamepad.dpad.left.wasPressedThisFrame
+                || gamepad.dpad.right.wasPressedThisFrame
+                || gamepad.rightStick.ReadValue().sqrMagnitude
+                    > GamepadNavigationDeadzone * GamepadNavigationDeadzone);
+        }
+
+        private void SetMouseModeActive(bool mouseModeActive)
+        {
+            bool modeChanged = IsMouseModeActive != mouseModeActive;
+            IsMouseModeActive = mouseModeActive;
+            if (softwareCursorGraphic != null)
+                softwareCursorGraphic.enabled = isActiveAndEnabled && usesSoftwareCursor && mouseModeActive;
+
+            if (modeChanged)
+                MouseModeChanged?.Invoke(mouseModeActive);
         }
 
         private Mouse GetCurrentHardwareMouse()

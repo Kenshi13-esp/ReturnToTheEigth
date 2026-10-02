@@ -54,6 +54,7 @@ namespace ReturnToTheEigth.UI
 
         private void OnEnable()
         {
+            AnimatedClickCursor.MouseModeChanged += HandleMouseModeChanged;
             isSelected = selectable != null && EventSystem.current != null
                 && EventSystem.current.currentSelectedGameObject == gameObject;
             ApplyFocusFeedback();
@@ -61,6 +62,7 @@ namespace ReturnToTheEigth.UI
 
         private void OnDisable()
         {
+            AnimatedClickCursor.MouseModeChanged -= HandleMouseModeChanged;
             isPointerOver = false;
             isSelected = false;
             transform.localScale = originalLocalScale;
@@ -94,6 +96,11 @@ namespace ReturnToTheEigth.UI
             ApplyFocusFeedback();
         }
 
+        private void HandleMouseModeChanged(bool mouseModeActive)
+        {
+            ApplyFocusFeedback();
+        }
+
         private void ApplyFocusFeedback()
         {
             if (selectable == null)
@@ -101,7 +108,10 @@ namespace ReturnToTheEigth.UI
                 return;
             }
 
-            bool isFocused = selectable.IsInteractable() && (isPointerOver || isSelected);
+            bool hasInputFocus = AnimatedClickCursor.IsMouseModeActive
+                ? isPointerOver
+                : isSelected;
+            bool isFocused = selectable.IsInteractable() && hasInputFocus;
             transform.localScale = isFocused
                 ? originalLocalScale * FocusScaleMultiplier
                 : originalLocalScale;

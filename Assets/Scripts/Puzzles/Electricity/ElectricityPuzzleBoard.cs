@@ -163,7 +163,6 @@ namespace ReturnToTheEigth.Puzzles.Electricity
             if (!IsSolved && IsSolvedConfiguration())
             {
                 IsSolved = true;
-                PuzzleVictoryAudio.Play();
                 GameManager gameManager = GameManager.Instance;
                 if (gameManager != null)
                 {

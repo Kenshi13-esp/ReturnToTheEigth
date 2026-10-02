@@ -32,6 +32,10 @@ namespace ReturnToTheEigth.Core
         /// <summary>Gets the session door-state channel used by door controllers.</summary>
         public DoorStateEventChannelSO DoorStateChannel => doorStateChannel;
         public GameState CurrentGameState { get; private set; } = GameState.Exploration;
+        /// <summary>Raised whenever the current inventory contents change.</summary>
+        public event Action InventoryChanged;
+        /// <summary>Raised with the item rewards added in one inventory grant.</summary>
+        public event Action<IReadOnlyList<PuzzleReward>> ItemsAdded;
         /// <summary>Gets whether the player has examined the family portrait and unlocked timeline travel this session.</summary>
         public bool IsTimelineTravelUnlocked { get; private set; }
         /// <summary>Gets whether the family-frame interaction instruction has already been used this session.</summary>
@@ -46,6 +50,7 @@ namespace ReturnToTheEigth.Core
         private readonly HashSet<string> completedPuzzleIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly Dictionary<string, int> itemCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         private readonly HashSet<string> puzzlesWithGrantedRewards = new HashSet<string>(StringComparer.Ordinal);
+        private readonly List<PuzzleReward> pendingAcquisitionRewards = new List<PuzzleReward>();
 
         private void Awake()
         {
@@ -143,15 +148,15 @@ namespace ReturnToTheEigth.Core
             return !string.IsNullOrWhiteSpace(puzzleId) && completedPuzzleIds.Contains(puzzleId);
         }
 
-        /// <summary>Marks a puzzle completed once per session and plays its victory sound on its first completion.</summary>
-        public void MarkPuzzleCompleted(string puzzleId)
+        /// <summary>Marks a puzzle completed once per session and optionally plays its victory sound on its first completion.</summary>
+        public void MarkPuzzleCompleted(string puzzleId, bool playVictorySound = true)
         {
             if (string.IsNullOrWhiteSpace(puzzleId) || !completedPuzzleIds.Add(puzzleId))
             {
                 return;
             }
 
-            if (puzzleVictoryAudioSource != null && puzzleVictoryClip != null)
+            if (playVictorySound && puzzleVictoryAudioSource != null && puzzleVictoryClip != null)
             {
                 puzzleVictoryAudioSource.PlayOneShot(puzzleVictoryClip);
             }
@@ -187,6 +192,10 @@ namespace ReturnToTheEigth.Core
             }
 
             itemCounts[itemId] = currentCount + amount;
+            PuzzleReward addedReward = new PuzzleReward(itemId, amount);
+            pendingAcquisitionRewards.Add(addedReward);
+            InventoryChanged?.Invoke();
+            ItemsAdded?.Invoke(new[] { addedReward });
             return true;
         }
 
@@ -214,6 +223,7 @@ namespace ReturnToTheEigth.Core
                 itemCounts[itemId] = remainingCount;
             }
 
+            InventoryChanged?.Invoke();
             return true;
         }
 
@@ -254,6 +264,14 @@ namespace ReturnToTheEigth.Core
             }
 
             puzzlesWithGrantedRewards.Add(puzzleId);
+            for (int rewardIndex = 0; rewardIndex < rewards.Count; rewardIndex++)
+            {
+                PuzzleReward reward = rewards[rewardIndex];
+                pendingAcquisitionRewards.Add(new PuzzleReward(reward.ItemId, reward.Amount));
+            }
+
+            InventoryChanged?.Invoke();
+            ItemsAdded?.Invoke(rewards);
             return true;
         }
 
@@ -283,11 +301,44 @@ namespace ReturnToTheEigth.Core
             return true;
         }
 
-        /// <summary>Stores the player's exploration position and timeline so they can be restored after a puzzle returns.</summary>
-        public void SetPendingPlayerReturnState(Vector3 position, TimelineEra era)
+        /// <summary>Consumes all item rewards queued for the next acquisition popup.</summary>
+        public bool TryConsumePendingAcquisitionRewards(out List<PuzzleReward> rewards)
+        {
+            if (pendingAcquisitionRewards.Count == 0)
+            {
+                rewards = new List<PuzzleReward>();
+                return false;
+            }
+
+            rewards = new List<PuzzleReward>(pendingAcquisitionRewards);
+            pendingAcquisitionRewards.Clear();
+            return true;
+        }
+
+        /// <summary>Returns undisplayed item rewards to the queue after an acquisition popup is interrupted.</summary>
+        public void QueuePendingAcquisitionRewards(IReadOnlyList<PuzzleReward> rewards)
+        {
+            if (rewards == null)
+            {
+                return;
+            }
+
+            for (int rewardIndex = 0; rewardIndex < rewards.Count; rewardIndex++)
+            {
+                PuzzleReward reward = rewards[rewardIndex];
+                if (reward != null && !string.IsNullOrWhiteSpace(reward.ItemId) && reward.Amount > 0)
+                {
+                    pendingAcquisitionRewards.Add(new PuzzleReward(reward.ItemId, reward.Amount));
+                }
+            }
+        }
+
+
+        /// <summary>Stores the player's world position and always returns them to the Present era after a puzzle.</summary>
+        public void SetPendingPlayerReturnState(Vector3 position)
         {
             pendingPlayerReturnPosition = position;
-            pendingPlayerReturnEra = era;
+            pendingPlayerReturnEra = TimelineEra.Present;
             hasPendingPlayerReturnPosition = true;
         }
 
@@ -311,6 +362,20 @@ namespace ReturnToTheEigth.Core
             pendingPlayerReturnPosition = Vector3.zero;
             pendingPlayerReturnEra = TimelineEra.Present;
             return true;
+        }
+
+        /// <summary>Pauses gameplay and remembers the previous state while an item-acquisition modal is open.</summary>
+        public void PauseForItemAcquisition()
+        {
+            if (CurrentGameState != GameState.GameOver && CurrentGameState != GameState.Paused)
+                SetGameState(GameState.Paused);
+        }
+
+        /// <summary>Restores the game state that was active before the item-acquisition modal.</summary>
+        public void ResumeAfterItemAcquisition()
+        {
+            if (CurrentGameState == GameState.Paused)
+                SetGameState(stateBeforePause);
         }
 
         /// <summary>Changes session state and notifies input/UI systems through the state channel.</summary>

@@ -599,6 +599,7 @@ GameObject:
   - component: {fileID: 4701446790260338902}
   - component: {fileID: 7004888871795399011}
   - component: {fileID: 602606225035766390}
+  - component: {fileID: 1986822803388869150}
   m_Layer: 0
   m_Name: PauseMenuCanvas
   m_TagString: Untagged
@@ -694,6 +695,18 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &1986822803388869150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810302867091219113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75f0d2a7692ee024e9a8e91b25852668, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.UI.InventoryMenuPresenter
 --- !u!1 &944943602848168000
 GameObject:
   m_ObjectHideFlags: 0
@@ -2486,7 +2499,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "La descripci\xF3n del objeto aparecer\xE1 aqu\xED."
+  m_Text: The item's description will appear here.
 --- !u!1 &7318011816711664806
 GameObject:
   m_ObjectHideFlags: 0
@@ -2691,7 +2704,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Selecciona un objeto
+  m_Text: Select an item
 --- !u!1 &7595228480863478829
 GameObject:
   m_ObjectHideFlags: 0

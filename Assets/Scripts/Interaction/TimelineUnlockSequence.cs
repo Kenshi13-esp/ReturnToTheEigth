@@ -24,9 +24,6 @@ namespace ReturnToTheEigth.Interaction
         private const float InitialCameraShakeMagnitude = 0.045f;
         private const float FinalCameraShakeMagnitude = 0.085f;
         private const float FlashAccelerationPower = 2.8f;
-        private const float PanelWidthRatio = 0.82f;
-        private const float PanelHeight = 116f;
-        private const float PanelBottom = 24f;
         private const int FlashCount = 8;
         private const int FirstIndex = 0;
 
@@ -118,9 +115,7 @@ namespace ReturnToTheEigth.Interaction
         private void OnGUI()
         {
             if (string.IsNullOrWhiteSpace(currentMessage)) return;
-            float panelWidth = Screen.width * PanelWidthRatio;
-            Rect panelRect = new Rect((Screen.width - panelWidth) * 0.5f,
-                Screen.height - PanelHeight - PanelBottom, panelWidth, PanelHeight);
+            Rect panelRect = GameTextGUI.GetStandardDialogueRect();
             GameTextGUI.DrawLabel(panelRect, currentMessage, dialogueBoxBackground, TextAnchor.MiddleCenter);
         }
 

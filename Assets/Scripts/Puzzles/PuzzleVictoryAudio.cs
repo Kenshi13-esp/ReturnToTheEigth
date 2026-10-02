@@ -15,6 +15,9 @@ namespace ReturnToTheEigth.Puzzles
         private static bool hasLoadedClip;
         private static bool hasWarnedAboutClip;
 
+        /// <summary>Gets whether the shared victory sound is still playing.</summary>
+        public static bool IsPlaying => victorySource != null && victorySource.isPlaying;
+
         /// <summary>Plays the victory sound once; the persistent source survives immediate scene changes.</summary>
         public static void Play()
         {

@@ -2,6 +2,7 @@ using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace ReturnToTheEigth.Player
 {
@@ -12,6 +13,7 @@ namespace ReturnToTheEigth.Player
     {
         private const string MoveActionPath = "Player/Move";
         private const string TimeShiftActionPath = "Player/TimeShift";
+        private const string HallSceneName = "Hall";
         private const string MissingInputError = "The 2D player requires Player/Move and Player/TimeShift actions.";
         private const string FootstepResourcePath = "Sounds/X/Steps";
         private const string MissingFootstepClipWarning = "TopDownCharacterController could not load Resources/Sounds/X/Steps.";
@@ -107,7 +109,8 @@ namespace ReturnToTheEigth.Player
 
         private void Start()
         {
-            if (GameManager.Instance != null
+            if (SceneManager.GetActiveScene().name == HallSceneName
+                && GameManager.Instance != null
                 && GameManager.Instance.TryConsumePendingPlayerReturnPosition(out Vector3 returnPosition))
             {
                 body.position = new Vector2(returnPosition.x, returnPosition.y);

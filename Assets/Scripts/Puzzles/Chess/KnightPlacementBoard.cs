@@ -156,7 +156,6 @@ namespace ReturnToTheEigth.Puzzles
             {
                 IsSolved = true;
                 placementRoutine = null;
-                PuzzleVictoryAudio.Play();
                 GameManager gameManager = GameManager.Instance;
                 if (gameManager != null)
                 {

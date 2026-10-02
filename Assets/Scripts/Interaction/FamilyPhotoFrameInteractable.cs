@@ -20,7 +20,6 @@ namespace ReturnToTheEigth.Interaction
         private const float ImageWidthRatio = 0.54f;
         private const float ImageHeightRatio = 0.66f;
         private const float FrameVerticalOffset = 32f;
-        private const float TextHeight = 76f;
         private const float Zero = 0f;
         private static readonly string[] FragmentIds =
         {
@@ -182,8 +181,7 @@ namespace ReturnToTheEigth.Interaction
 
             if (ShouldShowFrameExitHint)
             {
-                Rect hintRect = new Rect(Screen.width * 0.08f, Screen.height - PanelMargin - TextHeight,
-                    Screen.width * 0.84f, TextHeight);
+                Rect hintRect = GameTextGUI.GetStandardDialogueRect();
                 string hint = string.Format("Press {0} to leave the portrait.", InputPromptUtility.PuzzleExitControlLabel);
                 GameTextGUI.DrawLabel(hintRect, hint, dialogueBoxBackground, TextAnchor.MiddleCenter);
             }
@@ -203,7 +201,7 @@ namespace ReturnToTheEigth.Interaction
 
         private void DrawEndingScreen()
         {
-            Rect rect = new Rect(Screen.width * 0.08f, Screen.height * 0.36f, Screen.width * 0.84f, Screen.height * 0.28f);
+            Rect rect = GameTextGUI.GetStandardDialogueRect();
             GameTextGUI.DrawLabel(rect, "The family portrait is complete again.\nThank you for playing.", dialogueBoxBackground, TextAnchor.MiddleCenter);
         }
 

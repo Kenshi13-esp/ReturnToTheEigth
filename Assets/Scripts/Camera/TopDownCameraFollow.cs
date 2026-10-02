@@ -49,6 +49,44 @@ namespace ReturnToTheEigth.CameraSystem
             RefreshRoomFraming();
         }
 
+        private void OnGUI()
+        {
+            if (!Application.isPlaying || roomCamera == null || roomCamera.targetTexture != null
+                || roomCamera.targetDisplay != 0 || Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+
+            Rect cameraPixelRect = roomCamera.pixelRect;
+            Color previousColor = GUI.color;
+            GUI.color = roomCamera.backgroundColor;
+
+            float topBandHeight = Mathf.Max(0f, Screen.height - cameraPixelRect.yMax);
+            if (topBandHeight > Zero)
+                GUI.DrawTexture(new Rect(Zero, Zero, Screen.width, topBandHeight), Texture2D.whiteTexture);
+
+            if (cameraPixelRect.yMin > Zero)
+            {
+                GUI.DrawTexture(new Rect(Zero, Screen.height - cameraPixelRect.yMin,
+                    Screen.width, cameraPixelRect.yMin), Texture2D.whiteTexture);
+            }
+
+            if (cameraPixelRect.xMin > Zero)
+            {
+                GUI.DrawTexture(new Rect(Zero, Zero, cameraPixelRect.xMin, Screen.height),
+                    Texture2D.whiteTexture);
+            }
+
+            float rightBandWidth = Mathf.Max(0f, Screen.width - cameraPixelRect.xMax);
+            if (rightBandWidth > Zero)
+            {
+                GUI.DrawTexture(new Rect(cameraPixelRect.xMax, Zero,
+                    rightBandWidth, Screen.height), Texture2D.whiteTexture);
+            }
+
+            GUI.color = previousColor;
+        }
+
         private void OnValidate()
         {
             roomSize.x = Mathf.Max(MinimumRoomDimension, roomSize.x);

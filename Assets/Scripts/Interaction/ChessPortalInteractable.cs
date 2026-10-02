@@ -1,5 +1,4 @@
 using ReturnToTheEigth.Core;
-using ReturnToTheEigth.TimeTravel;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
@@ -86,8 +85,7 @@ namespace ReturnToTheEigth.Interaction
                 return;
             }
 
-            TimelineEra returnEra = FindAnyObjectByType<TimeTravelManager>()?.CurrentEra ?? TimelineEra.Present;
-            gameManager.SetPendingPlayerReturnState(interactor.transform.position, returnEra);
+            gameManager.SetPendingPlayerReturnState(interactor.transform.position);
             SceneManager.LoadSceneAsync(PuzzleSceneName, LoadSceneMode.Single);
         }
 

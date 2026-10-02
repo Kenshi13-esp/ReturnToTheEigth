@@ -13,23 +13,24 @@ namespace ReturnToTheEigth.TimeTravel
         private const string FrameInteractionInstruction = "Press {0} to interact with the family portrait.";
         private const float FeedbackDuration = 2f;
         private const float RewardNoticeDuration = 3.5f;
-        private const float PanelWidthRatio = 0.82f;
-        private const float PanelHeight = 116f;
-        private const float PanelBottomInset = 24f;
+        private const float MinimumNoticeDuration = 0f;
         [SerializeField] private TimelineEventChannelSO timelineChangedChannel;
         [SerializeField] private VoidEventChannelSO transitionBlockedChannel;
         [SerializeField] private PlayerInteraction playerInteraction;
         [SerializeField] private Sprite dialogueBoxBackground;
         private float blockedUntil = float.NegativeInfinity;
         private float rewardNoticeUntil = float.NegativeInfinity;
+        private float storyNoticeUntil = float.NegativeInfinity;
         private string activeRewardNotice;
+        private string activeStoryNotice;
 
         private void OnEnable()
         {
             if (timelineChangedChannel != null) timelineChangedChannel.OnTimelineChanged += HandleTimelineChanged;
             if (transitionBlockedChannel != null) transitionBlockedChannel.OnEventRaised += HandleTransitionBlocked;
             GameManager gameManager = GameManager.Instance;
-            if (gameManager != null && gameManager.TryConsumePendingRewardNotice(out string pendingNotice))
+            if (gameManager != null && gameManager.TryConsumePendingRewardNotice(out string pendingNotice)
+                && !ItemAcquisitionPopup.IsOpen)
             {
                 activeRewardNotice = pendingNotice;
                 rewardNoticeUntil = Time.unscaledTime + RewardNoticeDuration;
@@ -42,12 +43,31 @@ namespace ReturnToTheEigth.TimeTravel
             if (transitionBlockedChannel != null) transitionBlockedChannel.OnEventRaised -= HandleTransitionBlocked;
         }
 
+        /// <summary>Displays a timed narrative notice above the exploration HUD.</summary>
+        public void ShowStoryNotice(string message, float duration)
+        {
+            if (string.IsNullOrWhiteSpace(message) || duration <= MinimumNoticeDuration)
+                return;
+
+            activeStoryNotice = message;
+            storyNoticeUntil = Time.unscaledTime + duration;
+        }
+
         private void OnGUI()
         {
             if (FamilyPhotoFrameInteractable.HidesExplorationHud) return;
+            if (ItemAcquisitionPopup.IsOpen)
+            {
+                activeRewardNotice = null;
+                rewardNoticeUntil = float.NegativeInfinity;
+                return;
+            }
+
             bool blocked = Time.unscaledTime < blockedUntil;
             bool rewardNoticeActive = Time.unscaledTime < rewardNoticeUntil
                 && !string.IsNullOrWhiteSpace(activeRewardNotice);
+            bool storyNoticeActive = Time.unscaledTime < storyNoticeUntil
+                && !string.IsNullOrWhiteSpace(activeStoryNotice);
             InteractableBase target = playerInteraction != null ? playerInteraction.CurrentInteractable : null;
             bool showingFrameInteractionInstruction = target != null
                 && target is FamilyPhotoFrameInteractable frame
@@ -56,7 +76,8 @@ namespace ReturnToTheEigth.TimeTravel
                 && target is IProximityDescription descriptionSource
                 && target.isActiveAndEnabled
                 && !string.IsNullOrWhiteSpace(descriptionSource.ProximityDescription);
-            if (!blocked && !rewardNoticeActive && !showingFrameInteractionInstruction && !showingProximityDescription) return;
+            if (!blocked && !rewardNoticeActive && !storyNoticeActive
+                && !showingFrameInteractionInstruction && !showingProximityDescription) return;
 
             string message;
             if (blocked)
@@ -67,6 +88,10 @@ namespace ReturnToTheEigth.TimeTravel
             {
                 message = activeRewardNotice;
             }
+            else if (storyNoticeActive)
+            {
+                message = activeStoryNotice;
+            }
             else if (showingFrameInteractionInstruction)
             {
                 message = string.Format(FrameInteractionInstruction, InputPromptUtility.InteractControlLabel);
@@ -76,9 +101,7 @@ namespace ReturnToTheEigth.TimeTravel
                 message = ((IProximityDescription)target).ProximityDescription;
             }
 
-            float panelWidth = Screen.width * PanelWidthRatio;
-            Rect panelRect = new Rect((Screen.width - panelWidth) * 0.5f,
-                Screen.height - PanelHeight - PanelBottomInset, panelWidth, PanelHeight);
+            Rect panelRect = GameTextGUI.GetStandardDialogueRect();
             GameTextGUI.DrawLabel(panelRect, message, dialogueBoxBackground, TextAnchor.MiddleCenter);
         }
 

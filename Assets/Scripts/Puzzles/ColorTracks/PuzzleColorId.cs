@@ -13,15 +13,15 @@ namespace ReturnToTheEigth.Puzzles
         Orange
     }
 
-    /// <summary>Static palette and display names for <see cref="PuzzleColorId"/>.</summary>
+    /// <summary>Static palette and English display names for <see cref="PuzzleColorId"/>.</summary>
     public static class PuzzleColorPalette
     {
-        private const string RedName = "Rojo";
-        private const string GreenName = "Verde";
-        private const string BlueName = "Azul";
-        private const string YellowName = "Amarillo";
-        private const string PurpleName = "Morado";
-        private const string OrangeName = "Naranja";
+        private const string RedName = "Red";
+        private const string GreenName = "Green";
+        private const string BlueName = "Blue";
+        private const string YellowName = "Yellow";
+        private const string PurpleName = "Purple";
+        private const string OrangeName = "Orange";
         private static readonly Color RedColor = new Color(0.62f, 0.13f, 0.08f, 1f);
         private static readonly Color GreenColor = new Color(0.30f, 0.62f, 0.20f, 1f);
         private static readonly Color BlueColor = new Color(0.10f, 0.20f, 0.80f, 1f);
@@ -43,8 +43,8 @@ namespace ReturnToTheEigth.Puzzles
             }
         }
 
-        /// <summary>Returns the Spanish name used by HUD texts.</summary>
-        public static string GetSpanishName(PuzzleColorId id)
+        /// <summary>Returns the English name used by HUD texts.</summary>
+        public static string GetEnglishName(PuzzleColorId id)
         {
             switch (id)
             {

@@ -75,6 +75,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private InputAction confirmAction;
         private Coroutine resetRoutine;
         private Coroutine demonstrationRoutine;
+        private Coroutine completionRoutine;
         private Texture2D whiteTexture;
         private Texture2D blackTexture;
         private Texture2D selectionTexture;
@@ -82,6 +83,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private int demonstrationKeyIndex = -1;
         private bool inputLocked;
         private bool isDemonstrating;
+        private bool hasCompletedSequence;
 
         /// <summary>Raised once after the player confirms the correct sequence.</summary>
         public event Action Solved;
@@ -211,6 +213,11 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 resetRoutine = null;
                 inputLocked = false;
             }
+            if (completionRoutine != null)
+            {
+                StopCoroutine(completionRoutine);
+                completionRoutine = null;
+            }
         }
 
         private void OnDestroy()
@@ -296,7 +303,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
             GameManager.Instance?.SetGameState(GameState.Puzzle);
             if (finalNoteClip != null && noteAudioSource != null && noteAudioSource.isPlaying)
             {
-                StartCoroutine(CompleteSolvedSequenceAfterFinalNote());
+                completionRoutine = StartCoroutine(CompleteSolvedSequenceAfterFinalNote());
                 return;
             }
 
@@ -305,21 +312,26 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
         private IEnumerator CompleteSolvedSequenceAfterFinalNote()
         {
-            while (noteAudioSource != null && noteAudioSource.isPlaying)
+            while (!hasCompletedSequence && noteAudioSource != null && noteAudioSource.isPlaying)
             {
                 yield return null;
             }
 
+            completionRoutine = null;
             CompleteSolvedSequence();
         }
 
         private void CompleteSolvedSequence()
         {
+            if (hasCompletedSequence)
+                return;
+
+            hasCompletedSequence = true;
             PuzzleVictoryAudio.Play();
             GameManager gameManager = GameManager.Instance;
             if (gameManager != null)
             {
-                gameManager.MarkPuzzleCompleted(PuzzleId);
+                gameManager.MarkPuzzleCompleted(PuzzleId, false);
                 if (gameManager.TryGrantPuzzleRewards(PuzzleId, CompletionRewards))
                 {
                     gameManager.SetPendingRewardNotice(PianoRewardNotice);

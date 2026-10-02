@@ -40,7 +40,6 @@ namespace ReturnToTheEigth.Puzzles
         {
             if (IsSolved || !IsPlayer(other)) return;
             IsSolved = true;
-            PuzzleVictoryAudio.Play();
             GetComponent<BoxCollider2D>().enabled = false;
             GameManager.Instance?.MarkPuzzleCompleted(puzzleId);
             DisablePuzzleInteractions();

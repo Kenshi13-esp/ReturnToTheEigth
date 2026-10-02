@@ -3,6 +3,7 @@ using System.Collections;
 using ReturnToTheEigth.CameraSystem;
 using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Player;
+using ReturnToTheEigth.Puzzles;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -90,6 +91,11 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
             yield return loadOperation;
             yield return null;
+
+            while (PuzzleVictoryAudio.IsPlaying)
+            {
+                yield return null;
+            }
 
             if (melodyClip == null || audioSource == null)
             {
@@ -205,9 +211,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         {
             playerController ??= FindAnyObjectByType<TopDownCharacterController>();
             if (playerController == null)
-            {
                 return;
-            }
 
             Rigidbody2D body = playerController.GetComponent<Rigidbody2D>();
             if (body != null)

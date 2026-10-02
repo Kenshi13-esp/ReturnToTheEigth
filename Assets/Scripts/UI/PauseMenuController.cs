@@ -36,6 +36,9 @@ namespace ReturnToTheEigth.UI
 
         private void Update()
         {
+            if (ItemAcquisitionPopup.IsOpen)
+                return;
+
             bool qPressed = Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
             bool escapePressed = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
             bool controllerBackPressed = Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame;
@@ -56,7 +59,7 @@ namespace ReturnToTheEigth.UI
                 return;
 
             bool gamepadStartPressed = Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame;
-            if (!qPressed && !escapePressed && !gamepadStartPressed)
+            if (!escapePressed && !gamepadStartPressed)
                 return;
 
             if (GameManager.Instance == null || GameManager.Instance.CurrentGameState == GameState.GameOver)

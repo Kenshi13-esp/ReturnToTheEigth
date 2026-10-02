@@ -89,7 +89,10 @@ namespace ReturnToTheEigth.Interaction
                 FindNearestInteractable();
                 if (CurrentInteractable != null && CurrentInteractable.isActiveAndEnabled)
                 {
-                    interactionAudioSource?.PlayOneShot(interactionClip);
+                    if (!(CurrentInteractable is PushableBox))
+                    {
+                        interactionAudioSource?.PlayOneShot(interactionClip);
+                    }
                     CurrentInteractable.Interact(gameObject);
                 }
             }

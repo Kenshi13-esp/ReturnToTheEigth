@@ -14,12 +14,15 @@ namespace ReturnToTheEigth.Interaction
         private const string OpenPrompt = "View the family portrait";
         private const string FrameExitActionPath = "Player/PuzzleExit";
         private const string MissingFrameExitActionWarning = "FamilyPhotoFrameInteractable could not find Player/PuzzleExit.";
+        private const string CompletePortraitMemory = "Now I remember everything. I was the one who started the fire when I was eight years old.";
+        private const string ExitPortraitPromptFormat = "Press {0} to leave the portrait.";
         private const int PanelMargin = 24;
         private const float HighlightRadius = 0.9f;
         private const float ColliderPadding = 0.4f;
         private const float ImageWidthRatio = 0.54f;
         private const float ImageHeightRatio = 0.66f;
-        private const float FrameVerticalOffset = 32f;
+        private const float FrameVerticalOffset = 72f;
+        private const float FramePanelGap = 16f;
         private const float Zero = 0f;
         private static readonly string[] FragmentIds =
         {
@@ -37,6 +40,8 @@ namespace ReturnToTheEigth.Interaction
         private InputAction frameExitAction;
         private Texture2D solidTexture;
         [SerializeField] private Sprite dialogueBoxBackground;
+        [SerializeField] private Sprite missingPortraitSprite;
+        [SerializeField] private Sprite completedPortraitSprite;
         private bool isOpen;
         private bool isEnding;
         private bool isTimelineIntroPlaying;
@@ -168,29 +173,49 @@ namespace ReturnToTheEigth.Interaction
 
         private void DrawFrameScreen()
         {
-            if (frameRenderer.sprite == null) return;
+            Sprite portraitSprite = GetPortraitSprite();
+            if (portraitSprite == null) return;
 
-            Rect spriteRect = frameRenderer.sprite.rect;
+            Rect spriteRect = portraitSprite.rect;
             float aspect = spriteRect.width / spriteRect.height;
-            float imageHeight = Mathf.Min(Screen.height * ImageHeightRatio, Screen.height - PanelMargin * 2f);
+            Rect dialogueRect = GameTextGUI.GetStandardDialogueRect();
+            float maximumImageHeight = 2f * (dialogueRect.yMin - FramePanelGap + FrameVerticalOffset) - Screen.height;
+            float imageHeight = Mathf.Min(Screen.height * ImageHeightRatio,
+                Mathf.Min(Screen.height - PanelMargin * 2f, maximumImageHeight));
             float imageWidth = Mathf.Min(Screen.width * ImageWidthRatio, imageHeight * aspect);
             imageHeight = imageWidth / aspect;
             Rect imageRect = new Rect((Screen.width - imageWidth) * 0.5f,
                 (Screen.height - imageHeight) * 0.5f - FrameVerticalOffset, imageWidth, imageHeight);
-            DrawFrameSprite(imageRect);
+            DrawFrameSprite(imageRect, portraitSprite);
+            DrawFrameDialogue(dialogueRect);
+        }
 
+        private void DrawFrameDialogue(Rect dialogueRect)
+        {
+            string message = HasAllFragments() ? CompletePortraitMemory : string.Empty;
             if (ShouldShowFrameExitHint)
             {
-                Rect hintRect = GameTextGUI.GetStandardDialogueRect();
-                string hint = string.Format("Press {0} to leave the portrait.", InputPromptUtility.PuzzleExitControlLabel);
-                GameTextGUI.DrawLabel(hintRect, hint, dialogueBoxBackground, TextAnchor.MiddleCenter);
+                if (!string.IsNullOrEmpty(message)) message += "\n";
+                message += string.Format(ExitPortraitPromptFormat, InputPromptUtility.PuzzleExitControlLabel);
+            }
+
+            if (!string.IsNullOrEmpty(message))
+            {
+                GameTextGUI.DrawLabel(dialogueRect, message, dialogueBoxBackground, TextAnchor.MiddleCenter);
             }
         }
 
-        private void DrawFrameSprite(Rect imageRect)
+        private Sprite GetPortraitSprite()
         {
-            Texture2D spriteTexture = frameRenderer.sprite.texture;
-            Rect textureRect = frameRenderer.sprite.textureRect;
+            bool hasAllFragments = HasAllFragments();
+            Sprite selectedSprite = hasAllFragments ? completedPortraitSprite : missingPortraitSprite;
+            return selectedSprite != null ? selectedSprite : frameRenderer.sprite;
+        }
+
+        private void DrawFrameSprite(Rect imageRect, Sprite sprite)
+        {
+            Texture2D spriteTexture = sprite.texture;
+            Rect textureRect = sprite.textureRect;
             Rect uv = new Rect(
                 textureRect.x / spriteTexture.width,
                 textureRect.y / spriteTexture.height,

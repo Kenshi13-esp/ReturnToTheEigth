@@ -7,7 +7,7 @@ namespace ReturnToTheEigth.Interaction
 {
     /// <summary>Makes a sprite asset a reusable nearby puzzle entrance with an outline that appears on approach.</summary>
     [DisallowMultipleComponent]
-    public sealed class PuzzleAssetInteractable : InteractableBase
+    public sealed class PuzzleAssetInteractable : InteractableBase, IProximityDescription
     {
         private const string DefaultPrompt = "Enter the puzzle";
         private const string MissingRequiredItemPrompt = "You need the piano sheet music";
@@ -27,6 +27,7 @@ namespace ReturnToTheEigth.Interaction
         [SerializeField] private string sceneToLoad = DefaultPuzzleSceneName;
         [SerializeField] private string puzzleId = DefaultPuzzleId;
         [SerializeField] private string interactionPrompt = DefaultPrompt;
+        [SerializeField, TextArea] private string proximityDescription;
         [SerializeField] private string requiredItemId;
         [SerializeField] private string missingRequiredItemPrompt = MissingRequiredItemPrompt;
         [SerializeField, Min(Zero)] private float interactionRadius = DefaultInteractionRadius;
@@ -46,6 +47,9 @@ namespace ReturnToTheEigth.Interaction
         public override string InteractionPrompt => HasRequiredItem
             ? string.IsNullOrWhiteSpace(interactionPrompt) ? DefaultPrompt : interactionPrompt
             : string.IsNullOrWhiteSpace(missingRequiredItemPrompt) ? MissingRequiredItemPrompt : missingRequiredItemPrompt;
+
+        /// <summary>Gets the optional narrative shown while the player is near this puzzle asset.</summary>
+        public string ProximityDescription => proximityDescription;
 
         /// <summary>Gets the center point used for nearby interaction checks.</summary>
         public Vector2 InteractionPoint => targetRenderer != null ? targetRenderer.bounds.center : transform.position;

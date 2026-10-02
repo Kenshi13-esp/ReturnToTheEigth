@@ -22,6 +22,7 @@ namespace ReturnToTheEigth.CameraSystem
         [SerializeField, Min(Zero)] private float rollDegrees = DefaultRollDegrees;
 
         private Coroutine shakeRoutine;
+        private Coroutine shakeSequenceRoutine;
         private Vector3 restPosition;
         private Quaternion restRotation;
         private TopDownCameraFollow topDownCameraFollow;
@@ -51,6 +52,21 @@ namespace ReturnToTheEigth.CameraSystem
             shakeRoutine = StartCoroutine(ShakeRoutine(duration, magnitude, rollMagnitude));
         }
 
+        /// <summary>Runs several separated camera shakes, restarting any sequence already in progress.</summary>
+        public void ShakeSequence(int shakeCount, float duration, float magnitude, float interval)
+        {
+            if (shakeCount <= 0 || duration <= Zero || magnitude <= Zero || interval < Zero) return;
+
+            if (shakeSequenceRoutine != null)
+            {
+                StopCoroutine(shakeSequenceRoutine);
+                shakeSequenceRoutine = null;
+            }
+
+            Stop();
+            shakeSequenceRoutine = StartCoroutine(ShakeSequenceRoutine(shakeCount, duration, magnitude, interval));
+        }
+
         /// <summary>Stops the current shake (if any) and restores the rest pose.</summary>
         public void Stop()
         {
@@ -62,7 +78,25 @@ namespace ReturnToTheEigth.CameraSystem
 
         private void OnDisable()
         {
+            if (shakeSequenceRoutine != null)
+            {
+                StopCoroutine(shakeSequenceRoutine);
+                shakeSequenceRoutine = null;
+            }
+
             Stop();
+        }
+
+        private IEnumerator ShakeSequenceRoutine(int shakeCount, float duration, float magnitude, float interval)
+        {
+            for (int shakeIndex = 0; shakeIndex < shakeCount; shakeIndex++)
+            {
+                Shake(duration, magnitude);
+                float waitDuration = duration + (shakeIndex < shakeCount - 1 ? interval : Zero);
+                yield return new WaitForSecondsRealtime(waitDuration);
+            }
+
+            shakeSequenceRoutine = null;
         }
 
         private IEnumerator ShakeRoutine(float duration, float magnitude, float rollMagnitude)

@@ -65,6 +65,7 @@ namespace ReturnToTheEigth.Puzzles
         [SerializeField, Min(Zero)] private float animationSpeedDegrees = DefaultAnimationSpeed;
         [SerializeField] private PlayerInteraction playerInteraction;
         [SerializeField, TextArea] private string proximityDescription;
+        [SerializeField] private bool showProximityDescriptionOnWrongSideOnly;
 
         private Quaternion closedRotation;
         private Quaternion targetRotation;
@@ -86,7 +87,24 @@ namespace ReturnToTheEigth.Puzzles
         private float InteractionHighlightRadius => InteractionRadius;
 
         /// <summary>Gets an optional narrative description shown while the player is near this door.</summary>
-        public string ProximityDescription => proximityDescription;
+        public string ProximityDescription
+        {
+            get
+            {
+                if (showProximityDescriptionOnWrongSideOnly && !IsPlayerOnWrongSide)
+                {
+                    return string.Empty;
+                }
+
+                if (string.Equals(gameObject.name, HallKeyDoorObjectName, StringComparison.Ordinal)
+                    && (IsOpen || (GameManager.Instance != null && GameManager.Instance.HasItem(requiredItemId))))
+                {
+                    return string.Empty;
+                }
+
+                return proximityDescription;
+            }
+        }
 
         /// <summary>Gets whether the nearby player is standing on the side from which this door opens.</summary>
         public bool IsPlayerOnWrongSide => accessMode == DoorAccessMode.OneSided
@@ -138,7 +156,8 @@ namespace ReturnToTheEigth.Puzzles
                         return WrongSidePrompt;
                     }
 
-                    if (string.Equals(gameObject.name, DiningDoorObjectName, StringComparison.Ordinal))
+                    if (string.Equals(gameObject.name, DiningDoorObjectName, StringComparison.Ordinal)
+                        || string.Equals(gameObject.name, DeepDoorObjectName, StringComparison.Ordinal))
                     {
                         return DiningDoorAuthorizedPrompt;
                     }

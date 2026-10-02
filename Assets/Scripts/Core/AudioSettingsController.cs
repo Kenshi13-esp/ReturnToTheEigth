@@ -14,6 +14,8 @@ namespace ReturnToTheEigth.Core
     public sealed class AudioSettingsController : MonoBehaviour
     {
         private const string MainMenuSceneName = "MainMenu";
+        private const string PianoPuzzleSceneName = "PianoPuzzle";
+        private const string ElectricityPuzzleId = "ElectricityPuzzle";
         private const string MusicVolumeKey = "MusicVolume";
         private const string SoundVolumeKey = "SoundVolume";
         private const string MasterVolumeKey = "MasterVolume";
@@ -44,6 +46,7 @@ namespace ReturnToTheEigth.Core
         private AudioSource pastEraMusicSource;
         private TimelineEra currentEra = TimelineEra.Present;
         private bool eraMusicScheduled;
+        private bool suppressEraMusicUntilPowerRestored;
 
         private sealed class RegisteredAudioSource
         {
@@ -253,6 +256,7 @@ namespace ReturnToTheEigth.Core
 
             if (scene.name == MainMenuSceneName)
             {
+                suppressEraMusicUntilPowerRestored = false;
                 StopEraMusic();
                 if (!menuMusicSource.isPlaying)
                 {
@@ -265,6 +269,24 @@ namespace ReturnToTheEigth.Core
             {
                 menuMusicSource.Stop();
             }
+
+            if (scene.name == PianoPuzzleSceneName)
+            {
+                suppressEraMusicUntilPowerRestored = true;
+            }
+
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null && gameManager.IsPuzzleCompleted(ElectricityPuzzleId))
+            {
+                suppressEraMusicUntilPowerRestored = false;
+            }
+
+            if (suppressEraMusicUntilPowerRestored)
+            {
+                StopEraMusic();
+                return;
+            }
+
             StartEraMusic();
         }
 

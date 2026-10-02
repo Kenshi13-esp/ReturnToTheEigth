@@ -9,12 +9,13 @@ namespace ReturnToTheEigth.Interaction
     /// <summary>Loads the chess puzzle from the ChessPortal marker.</summary>
     [RequireComponent(typeof(BoxCollider2D), typeof(LineRenderer))]
     [DisallowMultipleComponent]
-    public sealed class ChessPortalInteractable : InteractableBase, IInteractionHighlightTarget
+    public sealed class ChessPortalInteractable : InteractableBase, IProximityDescription, IInteractionHighlightTarget
     {
         private const string PuzzleSceneName = "ChessPuzle";
         private const string PuzzleId = "KnightPuzzle";
         private const string InteractionPromptText = "Enter the chess puzzle";
         private const string MissingChessPiecePromptText = "You need the knight piece from the color puzzle";
+        private const string MissingChessPieceDescriptionText = "Oh, how can this be? The game I left unfinished with my sister that night is still just as we left it, but... the knight I used to make the winning move is missing.";
         private const string ChessAssetObjectName = "Chess";
         private const string PastTableObjectName = "pasttable";
         private const float HalfExtent = 0.3f;
@@ -41,6 +42,9 @@ namespace ReturnToTheEigth.Interaction
 
         /// <summary>Gets the prompt shown while the player can interact with the chess portal.</summary>
         public override string InteractionPrompt => HasChessPiece ? InteractionPromptText : MissingChessPiecePromptText;
+
+        /// <summary>Gets the narrative shown nearby until the player has the missing knight piece.</summary>
+        public string ProximityDescription => HasChessPiece ? string.Empty : MissingChessPieceDescriptionText;
 
         private bool HasChessPiece => GameManager.Instance != null &&
             GameManager.Instance.HasItem(PuzzleItemIds.ChessKnightPiece);

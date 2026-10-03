@@ -17,6 +17,10 @@ namespace ReturnToTheEigth.UI
         private const float HorizontalTextInsetRatio = 0.08f;
         private const float VerticalTextInsetRatio = 0.18f;
         private const float DialogueBackgroundScale = 0.65f;
+        private const float CharacterPictureHeightRatio = 0.82f;
+        private const float CharacterPictureLeftInsetRatio = 0.04f;
+        private const float CharacterPictureTextGapRatio = 0.08f;
+        private const float DialogueRightInsetRatio = 0.08f;
         private const float MinimumResolutionScale = 0.7f;
         private const float MaximumResolutionScale = 1.6f;
         private const float MaximumDialogueBackgroundHeightRatio = 0.32f;
@@ -74,8 +78,9 @@ namespace ReturnToTheEigth.UI
             GUI.color = previousColor;
         }
 
-        /// <summary>Draws the dialogue-box sprite and uniform-size wrapped text fully inside the safe area.</summary>
-        public static void DrawLabel(Rect rect, string text, Sprite backgroundSprite, TextAnchor alignment = TextAnchor.MiddleCenter)
+        /// <summary>Draws a character portrait and dialogue-box sprite as one bottom-centered group with wrapped text.</summary>
+        public static void DrawLabel(Rect rect, string text, Sprite backgroundSprite,
+            TextAnchor alignment = TextAnchor.MiddleCenter, Sprite characterPicture = null)
         {
             EnsureResources();
             Rect safeArea = GetSafeAreaRect();
@@ -102,22 +107,35 @@ namespace ReturnToTheEigth.UI
                         rect.yMax - backgroundHeight,
                         backgroundWidth,
                         backgroundHeight);
-                    Rect textureCoordinates = new Rect(
-                        spriteRect.x / backgroundSprite.texture.width,
-                        spriteRect.y / backgroundSprite.texture.height,
-                        spriteRect.width / backgroundSprite.texture.width,
-                        spriteRect.height / backgroundSprite.texture.height);
-
-                    GUI.color = Color.white;
-                    GUI.DrawTextureWithTexCoords(backgroundRect, backgroundSprite.texture, textureCoordinates, true);
+                    DrawSprite(backgroundSprite, backgroundRect);
 
                     float horizontalInset = backgroundWidth * HorizontalTextInsetRatio;
+                    Rect characterSpriteRect = characterPicture != null ? characterPicture.textureRect : Rect.zero;
+
                     float verticalInset = backgroundHeight * VerticalTextInsetRatio;
-                    labelRect = new Rect(
-                        backgroundRect.x + horizontalInset,
-                        backgroundRect.y + verticalInset,
-                        backgroundRect.width - horizontalInset * 2f,
-                        backgroundRect.height - verticalInset * 2f);
+                    float textLeft = backgroundRect.x + horizontalInset;
+                    float textRight = backgroundRect.xMax - horizontalInset;
+                    if (characterPicture != null && characterSpriteRect.height > 0f)
+                    {
+                        float characterHeight = backgroundHeight * CharacterPictureHeightRatio;
+                        float characterWidth = characterHeight * characterSpriteRect.width / characterSpriteRect.height;
+                        float characterLeft = backgroundRect.x + backgroundWidth * CharacterPictureLeftInsetRatio;
+                        float characterTop = backgroundRect.y + (backgroundHeight - characterHeight) * 0.5f;
+                        Rect characterRect = new Rect(characterLeft, characterTop, characterWidth, characterHeight);
+                        DrawSprite(characterPicture, characterRect);
+                        textLeft = characterRect.xMax + backgroundHeight * CharacterPictureTextGapRatio;
+                        labelRect = new Rect(textLeft, backgroundRect.y + verticalInset,
+                            Mathf.Max(textRight - textLeft, 0f), backgroundHeight - verticalInset * 2f);
+                        alignment = TextAnchor.MiddleCenter;
+                    }
+                    else
+                    {
+                        labelRect = new Rect(
+                            backgroundRect.x + horizontalInset,
+                            backgroundRect.y + verticalInset,
+                            backgroundWidth - horizontalInset * 2f,
+                            backgroundHeight - verticalInset * 2f);
+                    }
                 }
             }
 
@@ -128,6 +146,18 @@ namespace ReturnToTheEigth.UI
             GUI.color = TextColor;
             GUI.Label(labelRect, text, labelStyle);
             GUI.color = previousColor;
+        }
+
+        private static void DrawSprite(Sprite sprite, Rect destination)
+        {
+            Rect spriteRect = sprite.textureRect;
+            Rect textureCoordinates = new Rect(
+                spriteRect.x / sprite.texture.width,
+                spriteRect.y / sprite.texture.height,
+                spriteRect.width / sprite.texture.width,
+                spriteRect.height / sprite.texture.height);
+            GUI.color = Color.white;
+            GUI.DrawTextureWithTexCoords(destination, sprite.texture, textureCoordinates, true);
         }
 
         private static void FitFontSizeToRect(string text, Rect rect)

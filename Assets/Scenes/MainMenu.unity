@@ -2332,6 +2332,7 @@ MonoBehaviour:
         m_CallState: 2
   sceneToLoadAfterAnimation: 
   enablePointerHoverFeedback: 1
+  introCinematicClip: {fileID: 0}
 --- !u!1 &448690575
 GameObject:
   m_ObjectHideFlags: 0
@@ -3928,6 +3929,7 @@ GameObject:
   - component: {fileID: 731746073}
   - component: {fileID: 731746074}
   - component: {fileID: 731746075}
+  - component: {fileID: 731746076}
   m_Layer: 0
   m_Name: Main Menu Music
   m_TagString: Untagged
@@ -4062,6 +4064,22 @@ MonoBehaviour:
   presentEraMusicClip: {fileID: 8300000, guid: bff7a910dbdebd4429f9ec9decd3215e, type: 3}
   pastEraMusicClip: {fileID: 8300000, guid: ae3354b404f966f43888d3d3993a3efb, type: 3}
   timelineChangedChannel: {fileID: 11400000, guid: b9e106cbe4429774780d5157814ac899, type: 2}
+--- !u!114 &731746076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 731746072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eca83af4b951aa443a292df39b7b285c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Core.SoundManager
+  soundEffects:
+  - effectId: break-cristal
+    clip: {fileID: 8300000, guid: 4dce52575058cb84fa847dee0a10687d, type: 3}
+    volume: 0.7
 --- !u!1 &731938244
 GameObject:
   m_ObjectHideFlags: 0
@@ -4714,6 +4732,7 @@ MonoBehaviour:
         m_CallState: 2
   sceneToLoadAfterAnimation: 
   enablePointerHoverFeedback: 1
+  introCinematicClip: {fileID: 0}
 --- !u!1 &803992878
 GameObject:
   m_ObjectHideFlags: 0
@@ -4869,6 +4888,7 @@ MonoBehaviour:
       m_Calls: []
   sceneToLoadAfterAnimation: Hall
   enablePointerHoverFeedback: 1
+  introCinematicClip: {fileID: 0}
 --- !u!1 &828681082
 GameObject:
   m_ObjectHideFlags: 0
@@ -5880,6 +5900,7 @@ MonoBehaviour:
         m_CallState: 2
   sceneToLoadAfterAnimation: 
   enablePointerHoverFeedback: 1
+  introCinematicClip: {fileID: 0}
 --- !u!114 &1084471844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6585,6 +6606,7 @@ MonoBehaviour:
         m_CallState: 2
   sceneToLoadAfterAnimation: 
   enablePointerHoverFeedback: 1
+  introCinematicClip: {fileID: 0}
 --- !u!1 &1276975990
 GameObject:
   m_ObjectHideFlags: 0
@@ -6831,6 +6853,7 @@ MonoBehaviour:
         m_CallState: 2
   sceneToLoadAfterAnimation: 
   enablePointerHoverFeedback: 1
+  introCinematicClip: {fileID: 0}
 --- !u!1 &1286993970
 GameObject:
   m_ObjectHideFlags: 0
@@ -7120,6 +7143,7 @@ MonoBehaviour:
         m_CallState: 2
   sceneToLoadAfterAnimation: 
   enablePointerHoverFeedback: 1
+  introCinematicClip: {fileID: 0}
 --- !u!114 &1364316724
 MonoBehaviour:
   m_ObjectHideFlags: 0

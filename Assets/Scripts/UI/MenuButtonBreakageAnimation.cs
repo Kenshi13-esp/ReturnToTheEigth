@@ -15,6 +15,7 @@ namespace ReturnToTheEigth.UI
     public sealed class MenuButtonBreakageAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
     {
         private const string HallSceneName = "Hall";
+        private const string GlassBreakSoundEffectId = "break-cristal";
         private const int AnimationVariantCount = 3;
         private const int FirstVariantIndex = 0;
         private const int SecondVariantIndex = 1;
@@ -151,6 +152,8 @@ namespace ReturnToTheEigth.UI
                 Debug.LogWarning("No glass-break animation frames are assigned to this menu button.", this);
                 return;
             }
+
+            SoundManager.Play(GlassBreakSoundEffectId);
 
             if (playbackCoroutine != null)
             {

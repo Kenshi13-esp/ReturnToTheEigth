@@ -46,6 +46,7 @@ namespace ReturnToTheEigth.Interaction
         private InputAction frameExitAction;
         private Texture2D solidTexture;
         [SerializeField] private Sprite dialogueBoxBackground;
+        [SerializeField] private Sprite characterPicture;
         [SerializeField] private Sprite missingPortraitSprite;
         [SerializeField] private Sprite completedPortraitSprite;
         [SerializeField] private VideoClip finalCinematicClip;
@@ -244,7 +245,7 @@ namespace ReturnToTheEigth.Interaction
 
             if (!string.IsNullOrEmpty(message))
             {
-                GameTextGUI.DrawLabel(dialogueRect, message, dialogueBoxBackground, TextAnchor.MiddleCenter);
+                GameTextGUI.DrawLabel(dialogueRect, message, dialogueBoxBackground, TextAnchor.MiddleCenter, characterPicture);
             }
         }
 
@@ -282,7 +283,7 @@ namespace ReturnToTheEigth.Interaction
         private void DrawEndingScreen()
         {
             Rect rect = GameTextGUI.GetStandardDialogueRect();
-            GameTextGUI.DrawLabel(rect, "The family portrait is complete again.\nThank you for playing.", dialogueBoxBackground, TextAnchor.MiddleCenter);
+            GameTextGUI.DrawLabel(rect, "The family portrait is complete again.\nThank you for playing.", dialogueBoxBackground, TextAnchor.MiddleCenter, characterPicture);
         }
 
         private bool HasAllFragments()

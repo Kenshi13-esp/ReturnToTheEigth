@@ -29,6 +29,7 @@ namespace ReturnToTheEigth.Interaction
 
         [SerializeField] private CameraShake cameraShake;
         [SerializeField] private Sprite dialogueBoxBackground;
+        [SerializeField] private Sprite characterPicture;
 
         private TimeTravelManager timeTravelManager;
         private Coroutine sequenceRoutine;
@@ -116,7 +117,7 @@ namespace ReturnToTheEigth.Interaction
         {
             if (string.IsNullOrWhiteSpace(currentMessage)) return;
             Rect panelRect = GameTextGUI.GetStandardDialogueRect();
-            GameTextGUI.DrawLabel(panelRect, currentMessage, dialogueBoxBackground, TextAnchor.MiddleCenter);
+            GameTextGUI.DrawLabel(panelRect, currentMessage, dialogueBoxBackground, TextAnchor.MiddleCenter, characterPicture);
         }
 
         private void OnDisable()

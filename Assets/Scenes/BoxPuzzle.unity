@@ -723,9 +723,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.00058838725
+    x: 0.00096926093
     y: 0
-    width: 0.9988232
+    width: 0.9980615
     height: 1
   near clip plane: 0.1
   far clip plane: 30
@@ -1581,6 +1581,7 @@ MonoBehaviour:
   transitionBlockedChannel: {fileID: 11400000, guid: c60a11b645ea2fb4ab1544e9b55d9e97, type: 2}
   playerInteraction: {fileID: 1092855655}
   dialogueBoxBackground: {fileID: -469516085027664225, guid: de9650a2a9211064bba893a3aa9cd580, type: 3}
+  characterPicture: {fileID: 6429051268254912848, guid: 2fdee81339daeab43b6f040a797a4f29, type: 3}
 --- !u!114 &802341808
 MonoBehaviour:
   m_ObjectHideFlags: 0

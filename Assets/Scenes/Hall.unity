@@ -9765,7 +9765,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &788533826
 Transform:
   m_ObjectHideFlags: 0
@@ -10149,7 +10149,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 1.9320261, y: 1.0393863}
+  m_Offset: {x: 2.1024995, y: 1.0393863}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -10159,7 +10159,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 3.0964494, y: 2.4266195}
+  m_Size: {x: 3.4373984, y: 2.4266195}
   m_EdgeRadius: 0
 --- !u!1 &836169187
 GameObject:
@@ -15190,6 +15190,9 @@ MonoBehaviour:
   - effectId: metal-scraping
     clip: {fileID: 8300000, guid: 73a85fea248c97f4f9e076dc89c6d943, type: 3}
     volume: 0.7
+  - effectId: break-cristal
+    clip: {fileID: 8300000, guid: 4dce52575058cb84fa847dee0a10687d, type: 3}
+    volume: 0.7
 --- !u!1 &1280655439
 GameObject:
   m_ObjectHideFlags: 0
@@ -15267,6 +15270,7 @@ MonoBehaviour:
   transitionBlockedChannel: {fileID: 11400000, guid: c60a11b645ea2fb4ab1544e9b55d9e97, type: 2}
   playerInteraction: {fileID: 1316882288}
   dialogueBoxBackground: {fileID: -469516085027664225, guid: de9650a2a9211064bba893a3aa9cd580, type: 3}
+  characterPicture: {fileID: 6429051268254912848, guid: 2fdee81339daeab43b6f040a797a4f29, type: 3}
 --- !u!114 &1280655443
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15293,6 +15297,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Interaction.TimelineUnlockSequence
   cameraShake: {fileID: 1425701432}
   dialogueBoxBackground: {fileID: -469516085027664225, guid: de9650a2a9211064bba893a3aa9cd580, type: 3}
+  characterPicture: {fileID: 6429051268254912848, guid: 2fdee81339daeab43b6f040a797a4f29, type: 3}
 --- !u!114 &1280655445
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17377,9 +17382,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.00019189715
+    x: 0.0011502802
     y: 0
-    width: 0.9996162
+    width: 0.99769944
     height: 1
   near clip plane: 0.1
   far clip plane: 30
@@ -23092,6 +23097,7 @@ GameObject:
   - component: {fileID: 1801045605}
   - component: {fileID: 1801045606}
   - component: {fileID: 1801045607}
+  - component: {fileID: 1801045608}
   m_Layer: 8
   m_Name: MiddleWestWall (1)
   m_TagString: Untagged
@@ -23167,7 +23173,7 @@ EdgeCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1801045604}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -23220,6 +23226,71 @@ EdgeCollider2D:
   m_AdjacentEndPoint: {x: 0, y: 0}
   m_UseAdjacentStartPoint: 0
   m_UseAdjacentEndPoint: 0
+--- !u!60 &1801045608
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801045604}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: 0.5016002, y: -0.0012535518}
+      - {x: -0.59314847, y: -0.020930108}
+      - {x: -1.2677289, y: -0.67396414}
+      - {x: -1.2722309, y: -0.81235504}
+      - {x: -1.2751502, y: -1.0884783}
+      - {x: -1.1895984, y: -1.0907081}
+      - {x: -1.1894877, y: -1.4047436}
+      - {x: -1.128013, y: -1.4045169}
+      - {x: -0.77775, y: -1.4032254}
+      - {x: -0.77742994, y: -1.6625285}
+      - {x: -0.39992845, y: -1.66404}
+      - {x: -0.3264705, y: -1.6643252}
+      - {x: -0.33099675, y: -1.8045834}
+      - {x: 0.04469645, y: -1.806606}
+      - {x: 0.0879958, y: -1.8042538}
+      - {x: 0.08686873, y: -1.9634314}
+      - {x: 0.5015701, y: -1.9643409}
+      - {x: 0.4858037, y: -1.487354}
+  m_UseDelaunayMesh: 1
 --- !u!1 &1824098135
 GameObject:
   m_ObjectHideFlags: 0
@@ -24309,6 +24380,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Interaction.FamilyPhotoFrameInteractable
   dialogueBoxBackground: {fileID: -469516085027664225, guid: de9650a2a9211064bba893a3aa9cd580, type: 3}
+  characterPicture: {fileID: 6429051268254912848, guid: 2fdee81339daeab43b6f040a797a4f29, type: 3}
   missingPortraitSprite: {fileID: 4460528590129382455, guid: 6b4a4689fefd40549afde2d4293283c4, type: 3}
   completedPortraitSprite: {fileID: 1966125940161848107, guid: e308e25572efeb048809efea31243c83, type: 3}
   finalCinematicClip: {fileID: 0}
@@ -25631,11 +25703,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: b04efa55e57f6b548ace2bea7134b443, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.911
+      value: -1.984
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: b04efa55e57f6b548ace2bea7134b443, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4.105
+      value: 4.119
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: b04efa55e57f6b548ace2bea7134b443, type: 3}
       propertyPath: m_LocalPosition.z

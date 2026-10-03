@@ -18,6 +18,7 @@ namespace ReturnToTheEigth.TimeTravel
         [SerializeField] private VoidEventChannelSO transitionBlockedChannel;
         [SerializeField] private PlayerInteraction playerInteraction;
         [SerializeField] private Sprite dialogueBoxBackground;
+        [SerializeField] private Sprite characterPicture;
         private float blockedUntil = float.NegativeInfinity;
         private float rewardNoticeUntil = float.NegativeInfinity;
         private float storyNoticeUntil = float.NegativeInfinity;
@@ -102,7 +103,7 @@ namespace ReturnToTheEigth.TimeTravel
             }
 
             Rect panelRect = GameTextGUI.GetStandardDialogueRect();
-            GameTextGUI.DrawLabel(panelRect, message, dialogueBoxBackground, TextAnchor.MiddleCenter);
+            GameTextGUI.DrawLabel(panelRect, message, dialogueBoxBackground, TextAnchor.MiddleCenter, characterPicture);
         }
 
         private void HandleTimelineChanged(TimelineEra era) { blockedUntil = float.NegativeInfinity; }

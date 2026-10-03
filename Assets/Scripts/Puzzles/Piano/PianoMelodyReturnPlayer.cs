@@ -22,6 +22,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private const float Zero = 0f;
         private const float One = 1f;
         private const float FadeDuration = 0.35f;
+        private const float FadeToBlackDuration = FadeDuration + 0.5f;
         private const float BlackoutDuration = 1f;
         private const int BlackoutCanvasSortingOrder = 10000;
         private const int FirstShakeIndex = 0;
@@ -44,6 +45,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
         private CameraShake earthquakeCameraShake;
         private Image blackoutImage;
         private bool hasStarted;
+        private bool hasCompletedFadeToBlack;
 
         /// <summary>Loads Hall, plays the supplied melody from a persistent 2D audio source, and restores exploration state.</summary>
         public void ReturnToHallAndPlay(AudioClip clip, GameManager manager)
@@ -146,17 +148,31 @@ namespace ReturnToTheEigth.Puzzles.Piano
             SoundManager.PlayLoop(EarthquakeSoundId);
             for (int index = FirstShakeIndex; index < ShakeCount; index++)
             {
+                bool isLastShake = index == ShakeCount - 1;
+                if (isLastShake)
+                {
+                    CreateBlackoutOverlay();
+                    hasCompletedFadeToBlack = false;
+                    StartCoroutine(FadeBlackoutTo(One, FadeToBlackDuration));
+                }
+
                 earthquakeCameraShake?.Shake(EarthquakeShakeDurations[index], EarthquakeShakeMagnitudes[index], EarthquakeShakeRolls[index]);
                 yield return new WaitForSecondsRealtime(EarthquakeShakeDurations[index]);
                 while (earthquakeCameraShake != null && earthquakeCameraShake.IsShaking)
                 {
                     yield return null;
                 }
+
+                if (isLastShake)
+                {
+                    while (!hasCompletedFadeToBlack)
+                    {
+                        yield return null;
+                    }
+                }
             }
             SoundManager.StopLoop(EarthquakeSoundId);
 
-            CreateBlackoutOverlay();
-            yield return FadeBlackoutTo(One, FadeDuration);
             yield return new WaitForSecondsRealtime(BlackoutDuration);
             TeleportPlayerBesideElectric();
 
@@ -210,6 +226,10 @@ namespace ReturnToTheEigth.Puzzles.Piano
 
             color = targetAlpha >= One ? OpaqueBlack : TransparentBlack;
             blackoutImage.color = color;
+            if (targetAlpha >= One)
+            {
+                hasCompletedFadeToBlack = true;
+            }
         }
 
         private void TeleportPlayerBesideElectric()

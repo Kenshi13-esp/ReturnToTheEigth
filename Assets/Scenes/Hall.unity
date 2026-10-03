@@ -17382,9 +17382,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.0011502802
+    x: 0.00035366416
     y: 0
-    width: 0.99769944
+    width: 0.9992927
     height: 1
   near clip plane: 0.1
   far clip plane: 30
@@ -24383,7 +24383,7 @@ MonoBehaviour:
   characterPicture: {fileID: 6429051268254912848, guid: 2fdee81339daeab43b6f040a797a4f29, type: 3}
   missingPortraitSprite: {fileID: 4460528590129382455, guid: 6b4a4689fefd40549afde2d4293283c4, type: 3}
   completedPortraitSprite: {fileID: 1966125940161848107, guid: e308e25572efeb048809efea31243c83, type: 3}
-  finalCinematicClip: {fileID: 0}
+  finalCinematicClip: {fileID: 32900000, guid: bd670b6e6fe626e4eb683e5b662aca9f, type: 3}
 --- !u!61 &1934571509
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -48,6 +48,7 @@ namespace ReturnToTheEigth.Core
         private TimelineEra currentEra = TimelineEra.Present;
         private bool eraMusicScheduled;
         private bool suppressEraMusicUntilPowerRestored;
+        private bool isBackgroundMusicSuspendedForCinematic;
 
         private sealed class RegisteredAudioSource
         {
@@ -119,6 +120,30 @@ namespace ReturnToTheEigth.Core
         public static void RegisterMusicSource(AudioSource source)
         {
             RegisterAudioSource(source, true);
+        }
+
+        /// <summary>Stops background music for a cinematic without changing the saved category or master volumes.</summary>
+        public static void SuspendBackgroundMusicForCinematic()
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            instance.isBackgroundMusicSuspendedForCinematic = true;
+            instance.StopBackgroundMusic();
+        }
+
+        /// <summary>Restarts scene-appropriate background music after a cinematic transition finishes loading.</summary>
+        private void ResumeBackgroundMusicAfterCinematic()
+        {
+            if (!isBackgroundMusicSuspendedForCinematic)
+            {
+                return;
+            }
+
+            isBackgroundMusicSuspendedForCinematic = false;
+            UpdateMusicForScene(SceneManager.GetActiveScene());
         }
 
         /// <summary>Sets the music volume from its options slider and saves the preference.</summary>
@@ -194,6 +219,12 @@ namespace ReturnToTheEigth.Core
         {
             RegisterSceneAudioSources();
             BindVolumeSliders();
+            if (isBackgroundMusicSuspendedForCinematic)
+            {
+                ResumeBackgroundMusicAfterCinematic();
+                return;
+            }
+
             UpdateMusicForScene(scene);
         }
 
@@ -256,6 +287,12 @@ namespace ReturnToTheEigth.Core
                 return;
             }
 
+            if (isBackgroundMusicSuspendedForCinematic)
+            {
+                StopBackgroundMusic();
+                return;
+            }
+
             if (scene.name == MainMenuSceneName)
             {
                 suppressEraMusicUntilPowerRestored = false;
@@ -304,6 +341,16 @@ namespace ReturnToTheEigth.Core
             pastEraMusicSource.PlayScheduled(startTime);
             eraMusicScheduled = true;
             ApplyCategoryVolumes();
+        }
+
+        private void StopBackgroundMusic()
+        {
+            if (menuMusicSource != null && menuMusicSource.isPlaying)
+            {
+                menuMusicSource.Stop();
+            }
+
+            StopEraMusic();
         }
 
         private void StopEraMusic()

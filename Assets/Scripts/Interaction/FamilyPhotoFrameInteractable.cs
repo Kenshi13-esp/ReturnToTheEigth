@@ -1,3 +1,4 @@
+using System.Collections;
 using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Player;
 using ReturnToTheEigth.UI;
@@ -22,6 +23,7 @@ namespace ReturnToTheEigth.Interaction
         private const string InitialPortraitMessage = "This is the old family portrait. It seems intact, but our family photo is missing. This is very strange...";
         private const string ExitPortraitPromptFormat = "Press {0} to leave the portrait.";
         private const float InitialPortraitMessageDuration = 5f;
+        private const float FinalPortraitMessageDuration = 2f;
         private const int PanelMargin = 24;
         private const float HighlightRadius = 0.9f;
         private const float ColliderPadding = 0.4f;
@@ -30,6 +32,9 @@ namespace ReturnToTheEigth.Interaction
         private const float FrameVerticalOffset = 72f;
         private const float FramePanelGap = 16f;
         private const float Zero = 0f;
+        private const float FullAudioVolume = 1f;
+        private const float TwoDimensionalAudio = 0f;
+        private const ushort CinematicAudioTrackIndex = 0;
         private static readonly string[] FragmentIds =
         {
             PuzzleItemIds.ColorTrackPuzzlePaintingFragment,
@@ -58,6 +63,8 @@ namespace ReturnToTheEigth.Interaction
         private bool isShowingInitialPortraitMessage;
         private float initialPortraitMessageUntil;
         private VideoPlayer finalCinematicPlayer;
+        private AudioSource finalCinematicAudioSource;
+        private Coroutine finalEndingCoroutine;
         private bool isFinalCinematicPlaying;
 
         /// <summary>Gets whether this view should hide the normal exploration HUD.</summary>
@@ -96,7 +103,14 @@ namespace ReturnToTheEigth.Interaction
                 finalCinematicPlayer.renderMode = VideoRenderMode.CameraNearPlane;
                 finalCinematicPlayer.targetCamera = Camera.main;
                 finalCinematicPlayer.aspectRatio = VideoAspectRatio.FitInside;
-                finalCinematicPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
+                finalCinematicAudioSource = gameObject.AddComponent<AudioSource>();
+                finalCinematicAudioSource.playOnAwake = false;
+                finalCinematicAudioSource.volume = FullAudioVolume;
+                finalCinematicAudioSource.spatialBlend = TwoDimensionalAudio;
+                AudioSettingsController.RegisterMusicSource(finalCinematicAudioSource);
+                finalCinematicPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;
+                finalCinematicPlayer.EnableAudioTrack(CinematicAudioTrackIndex, true);
+                finalCinematicPlayer.SetTargetAudioSource(CinematicAudioTrackIndex, finalCinematicAudioSource);
                 finalCinematicPlayer.isLooping = false;
                 finalCinematicPlayer.loopPointReached += HandleFinalCinematicFinished;
             }
@@ -109,7 +123,7 @@ namespace ReturnToTheEigth.Interaction
 
         private void Update()
         {
-            if (isOpen && frameExitAction != null && frameExitAction.WasPerformedThisFrame())
+            if (isOpen && !HasAllFragments() && frameExitAction != null && frameExitAction.WasPerformedThisFrame())
             {
                 hasUsedFrameExit = true;
                 GameManager.Instance?.MarkFamilyFrameExitUsed();
@@ -117,24 +131,30 @@ namespace ReturnToTheEigth.Interaction
             }
         }
 
-        /// <summary>Opens the portrait on its first interaction; closing it is reserved for the Q/PuzzleExit action.</summary>
+        /// <summary>Opens the family portrait; after completion it locks control and starts the timed ending sequence.</summary>
         public override void Interact(GameObject interactor)
         {
             if (interactor == null || isEnding || isOpen) return;
-
             playerController = interactor.GetComponent<TopDownCharacterController>();
-            PlayerInteraction playerInteraction = interactor.GetComponent<PlayerInteraction>();
-            InputActionAsset inputActions = playerInteraction != null ? playerInteraction.InputActions : null;
-            InputAction sourceExitAction = inputActions != null
-                ? inputActions.FindAction(FrameExitActionPath, false) : null;
-            frameExitAction = sourceExitAction != null ? sourceExitAction.Clone() : null;
-            if (frameExitAction == null)
+
+
+            bool hasAllFragments = HasAllFragments();
+            if (!hasAllFragments)
             {
-                Debug.LogWarning(MissingFrameExitActionWarning, this);
-                return;
+                PlayerInteraction playerInteraction = interactor.GetComponent<PlayerInteraction>();
+                InputActionAsset inputActions = playerInteraction != null ? playerInteraction.InputActions : null;
+                InputAction sourceExitAction = inputActions != null
+                    ? inputActions.FindAction(FrameExitActionPath, false) : null;
+                frameExitAction = sourceExitAction != null ? sourceExitAction.Clone() : null;
+                if (frameExitAction == null)
+                {
+                    Debug.LogWarning(MissingFrameExitActionWarning, this);
+                    return;
+                }
+
+                frameExitAction.Enable();
             }
 
-            frameExitAction.Enable();
             playerController?.SetMovementEnabled(false);
             isShowingInitialPortraitMessage = GameManager.Instance != null
                 ? !GameManager.Instance.HasUsedFamilyFrameInteraction
@@ -144,6 +164,12 @@ namespace ReturnToTheEigth.Interaction
             GameManager.Instance?.MarkFamilyFrameInteractionUsed();
             isOpen = true;
             HidesExplorationHud = true;
+
+            if (hasAllFragments)
+            {
+                GameManager.Instance?.SetGameState(GameState.Puzzle);
+                finalEndingCoroutine = StartCoroutine(PlayFinalEndingSequence());
+            }
         }
 
         private void CloseFrame()
@@ -161,26 +187,37 @@ namespace ReturnToTheEigth.Interaction
                 return;
             }
 
-            if (HasAllFragments())
-            {
-                isEnding = true;
-                HidesExplorationHud = true;
-                if (finalCinematicPlayer != null)
-                {
-                    isFinalCinematicPlaying = true;
-                    finalCinematicPlayer.targetCamera = Camera.main;
-                    GameManager.Instance?.SetGameState(GameState.Puzzle);
-                    finalCinematicPlayer.Play();
-                }
-                else
-                {
-                    GameManager.Instance?.SetGameState(GameState.GameOver);
-                }
-                return;
-            }
-
             HidesExplorationHud = false;
             if (playerController != null) playerController.SetMovementEnabled(true);
+        }
+
+        private IEnumerator PlayFinalEndingSequence()
+        {
+            yield return new WaitForSecondsRealtime(FinalPortraitMessageDuration);
+            finalEndingCoroutine = null;
+            if (!isOpen)
+            {
+                yield break;
+            }
+
+            isOpen = false;
+            isEnding = true;
+            HidesExplorationHud = true;
+            frameExitAction?.Disable();
+            frameExitAction?.Dispose();
+            frameExitAction = null;
+            GameManager.Instance?.SetGameState(GameState.Puzzle);
+
+            if (finalCinematicPlayer == null)
+            {
+                HandleFinalCinematicFinished(null);
+                yield break;
+            }
+
+            isFinalCinematicPlaying = true;
+            finalCinematicPlayer.targetCamera = Camera.main;
+            AudioSettingsController.SuspendBackgroundMusicForCinematic();
+            finalCinematicPlayer.Play();
         }
 
         /// <summary>Restores the exploration HUD after the first-watch discovery sequence ends.</summary>
@@ -237,7 +274,7 @@ namespace ReturnToTheEigth.Interaction
             string message = showingInitialMessage
                 ? InitialPortraitMessage
                 : HasAllFragments() ? CompletePortraitMemory : string.Empty;
-            if (!showingInitialMessage && ShouldShowFrameExitHint)
+            if (!HasAllFragments() && !showingInitialMessage && ShouldShowFrameExitHint)
             {
                 if (!string.IsNullOrEmpty(message)) message += "\n";
                 message += string.Format(ExitPortraitPromptFormat, InputPromptUtility.PuzzleExitControlLabel);
@@ -307,7 +344,7 @@ namespace ReturnToTheEigth.Interaction
         {
             frameExitAction?.Disable();
             if (!isTimelineIntroPlaying) HidesExplorationHud = false;
-            if (isOpen && !isEnding && playerController != null)
+            if (isOpen && !isEnding && !HasAllFragments() && playerController != null)
             {
                 playerController.SetMovementEnabled(true);
             }

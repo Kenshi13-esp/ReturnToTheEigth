@@ -23,6 +23,9 @@ namespace ReturnToTheEigth.UI
         private const float AnimationDurationSeconds = 0.4f;
         private const float AnimationOverlayOpacity = 0.75f;
         private const float HoverScaleMultiplier = 1.12f;
+        private const float FullAudioVolume = 1f;
+        private const float TwoDimensionalAudio = 0f;
+        private const ushort CinematicAudioTrackIndex = 0;
        
 
         [SerializeField] private Button button;
@@ -38,6 +41,7 @@ namespace ReturnToTheEigth.UI
         private Coroutine playbackCoroutine;
         private RectTransform animationOverlayRectTransform;
         private Image buttonImage;
+        private AudioSource introCinematicAudioSource;
         private Vector2 originalOverlaySizeDelta;
 
         private int originalSiblingIndex;
@@ -257,7 +261,17 @@ namespace ReturnToTheEigth.UI
             videoPlayer.renderMode = VideoRenderMode.CameraNearPlane;
             videoPlayer.targetCamera = mainCamera;
             videoPlayer.aspectRatio = VideoAspectRatio.FitInside;
-            videoPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
+            if (introCinematicAudioSource == null)
+            {
+                introCinematicAudioSource = gameObject.AddComponent<AudioSource>();
+                introCinematicAudioSource.playOnAwake = false;
+                introCinematicAudioSource.volume = FullAudioVolume;
+                introCinematicAudioSource.spatialBlend = TwoDimensionalAudio;
+                AudioSettingsController.RegisterMusicSource(introCinematicAudioSource);
+            }
+            videoPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;
+            videoPlayer.EnableAudioTrack(CinematicAudioTrackIndex, true);
+            videoPlayer.SetTargetAudioSource(CinematicAudioTrackIndex, introCinematicAudioSource);
             videoPlayer.isLooping = false;
 
             bool playbackFinished = false;
@@ -275,6 +289,7 @@ namespace ReturnToTheEigth.UI
 
             if (!playbackFailed)
             {
+                AudioSettingsController.SuspendBackgroundMusicForCinematic();
                 videoPlayer.Play();
                 while (!playbackFinished && !playbackFailed)
                     yield return null;

@@ -124,6 +124,27 @@ namespace ReturnToTheEigth.Core
             Instance = null;
         }
 
+        /// <summary>Clears session progress and restores exploration before starting a new run from the main menu.</summary>
+        public void ResetForNewGameSession()
+        {
+            IsTimelineTravelUnlocked = false;
+            HasUsedFamilyFrameInteraction = false;
+            HasUsedFamilyFrameExit = false;
+            stateBeforePause = GameState.Exploration;
+            pendingPlayerReturnPosition = Vector3.zero;
+            pendingPlayerReturnEra = TimelineEra.Present;
+            hasPendingPlayerReturnPosition = false;
+            pendingRewardNotice = null;
+            completedPuzzleIds.Clear();
+            itemCounts.Clear();
+            puzzlesWithGrantedRewards.Clear();
+            pendingAcquisitionRewards.Clear();
+            doorStateChannel?.ResetSession();
+            InventoryChanged?.Invoke();
+            ApplyState(GameState.Exploration);
+        }
+
+
         /// <summary>Unlocks timeline travel after the player first examines the family portrait.</summary>
         public void UnlockTimelineTravel()
         {
@@ -175,8 +196,8 @@ namespace ReturnToTheEigth.Core
                 ? count : 0;
         }
 
-        /// <summary>Adds a positive quantity of an item to the session inventory.</summary>
-        public bool AddItem(string itemId, int amount = 1)
+        /// <summary>Adds a positive quantity of an item to the session inventory and optionally queues an acquisition popup.</summary>
+        public bool AddItem(string itemId, int amount = 1, bool showAcquisitionPopup = true)
         {
             if (string.IsNullOrWhiteSpace(itemId) || amount <= 0)
             {
@@ -193,7 +214,10 @@ namespace ReturnToTheEigth.Core
 
             itemCounts[itemId] = currentCount + amount;
             PuzzleReward addedReward = new PuzzleReward(itemId, amount);
-            pendingAcquisitionRewards.Add(addedReward);
+            if (showAcquisitionPopup)
+            {
+                pendingAcquisitionRewards.Add(addedReward);
+            }
             InventoryChanged?.Invoke();
             ItemsAdded?.Invoke(new[] { addedReward });
             return true;
@@ -334,10 +358,19 @@ namespace ReturnToTheEigth.Core
         }
 
 
-        /// <summary>Stores the player's world position and always returns them to the Present era after a puzzle.</summary>
-        public void SetPendingPlayerReturnState(Vector3 position)
+        /// <summary>Stores the player's physics position and always returns them to the Present era after a puzzle.</summary>
+        public void SetPendingPlayerReturnState(GameObject player)
         {
-            pendingPlayerReturnPosition = position;
+            if (player == null)
+            {
+                return;
+            }
+
+            Rigidbody2D playerBody = player.GetComponent<Rigidbody2D>();
+            Vector3 playerPosition = playerBody != null
+                ? new Vector3(playerBody.position.x, playerBody.position.y, player.transform.position.z)
+                : player.transform.position;
+            pendingPlayerReturnPosition = playerPosition;
             pendingPlayerReturnEra = TimelineEra.Present;
             hasPendingPlayerReturnPosition = true;
         }

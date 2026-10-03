@@ -16,6 +16,8 @@ namespace ReturnToTheEigth.Player
         private const string MoveActionPath = "Player/Move";
         private const string MissingInputError = "BoxDragController requires a Player/Move action.";
         private const string MissingGridWarning = "BoxDragController could not find a PuzzleGrid; box dragging is disabled.";
+        private const string BoxDragSoundId = "box-drag";
+        private const float BoxDragSoundPitch = 3f;
         private const float DefaultAxisThreshold = 0.5f;
         private const float MinimumAxisThreshold = 0.05f;
         private const float MaximumAxisThreshold = 1f;
@@ -324,6 +326,10 @@ namespace ReturnToTheEigth.Player
             float duration = Mathf.Max(MinimumStepDuration, box.StepDuration);
             float elapsed = Zero;
             box.Move(direction);
+            if (box.IsMoving)
+            {
+                SoundManager.Play(BoxDragSoundId, BoxDragSoundPitch);
+            }
             while (elapsed < duration)
             {
                 yield return WaitForPhysicsStep;

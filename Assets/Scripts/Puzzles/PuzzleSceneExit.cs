@@ -1,3 +1,4 @@
+using ReturnToTheEigth.CameraSystem;
 using ReturnToTheEigth.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -52,11 +53,20 @@ namespace ReturnToTheEigth.Puzzles
             if (isExiting || exitAction == null || !exitAction.WasPerformedThisFrame()) return;
 
             isExiting = true;
+            CameraShake activeCameraShake = FindAnyObjectByType<CameraShake>();
+            if (activeCameraShake != null)
+            {
+                activeCameraShake.StopAllShakes();
+            }
+
             GameManager gameManager = GameManager.Instance;
             if (gameManager != null)
             {
                 gameManager.SetGameState(GameState.Exploration);
-                if (!string.IsNullOrWhiteSpace(itemIdRefundedOnExit)) gameManager.AddItem(itemIdRefundedOnExit);
+                if (!string.IsNullOrWhiteSpace(itemIdRefundedOnExit))
+                {
+                    gameManager.AddItem(itemIdRefundedOnExit, showAcquisitionPopup: false);
+                }
             }
             SceneManager.LoadSceneAsync(HallSceneName, LoadSceneMode.Single);
         }

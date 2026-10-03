@@ -4,6 +4,9 @@ using ReturnToTheEigth.Events;
 using ReturnToTheEigth.Interaction;
 using ReturnToTheEigth.TimeTravel;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace ReturnToTheEigth.Puzzles
 {
@@ -33,8 +36,9 @@ namespace ReturnToTheEigth.Puzzles
         private const string HallKeyDoorIdentifier = "DoorH";
         private const string HallKeyDoorLockedPrompt = "This door is locked.";
         private const string HallKeyDoorItemDisplayName = "the chess puzzle key";
-        private const float HallKeyDoorInteractionRadius = 0.45f;
-        private const float DescriptiveDoorInteractionRadius = 0.45f;
+        private const string FireDoorObjectName = "DoorB";
+        private const string FireDoorSoundId = "present-fire-door";
+        private const float HallKeyDoorInteractionRadius = 0.35f;
         public const float DoorInteractionRadius = 0.25f;
         private const float InteractionOutlineWidth = 0.02f;
         private const float DoubleDoorHorizontalInset = 0.04f;
@@ -45,7 +49,9 @@ namespace ReturnToTheEigth.Puzzles
         private const int DefaultOutlineSortingOrder = 21;
         private const int OutlineSortingOrderOffset = 1;
         private const int OutlinePointCount = 4;
+        private const string SceneGuideLabelSuffix = " [texto puerta]";
         private static readonly Color InteractionOutlineColor = Color.white;
+        private static readonly Color SceneGuideColor = new Color(1f, 0.65f, 0.2f, 0.9f);
 
         [SerializeField] private string doorIdentifier = DefaultDoorIdentifier;
         [SerializeField] private DoorStateEventChannelSO doorStateChannel;
@@ -74,13 +80,14 @@ namespace ReturnToTheEigth.Puzzles
         private SpriteRenderer outlineBoundsRenderer;
         private Material runtimeOutlineMaterial;
         private bool hasInitialized;
+        private bool wasFireDoorSelected;
 
         /// <summary>Gets whether this door has been permanently opened for the current session.</summary>
         public bool IsOpen { get; private set; }
 
         /// <summary>Gets the radius used for this door's nearby interaction and outline checks.</summary>
         public float InteractionRadius => !string.IsNullOrWhiteSpace(proximityDescription)
-            ? DescriptiveDoorInteractionRadius
+            ? InteractableBase.ProximityTextInteractionRadius
             : string.Equals(gameObject.name, HallKeyDoorObjectName, StringComparison.Ordinal)
                 ? HallKeyDoorInteractionRadius : DoorInteractionRadius;
 
@@ -325,6 +332,11 @@ namespace ReturnToTheEigth.Puzzles
 
         private void OnDisable()
         {
+            if (wasFireDoorSelected)
+            {
+                SoundManager.StopLoop(FireDoorSoundId);
+                wasFireDoorSelected = false;
+            }
             if (doorStateChannel != null)
             {
                 doorStateChannel.OnDoorStateRequested -= HandleDoorStateRequested;
@@ -340,6 +352,18 @@ namespace ReturnToTheEigth.Puzzles
             }
 
             UpdateInteractionOutline();
+            bool isFireDoorSelected = string.Equals(gameObject.name, FireDoorObjectName, StringComparison.Ordinal)
+                && playerInteraction != null
+                && playerInteraction.CurrentInteractable == this;
+            if (isFireDoorSelected && !wasFireDoorSelected)
+            {
+                SoundManager.PlayLoop(FireDoorSoundId);
+            }
+            else if (!isFireDoorSelected && wasFireDoorSelected)
+            {
+                SoundManager.StopLoop(FireDoorSoundId);
+            }
+            wasFireDoorSelected = isFireDoorSelected;
         }
 
         private void OnDestroy()
@@ -349,6 +373,48 @@ namespace ReturnToTheEigth.Puzzles
                 Destroy(runtimeOutlineMaterial);
             }
         }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmos()
+        {
+            Camera sceneCamera = Camera.current;
+            if (sceneCamera == null || sceneCamera.cameraType != CameraType.SceneView
+                || string.IsNullOrWhiteSpace(proximityDescription))
+            {
+                return;
+            }
+
+            Collider2D textArea = blockingCollider != null ? blockingCollider : GetComponent<Collider2D>();
+            if (textArea == null)
+            {
+                return;
+            }
+
+            Color previousGizmoColor = Gizmos.color;
+            Color previousHandleColor = Handles.color;
+            Gizmos.color = SceneGuideColor;
+            Handles.color = SceneGuideColor;
+            BoxCollider2D boxArea = textArea as BoxCollider2D;
+            if (boxArea != null)
+            {
+                Matrix4x4 previousMatrix = Gizmos.matrix;
+                Gizmos.matrix = boxArea.transform.localToWorldMatrix;
+                Gizmos.DrawWireCube(boxArea.offset, boxArea.size);
+                Gizmos.matrix = previousMatrix;
+                Handles.Label(boxArea.transform.TransformPoint(boxArea.offset),
+                    gameObject.name + SceneGuideLabelSuffix);
+            }
+            else
+            {
+                Bounds areaBounds = textArea.bounds;
+                Gizmos.DrawWireCube(areaBounds.center, areaBounds.size);
+                Handles.Label(areaBounds.center, gameObject.name + SceneGuideLabelSuffix);
+            }
+
+            Gizmos.color = previousGizmoColor;
+            Handles.color = previousHandleColor;
+        }
+#endif
 
         /// <summary>Requests permanent opening when the configured access requirement is satisfied.</summary>
         public void OpenDoor()

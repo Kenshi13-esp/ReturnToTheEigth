@@ -20,6 +20,7 @@ namespace ReturnToTheEigth.Puzzles
         private const string MissingRewardManagerWarning = "The Chess puzzle was solved, but its rewards were not granted because no GameManager exists.";
         private const string ChessRewardNotice = "You received the key to the left kitchen door, a family portrait fragment, and the piano sheet music.";
         private const string DefaultPuzzleId = "KnightPuzzle";
+        private const string ChessPiecePlacementSoundId = "chess-piece-placement";
         private const float DefaultEvaluationDelay = 0.35f;
         private const float DefaultShakeDuration = 0.5f;
         private const float DefaultShakeMagnitude = 0.18f;
@@ -99,6 +100,7 @@ namespace ReturnToTheEigth.Puzzles
             SetHighlightsVisible(false);
             placedKnight.PlaceAt(cell);
             placedKnight.SetVisible(true);
+            SoundManager.Play(ChessPiecePlacementSoundId);
             Placed?.Invoke();
             placementRoutine = StartCoroutine(EvaluateRoutine(cell));
             return true;

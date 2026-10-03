@@ -1,3 +1,4 @@
+using ReturnToTheEigth.CameraSystem;
 using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using UnityEngine;
@@ -15,11 +16,9 @@ namespace ReturnToTheEigth.Player
         private const string TimeShiftActionPath = "Player/TimeShift";
         private const string HallSceneName = "Hall";
         private const string MissingInputError = "The 2D player requires Player/Move and Player/TimeShift actions.";
-        private const string FootstepResourcePath = "Sounds/X/Steps";
-        private const string MissingFootstepClipWarning = "TopDownCharacterController could not load Resources/Sounds/X/Steps.";
+        private const string FootstepSoundId = "wood-footstep-a";
         private const float DefaultMovementSpeed = 0.3f;
         private const float FootstepDistance = 0.42f;
-        private const float FootstepVolume = 0.35f;
         private const float FootstepPlaybackSpeed = 1.25f;
         private const float InputThreshold = 0.0001f;
         private const float UnitMagnitude = 1f;
@@ -30,8 +29,6 @@ namespace ReturnToTheEigth.Player
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         [SerializeField, Min(Zero)] private float movementSpeed = DefaultMovementSpeed;
         private Rigidbody2D body;
-        private AudioSource footstepAudioSource;
-        private AudioClip footstepClip;
         private Vector2 previousFootstepPosition;
         private float distanceSinceLastFootstep;
         private InputAction moveAction;
@@ -45,24 +42,6 @@ namespace ReturnToTheEigth.Player
             body = GetComponent<Rigidbody2D>();
             body.gravityScale = Zero;
             body.constraints = RigidbodyConstraints2D.FreezeRotation;
-            footstepClip = Resources.Load<AudioClip>(FootstepResourcePath);
-            if (footstepClip != null)
-            {
-                footstepAudioSource = GetComponent<AudioSource>();
-                if (footstepAudioSource == null)
-                {
-                    footstepAudioSource = gameObject.AddComponent<AudioSource>();
-                }
-                footstepAudioSource.playOnAwake = false;
-                footstepAudioSource.spatialBlend = Zero;
-                footstepAudioSource.volume = FootstepVolume;
-                footstepAudioSource.pitch = FootstepPlaybackSpeed;
-                AudioSettingsController.RegisterSoundSource(footstepAudioSource);
-            }
-            else
-            {
-                Debug.LogWarning(MissingFootstepClipWarning, this);
-            }
             previousFootstepPosition = body.position;
             InputAction sourceMove = inputActions != null ? inputActions.FindAction(MoveActionPath) : null;
             InputAction sourceShift = inputActions != null ? inputActions.FindAction(TimeShiftActionPath) : null;
@@ -78,6 +57,8 @@ namespace ReturnToTheEigth.Player
 
         private void OnEnable()
         {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            SceneManager.sceneLoaded += HandleSceneLoaded;
             moveAction?.Enable();
             if (timeShiftAction != null)
             {
@@ -88,6 +69,7 @@ namespace ReturnToTheEigth.Player
 
         private void OnDisable()
         {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
             moveAction?.Disable();
             if (timeShiftAction != null)
             {
@@ -109,16 +91,39 @@ namespace ReturnToTheEigth.Player
 
         private void Start()
         {
-            if (SceneManager.GetActiveScene().name == HallSceneName
-                && GameManager.Instance != null
-                && GameManager.Instance.TryConsumePendingPlayerReturnPosition(out Vector3 returnPosition))
+            RestorePendingPlayerReturnPosition();
+            ResetFootstepDistanceTracking();
+        }
+
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name == HallSceneName)
             {
-                body.position = new Vector2(returnPosition.x, returnPosition.y);
-                body.linearVelocity = Vector2.zero;
-                Physics2D.SyncTransforms();
+                RestorePendingPlayerReturnPosition();
+            }
+        }
+
+        private void RestorePendingPlayerReturnPosition()
+        {
+            if (SceneManager.GetActiveScene().name != HallSceneName
+                || body == null
+                || GameManager.Instance == null
+                || !GameManager.Instance.TryConsumePendingPlayerReturnPosition(out Vector3 returnPosition))
+            {
+                return;
             }
 
+            body.position = new Vector2(returnPosition.x, returnPosition.y);
+            body.linearVelocity = Vector2.zero;
+            transform.position = new Vector3(returnPosition.x, returnPosition.y, returnPosition.z);
+            Physics2D.SyncTransforms();
             ResetFootstepDistanceTracking();
+
+            TopDownCameraFollow cameraFollow = FindAnyObjectByType<TopDownCameraFollow>();
+            if (cameraFollow != null)
+            {
+                cameraFollow.SetTarget(transform);
+            }
         }
 
         private void FixedUpdate()
@@ -139,15 +144,10 @@ namespace ReturnToTheEigth.Player
             distanceSinceLastFootstep += Vector2.Distance(previousFootstepPosition, currentPosition);
             previousFootstepPosition = currentPosition;
 
-            if (footstepAudioSource == null || footstepClip == null)
-            {
-                return;
-            }
-
             while (distanceSinceLastFootstep >= FootstepDistance)
             {
                 distanceSinceLastFootstep -= FootstepDistance;
-                footstepAudioSource.PlayOneShot(footstepClip);
+                SoundManager.Play(FootstepSoundId, FootstepPlaybackSpeed);
             }
         }
 

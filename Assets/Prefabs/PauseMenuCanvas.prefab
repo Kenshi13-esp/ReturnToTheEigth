@@ -38,7 +38,7 @@ RectTransform:
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 213, y: 120}
   m_SizeDelta: {x: 18, y: 18}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.12, y: 0.95}
 --- !u!222 &3485003060737234722
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -219,6 +219,7 @@ MonoBehaviour:
   - {fileID: 3007341336628553716, guid: 2d23dd6f9d1f1d24996d0713b155c482, type: 3}
   - {fileID: -8914892523361739133, guid: 15bf998144c2b3343b205698f40b062c, type: 3}
   frameDurationSeconds: 0.07
+  softwareCursorHotspot: {x: 0.12, y: 0.95}
 --- !u!1 &14597384053997375
 GameObject:
   m_ObjectHideFlags: 0

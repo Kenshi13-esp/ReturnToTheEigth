@@ -9,9 +9,27 @@ namespace ReturnToTheEigth.UI
     [DisallowMultipleComponent]
     public sealed class MenuOptionsNavigation : MonoBehaviour
     {
+        private static bool shouldShowCreditsOnNextMainMenuLoad;
+
         [SerializeField] private GameObject sourceMenuPanel;
         [SerializeField] private GameObject optionsPanel;
         [SerializeField] private GameObject controlsPanel;
+
+        private void Start()
+        {
+            if (!shouldShowCreditsOnNextMainMenuLoad)
+                return;
+
+            shouldShowCreditsOnNextMainMenuLoad = false;
+            OpenCredits();
+        }
+
+        /// <summary>Opens the credits panel automatically the next time the main menu scene loads.</summary>
+        public static void ShowCreditsOnNextMainMenuLoad()
+        {
+            shouldShowCreditsOnNextMainMenuLoad = true;
+        }
+
         [SerializeField] private GameObject creditsPanel;
         [SerializeField] private GameObject backgroundDimmer;
 

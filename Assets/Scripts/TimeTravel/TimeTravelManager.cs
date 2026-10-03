@@ -21,6 +21,8 @@ namespace ReturnToTheEigth.TimeTravel
         private const string MissingCollisionWorldWarning = "TimeTravelManager rebuilt its missing clearance query world.";
         private const string PianoPuzzleId = "PianoPuzzle";
         private const string ElectricityPuzzleId = "ElectricityPuzzle";
+        private const string TimeTravelSoundId = "present-return";
+        private const string TimeTravelBlockedSoundId = "time-travel-error";
         [SerializeField] private GameObject presentMansionRoot;
         [SerializeField] private GameObject pastMansionRoot;
         [SerializeField] private BoxCollider2D playerCollider;
@@ -104,10 +106,15 @@ namespace ReturnToTheEigth.TimeTravel
         {
             if (!isConfigured || !isActiveAndEnabled || isTransitioning || !playerCollider.enabled
                 || Time.unscaledTime < nextTransitionTime
-                || (gameStateChannel != null && gameStateChannel.CurrentState != GameState.Exploration)) return false;
+                || (gameStateChannel != null && gameStateChannel.CurrentState != GameState.Exploration))
+            {
+                SoundManager.Play(TimeTravelBlockedSoundId);
+                return false;
+            }
             GameManager gameManager = GameManager.Instance;
             if (gameManager == null || !gameManager.IsTimelineTravelUnlocked)
             {
+                SoundManager.Play(TimeTravelBlockedSoundId);
                 return false;
             }
 
@@ -116,6 +123,7 @@ namespace ReturnToTheEigth.TimeTravel
             if (hasCompletedPiano && !hasCompletedElectricity)
             {
                 transitionBlockedChannel?.RaiseEvent();
+                SoundManager.Play(TimeTravelBlockedSoundId);
                 return false;
             }
 
@@ -126,6 +134,7 @@ namespace ReturnToTheEigth.TimeTravel
                 if (!CanTransitionToEra(targetEra))
                 {
                     transitionBlockedChannel?.RaiseEvent();
+                    SoundManager.Play(TimeTravelBlockedSoundId);
                     return false;
                 }
                 CurrentEra = targetEra;
@@ -133,6 +142,7 @@ namespace ReturnToTheEigth.TimeTravel
                 Physics2D.SyncTransforms();
                 nextTransitionTime = Time.unscaledTime + transitionCooldownSeconds;
                 timelineChangedChannel?.RaiseTimelineChanged(targetEra);
+                SoundManager.Play(TimeTravelSoundId);
                 return true;
             }
             finally { isTransitioning = false; }

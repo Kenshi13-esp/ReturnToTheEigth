@@ -16,6 +16,7 @@ namespace ReturnToTheEigth.UI
         private const float MinimumFrameDurationSeconds = 0.01f;
         private const float MouseIdleHideDelaySeconds = 1.5f;
         private const float GamepadNavigationDeadzone = 0.25f;
+        private static readonly Vector2 DefaultCursorHotspot = new Vector2(0.12f, 0.95f);
 
         /// <summary>Gets whether pointer input currently owns menu focus.</summary>
         public static bool IsMouseModeActive { get; private set; } = true;
@@ -26,6 +27,7 @@ namespace ReturnToTheEigth.UI
         [SerializeField] private Sprite idleCursorSprite;
         [SerializeField] private Sprite[] clickAnimationSprites;
         [SerializeField] private float frameDurationSeconds = DefaultFrameDurationSeconds;
+        [SerializeField] private Vector2 softwareCursorHotspot = DefaultCursorHotspot;
 
         private Image softwareCursorGraphic;
         private RectTransform softwareCursorTransform;
@@ -46,6 +48,9 @@ namespace ReturnToTheEigth.UI
         {
             softwareCursorGraphic = GetComponent<Image>();
             softwareCursorTransform = GetComponent<RectTransform>();
+            if (softwareCursorTransform != null)
+                softwareCursorTransform.pivot = new Vector2(
+                    Mathf.Clamp01(softwareCursorHotspot.x), Mathf.Clamp01(softwareCursorHotspot.y));
             virtualMouseInput = GetComponent<VirtualMouseInput>();
 
             Canvas cursorCanvas = GetComponentInParent<Canvas>();

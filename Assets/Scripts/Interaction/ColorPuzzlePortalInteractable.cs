@@ -59,7 +59,7 @@ namespace ReturnToTheEigth.Interaction
                 return;
             }
 
-            GameManager.Instance?.SetPendingPlayerReturnState(interactor.transform.position);
+            GameManager.Instance?.SetPendingPlayerReturnState(interactor);
             SceneManager.LoadSceneAsync(PuzzleSceneName, LoadSceneMode.Single);
         }
 

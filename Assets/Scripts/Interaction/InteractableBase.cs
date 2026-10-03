@@ -5,6 +5,9 @@ namespace ReturnToTheEigth.Interaction
     /// <summary>Common contract for doors, notes, levers, keys, and puzzles.</summary>
     public abstract class InteractableBase : MonoBehaviour
     {
+        /// <summary>Maximum player distance for text shown as proximity feedback.</summary>
+        public const float ProximityTextInteractionRadius = 0.25f;
+
         public abstract string InteractionPrompt { get; }
 
         /// <summary>Executes this object's interaction for the supplied player.</summary>

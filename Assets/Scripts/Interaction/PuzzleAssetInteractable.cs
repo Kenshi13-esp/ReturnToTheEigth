@@ -135,7 +135,7 @@ namespace ReturnToTheEigth.Interaction
                 return;
             }
 
-            GameManager.Instance?.SetPendingPlayerReturnState(interactor.transform.position);
+            GameManager.Instance?.SetPendingPlayerReturnState(interactor);
             SceneManager.LoadSceneAsync(sceneToLoad, LoadSceneMode.Single);
         }
 

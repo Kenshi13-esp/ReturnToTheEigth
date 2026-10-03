@@ -126,6 +126,7 @@ namespace ReturnToTheEigth.Interaction
             int count = Physics2D.OverlapCircle(origin, searchRadius, filter, nearbyColliders);
             float nearestDistanceSquared = float.PositiveInfinity;
             bool nearestIsPortal = false;
+            bool nearestIsProximityText = false;
             for (int index = FirstIndex; index < count; index++)
             {
                 Collider2D collider = nearbyColliders[index];
@@ -136,6 +137,7 @@ namespace ReturnToTheEigth.Interaction
                 Vector2 offset = point - origin;
                 float candidateRadius = effectiveInteractionRadius;
                 bool isPortal = false;
+                bool isProximityText = false;
                 if (candidate is ColorPuzzlePortalInteractable colorPortal)
                 {
                     isPortal = true;
@@ -175,19 +177,39 @@ namespace ReturnToTheEigth.Interaction
                 }
                 else if (candidate is DoorController door)
                 {
+                    if (!string.IsNullOrWhiteSpace(door.ProximityDescription))
+                    {
+                        isProximityText = true;
+                        point = collider.ClosestPoint(origin);
+                        offset = point - origin;
+                    }
                     candidateRadius = door.InteractionRadius;
+                }
+                else if (candidate is IProximityDescription description
+                    && !string.IsNullOrWhiteSpace(description.ProximityDescription))
+                {
+                    isProximityText = true;
+                    point = collider.ClosestPoint(origin);
+                    offset = point - origin;
+                    candidateRadius = InteractableBase.ProximityTextInteractionRadius;
                 }
 
                 float candidateDistanceSquared = offset.sqrMagnitude;
+                bool candidateHasLowerPriority = (nearestIsPortal && !isPortal)
+                    || (!nearestIsPortal && !isPortal && nearestIsProximityText && !isProximityText);
+                bool candidateHasHigherPriority = isPortal && !nearestIsPortal
+                    || (!isPortal && !nearestIsPortal && isProximityText && !nearestIsProximityText);
+                bool samePriorityGroup = !candidateHasHigherPriority && !candidateHasLowerPriority;
                 if (candidateDistanceSquared >= candidateRadius * candidateRadius
-                    || (!isPortal && Vector2.Dot(facing, offset) < Zero)
-                    || (nearestIsPortal && !isPortal)
-                    || (nearestIsPortal == isPortal && candidateDistanceSquared >= nearestDistanceSquared))
+                    || (!isPortal && !isProximityText && Vector2.Dot(facing, offset) < Zero)
+                    || candidateHasLowerPriority
+                    || (samePriorityGroup && candidateDistanceSquared >= nearestDistanceSquared))
                 {
                     continue;
                 }
 
                 if (!isPortal
+                    && !isProximityText
                     && point != origin
                     && candidateDistanceSquared > MinimumDistanceSquared
                     && !HasLineOfSight(origin, point, candidate, candidate is PushableBox))
@@ -197,6 +219,7 @@ namespace ReturnToTheEigth.Interaction
 
                 nearestDistanceSquared = candidateDistanceSquared;
                 nearestIsPortal = isPortal;
+                nearestIsProximityText = isProximityText;
                 CurrentInteractable = candidate;
             }
             SetHighlightedInteractable(CurrentInteractable);

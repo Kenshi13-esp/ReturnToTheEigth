@@ -3,6 +3,8 @@ using ReturnToTheEigth.Player;
 using ReturnToTheEigth.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using UnityEngine.Video;
 
 namespace ReturnToTheEigth.Interaction
 {
@@ -13,9 +15,13 @@ namespace ReturnToTheEigth.Interaction
     {
         private const string OpenPrompt = "View the family portrait";
         private const string FrameExitActionPath = "Player/PuzzleExit";
+        private const string MainMenuSceneName = "MainMenu";
         private const string MissingFrameExitActionWarning = "FamilyPhotoFrameInteractable could not find Player/PuzzleExit.";
+        private const string MissingMainMenuWarning = "FamilyPhotoFrameInteractable could not load the MainMenu scene after the final cinematic.";
         private const string CompletePortraitMemory = "Now I remember everything. I was the one who started the fire when I was eight years old.";
+        private const string InitialPortraitMessage = "This is the old family portrait. It seems intact, but our family photo is missing. This is very strange...";
         private const string ExitPortraitPromptFormat = "Press {0} to leave the portrait.";
+        private const float InitialPortraitMessageDuration = 5f;
         private const int PanelMargin = 24;
         private const float HighlightRadius = 0.9f;
         private const float ColliderPadding = 0.4f;
@@ -42,11 +48,16 @@ namespace ReturnToTheEigth.Interaction
         [SerializeField] private Sprite dialogueBoxBackground;
         [SerializeField] private Sprite missingPortraitSprite;
         [SerializeField] private Sprite completedPortraitSprite;
+        [SerializeField] private VideoClip finalCinematicClip;
         private bool isOpen;
         private bool isEnding;
         private bool isTimelineIntroPlaying;
         private bool hasOpenedFrame;
         private bool hasUsedFrameExit;
+        private bool isShowingInitialPortraitMessage;
+        private float initialPortraitMessageUntil;
+        private VideoPlayer finalCinematicPlayer;
+        private bool isFinalCinematicPlaying;
 
         /// <summary>Gets whether this view should hide the normal exploration HUD.</summary>
         public static bool HidesExplorationHud { get; private set; }
@@ -73,6 +84,20 @@ namespace ReturnToTheEigth.Interaction
                 Vector2 spriteSize = frameRenderer.sprite.bounds.size;
                 interactionCollider.size = spriteSize + Vector2.one * ColliderPadding;
                 interactionCollider.offset = frameRenderer.sprite.bounds.center;
+            }
+
+            if (finalCinematicClip != null)
+            {
+                finalCinematicPlayer = gameObject.AddComponent<VideoPlayer>();
+                finalCinematicPlayer.playOnAwake = false;
+                finalCinematicPlayer.source = VideoSource.VideoClip;
+                finalCinematicPlayer.clip = finalCinematicClip;
+                finalCinematicPlayer.renderMode = VideoRenderMode.CameraNearPlane;
+                finalCinematicPlayer.targetCamera = Camera.main;
+                finalCinematicPlayer.aspectRatio = VideoAspectRatio.FitInside;
+                finalCinematicPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
+                finalCinematicPlayer.isLooping = false;
+                finalCinematicPlayer.loopPointReached += HandleFinalCinematicFinished;
             }
         }
 
@@ -110,6 +135,10 @@ namespace ReturnToTheEigth.Interaction
 
             frameExitAction.Enable();
             playerController?.SetMovementEnabled(false);
+            isShowingInitialPortraitMessage = GameManager.Instance != null
+                ? !GameManager.Instance.HasUsedFamilyFrameInteraction
+                : !hasOpenedFrame;
+            initialPortraitMessageUntil = Time.unscaledTime + InitialPortraitMessageDuration;
             hasOpenedFrame = true;
             GameManager.Instance?.MarkFamilyFrameInteractionUsed();
             isOpen = true;
@@ -135,7 +164,17 @@ namespace ReturnToTheEigth.Interaction
             {
                 isEnding = true;
                 HidesExplorationHud = true;
-                GameManager.Instance?.SetGameState(GameState.GameOver);
+                if (finalCinematicPlayer != null)
+                {
+                    isFinalCinematicPlaying = true;
+                    finalCinematicPlayer.targetCamera = Camera.main;
+                    GameManager.Instance?.SetGameState(GameState.Puzzle);
+                    finalCinematicPlayer.Play();
+                }
+                else
+                {
+                    GameManager.Instance?.SetGameState(GameState.GameOver);
+                }
                 return;
             }
 
@@ -152,7 +191,7 @@ namespace ReturnToTheEigth.Interaction
 
         private void OnGUI()
         {
-            if (!isOpen && !isEnding) return;
+            if (isFinalCinematicPlaying || (!isOpen && !isEnding)) return;
             EnsureGuiResources();
             DrawOverlay();
             if (isEnding)
@@ -192,8 +231,12 @@ namespace ReturnToTheEigth.Interaction
 
         private void DrawFrameDialogue(Rect dialogueRect)
         {
-            string message = HasAllFragments() ? CompletePortraitMemory : string.Empty;
-            if (ShouldShowFrameExitHint)
+            bool showingInitialMessage = isShowingInitialPortraitMessage
+                && Time.unscaledTime < initialPortraitMessageUntil;
+            string message = showingInitialMessage
+                ? InitialPortraitMessage
+                : HasAllFragments() ? CompletePortraitMemory : string.Empty;
+            if (!showingInitialMessage && ShouldShowFrameExitHint)
             {
                 if (!string.IsNullOrEmpty(message)) message += "\n";
                 message += string.Format(ExitPortraitPromptFormat, InputPromptUtility.PuzzleExitControlLabel);
@@ -222,6 +265,18 @@ namespace ReturnToTheEigth.Interaction
                 textureRect.width / spriteTexture.width,
                 textureRect.height / spriteTexture.height);
             GUI.DrawTextureWithTexCoords(imageRect, spriteTexture, uv, true);
+        }
+
+        private void HandleFinalCinematicFinished(VideoPlayer source)
+        {
+            isFinalCinematicPlaying = false;
+            GameManager.Instance?.SetGameState(GameState.GameOver);
+            MenuOptionsNavigation.ShowCreditsOnNextMainMenuLoad();
+            AsyncOperation sceneLoad = SceneManager.LoadSceneAsync(MainMenuSceneName, LoadSceneMode.Single);
+            if (sceneLoad == null)
+            {
+                Debug.LogWarning(MissingMainMenuWarning, this);
+            }
         }
 
         private void DrawEndingScreen()

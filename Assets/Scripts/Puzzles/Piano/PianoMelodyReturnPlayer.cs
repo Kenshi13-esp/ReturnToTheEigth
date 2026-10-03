@@ -15,6 +15,8 @@ namespace ReturnToTheEigth.Puzzles.Piano
     public sealed class PianoMelodyReturnPlayer : MonoBehaviour
     {
         private const string HallSceneName = "Hall";
+        private const string BasementArrivalSoundId = "basement-arrival";
+        private const string EarthquakeSoundId = "earthquake";
         private const string MissingMelodyWarning = "Piano melody clip is missing; Hall will load without music.";
         private const string FailedLoadErrorFormat = "Could not return to Hall after the piano puzzle: {0}";
         private const float Zero = 0f;
@@ -141,6 +143,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
                 }
             }
 
+            SoundManager.PlayLoop(EarthquakeSoundId);
             for (int index = FirstShakeIndex; index < ShakeCount; index++)
             {
                 earthquakeCameraShake?.Shake(EarthquakeShakeDurations[index], EarthquakeShakeMagnitudes[index], EarthquakeShakeRolls[index]);
@@ -150,6 +153,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
                     yield return null;
                 }
             }
+            SoundManager.StopLoop(EarthquakeSoundId);
 
             CreateBlackoutOverlay();
             yield return FadeBlackoutTo(One, FadeDuration);
@@ -162,6 +166,7 @@ namespace ReturnToTheEigth.Puzzles.Piano
             }
 
             yield return FadeBlackoutTo(Zero, FadeDuration);
+            SoundManager.Play(BasementArrivalSoundId);
         }
 
         private void CreateBlackoutOverlay()

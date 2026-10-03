@@ -1,9 +1,11 @@
 using System.Collections;
+using ReturnToTheEigth.Core;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 namespace ReturnToTheEigth.UI
 {
@@ -12,6 +14,7 @@ namespace ReturnToTheEigth.UI
     [DisallowMultipleComponent]
     public sealed class MenuButtonBreakageAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
     {
+        private const string HallSceneName = "Hall";
         private const int AnimationVariantCount = 3;
         private const int FirstVariantIndex = 0;
         private const int SecondVariantIndex = 1;
@@ -29,6 +32,7 @@ namespace ReturnToTheEigth.UI
         [SerializeField] private UnityEvent onAnimationFinished = new UnityEvent();
         [SerializeField] private string sceneToLoadAfterAnimation;
         [SerializeField] private bool enablePointerHoverFeedback;
+        [SerializeField] private VideoClip introCinematicClip;
 
         private Coroutine playbackCoroutine;
         private RectTransform animationOverlayRectTransform;
@@ -209,36 +213,71 @@ namespace ReturnToTheEigth.UI
 
             onAnimationFinished?.Invoke();
 
+            animationOverlay.enabled = false;
+            animationOverlay.sprite = null;
+            RestoreAnimationOverlaySize();
+            RestoreButtonSiblingIndex();
+
             if (!string.IsNullOrWhiteSpace(sceneToLoadAfterAnimation))
             {
+                if (introCinematicClip != null)
+                    yield return PlayIntroCinematic();
+
+                if (sceneToLoadAfterAnimation == HallSceneName)
+                    GameManager.Instance?.ResetForNewGameSession();
+
                 AsyncOperation sceneLoad = SceneManager.LoadSceneAsync(sceneToLoadAfterAnimation, LoadSceneMode.Single);
                 if (sceneLoad != null)
                 {
                     while (!sceneLoad.isDone)
                         yield return null;
                 }
-
-                /* Previous behavior retained for rollback: it replayed the same break frames
-                   repeatedly while the destination scene was loading.
-                if (sceneLoad != null)
-                {
-                    int transitionFrameIndex = 0;
-                    while (!sceneLoad.isDone)
-                    {
-                        animationOverlay.sprite = frames[transitionFrameIndex];
-                        yield return new WaitForSecondsRealtime(frameDurationSeconds);
-                        transitionFrameIndex = (transitionFrameIndex + 1) % frames.Length;
-                    }
-                }
-                */
             }
 
-            animationOverlay.enabled = false;
-            animationOverlay.sprite = null;
-            RestoreAnimationOverlaySize();
-            RestoreButtonSiblingIndex();
             playbackCoroutine = null;
             ApplyFocusFeedback();
+        }
+
+        private IEnumerator PlayIntroCinematic()
+        {
+            Camera mainCamera = Camera.main;
+            if (mainCamera == null)
+            {
+                Debug.LogWarning("MenuButtonBreakageAnimation could not play the intro cinematic because there is no MainCamera.", this);
+                yield break;
+            }
+
+            VideoPlayer videoPlayer = gameObject.AddComponent<VideoPlayer>();
+            videoPlayer.playOnAwake = false;
+            videoPlayer.source = VideoSource.VideoClip;
+            videoPlayer.clip = introCinematicClip;
+            videoPlayer.renderMode = VideoRenderMode.CameraNearPlane;
+            videoPlayer.targetCamera = mainCamera;
+            videoPlayer.aspectRatio = VideoAspectRatio.FitInside;
+            videoPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
+            videoPlayer.isLooping = false;
+
+            bool playbackFinished = false;
+            bool playbackFailed = false;
+            videoPlayer.loopPointReached += _ => playbackFinished = true;
+            videoPlayer.errorReceived += (_, errorMessage) =>
+            {
+                Debug.LogError($"Intro cinematic playback failed: {errorMessage}", this);
+                playbackFailed = true;
+            };
+
+            videoPlayer.Prepare();
+            while (!videoPlayer.isPrepared && !playbackFailed)
+                yield return null;
+
+            if (!playbackFailed)
+            {
+                videoPlayer.Play();
+                while (!playbackFinished && !playbackFailed)
+                    yield return null;
+            }
+
+            Destroy(videoPlayer);
         }
 
         private Vector2 CalculateDisplayedButtonSize()

@@ -67,6 +67,18 @@ namespace ReturnToTheEigth.CameraSystem
             shakeSequenceRoutine = StartCoroutine(ShakeSequenceRoutine(shakeCount, duration, magnitude, interval));
         }
 
+        /// <summary>Stops the current shake and any remaining shake sequence, then restores the rest pose.</summary>
+        public void StopAllShakes()
+        {
+            if (shakeSequenceRoutine != null)
+            {
+                StopCoroutine(shakeSequenceRoutine);
+                shakeSequenceRoutine = null;
+            }
+
+            Stop();
+        }
+
         /// <summary>Stops the current shake (if any) and restores the rest pose.</summary>
         public void Stop()
         {

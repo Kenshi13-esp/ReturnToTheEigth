@@ -26,6 +26,7 @@ namespace ReturnToTheEigth.Core
         private const float MinimumVolume = 0f;
         private const float MaximumVolume = 1f;
         private const float ScheduledMusicStartDelay = 0.1f;
+        private const float MusicTrackBaseVolume = 0.25f;
         private const float FullVolume = 1f;
         private const float ZeroVolume = 0f;
         private const float TwoDimensionalAudio = 0f;
@@ -73,6 +74,7 @@ namespace ReturnToTheEigth.Core
 
             menuMusicSource = GetComponent<AudioSource>();
             menuMusicSource.playOnAwake = false;
+            menuMusicSource.volume = MusicTrackBaseVolume;
             RegisterAudioSource(menuMusicSource, true);
             presentEraMusicSource = CreateEraMusicSource(presentEraMusicClip);
             pastEraMusicSource = CreateEraMusicSource(pastEraMusicClip);
@@ -154,7 +156,7 @@ namespace ReturnToTheEigth.Core
             source.clip = clip;
             source.playOnAwake = false;
             source.loop = true;
-            source.volume = FullVolume;
+            source.volume = MusicTrackBaseVolume;
             source.spatialBlend = TwoDimensionalAudio;
             RegisterMusicSource(source);
             return source;

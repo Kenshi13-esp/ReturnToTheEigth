@@ -71,6 +71,7 @@ namespace ReturnToTheEigth.UI
         private Coroutine pendingDisplayRoutine;
         private int selectedItemIndex;
         private bool hasReleasedAcceptInput;
+        private bool hasFinishedHallSceneInitialization;
 
         /// <summary>Gets the active popup instance, if the current session has one.</summary>
         public static ItemAcquisitionPopup Instance { get; private set; }
@@ -102,9 +103,9 @@ namespace ReturnToTheEigth.UI
 
             Instance = this;
             gameManager = GameManager.Instance;
+            hasFinishedHallSceneInitialization = false;
             SceneManager.sceneLoaded += HandleSceneLoaded;
-
-            TryShowPendingAcquisitions();
+            SchedulePendingAcquisitionsDisplay();
         }
 
         private void OnDisable()
@@ -136,6 +137,12 @@ namespace ReturnToTheEigth.UI
 
         private void Update()
         {
+            if (SceneManager.GetActiveScene().name == HallSceneName
+                && !hasFinishedHallSceneInitialization)
+            {
+                return;
+            }
+
             if (gameManager == null)
                 gameManager = GameManager.Instance;
 
@@ -187,16 +194,26 @@ namespace ReturnToTheEigth.UI
 
         private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (scene.name != HallSceneName || pendingDisplayRoutine != null)
+            if (scene.name != HallSceneName)
                 return;
 
-            pendingDisplayRoutine = StartCoroutine(TryShowPendingAfterSceneLoad());
+            hasFinishedHallSceneInitialization = false;
+            SchedulePendingAcquisitionsDisplay();
+        }
+
+        private void SchedulePendingAcquisitionsDisplay()
+        {
+            if (pendingDisplayRoutine == null)
+            {
+                pendingDisplayRoutine = StartCoroutine(TryShowPendingAfterSceneLoad());
+            }
         }
 
         private IEnumerator TryShowPendingAfterSceneLoad()
         {
-            yield return null;
+            yield return new WaitForEndOfFrame();
             pendingDisplayRoutine = null;
+            hasFinishedHallSceneInitialization = true;
             TryShowPendingAcquisitions();
         }
 

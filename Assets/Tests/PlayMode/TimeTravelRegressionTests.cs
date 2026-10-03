@@ -26,6 +26,7 @@ namespace ReturnToTheEigth.Tests
         private const string MaskField = "solidObstacleLayers";
         private const string CooldownField = "transitionCooldownSeconds";
         private const string StateField = "gameStateChannel";
+        private const string PersistAcrossScenesField = "persistAcrossScenes";
         private const string BlockedField = "transitionBlockedChannel";
         private const string DoorIdentifierField = "doorIdentifier";
         private const string DoorChannelField = "doorStateChannel";
@@ -49,6 +50,7 @@ namespace ReturnToTheEigth.Tests
         private GameObject past;
         private BoxCollider2D player;
         private TimeTravelManager manager;
+        private GameManager testGameManager;
         private GameStateEventChannelSO stateChannel;
         private DoorStateEventChannelSO doorChannel;
         private VoidEventChannelSO blockedChannel;
@@ -60,6 +62,7 @@ namespace ReturnToTheEigth.Tests
             stateChannel = ScriptableObject.CreateInstance<GameStateEventChannelSO>();
             doorChannel = ScriptableObject.CreateInstance<DoorStateEventChannelSO>();
             blockedChannel = ScriptableObject.CreateInstance<VoidEventChannelSO>();
+            EnsureTimelineTravelUnlocked();
             fixture = new GameObject(FixtureName);
             fixture.SetActive(false);
             present = CreateChild(PresentName);
@@ -86,6 +89,8 @@ namespace ReturnToTheEigth.Tests
         public IEnumerator TearDown()
         {
             Object.Destroy(fixture);
+            if (testGameManager != null)
+                Object.Destroy(testGameManager.gameObject);
             Object.Destroy(stateChannel);
             Object.Destroy(doorChannel);
             Object.Destroy(blockedChannel);
@@ -225,6 +230,22 @@ namespace ReturnToTheEigth.Tests
             Assert.That(manager.TryShiftTime(), Is.True);
             Assert.That(manager.TryShiftTime(), Is.True);
             Assert.That(door.IsOpen, Is.True);
+        }
+
+        private void EnsureTimelineTravelUnlocked()
+        {
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager == null)
+            {
+                GameObject gameManagerObject = new GameObject("TimeTravelTestGameManager");
+                gameManagerObject.SetActive(false);
+                testGameManager = gameManagerObject.AddComponent<GameManager>();
+                SetField(testGameManager, PersistAcrossScenesField, false);
+                gameManagerObject.SetActive(true);
+                gameManager = testGameManager;
+            }
+
+            gameManager.UnlockTimelineTravel();
         }
 
         private GameObject CreateChild(string childName)

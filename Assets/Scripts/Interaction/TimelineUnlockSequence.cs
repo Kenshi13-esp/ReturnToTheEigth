@@ -13,12 +13,13 @@ namespace ReturnToTheEigth.Interaction
     public sealed class TimelineUnlockSequence : MonoBehaviour
     {
         private const string FirstMessage = "My watch is acting strange.";
-        private static string RevealMessage => string.Format("Press {0} to use the watch's power.",
+        private static string RevealMessage => string.Format(
+            "Looks like the watch takes me back in time, when I was 8 years old.\nPress {0} to use the watch's power.",
             InputPromptUtility.TimeShiftControlLabel);
         private const float FirstMessageDuration = 2.2f;
         private const float InitialFlashInterval = 1.25f;
         private const float FinalFlashInterval = 0.24f;
-        private const float RevealMessageDuration = 4.6f;
+        private const float RevealMessageDuration = 8f;
         private const float MaximumCameraShakeDuration = 0.58f;
         private const float MinimumCameraShakeIntervalRatio = 0.72f;
         private const float InitialCameraShakeMagnitude = 0.045f;

@@ -17382,9 +17382,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.00035366416
+    x: 0.0007683635
     y: 0
-    width: 0.9992927
+    width: 0.9984633
     height: 1
   near clip plane: 0.1
   far clip plane: 30
@@ -18077,7 +18077,7 @@ MonoBehaviour:
   openAngleDegrees: -100
   animationSpeedDegrees: 180
   playerInteraction: {fileID: 0}
-  proximityDescription: This door request a key...
+  proximityDescription: This door needs a key...
   showProximityDescriptionOnWrongSideOnly: 0
 --- !u!1 &1493923223
 GameObject:

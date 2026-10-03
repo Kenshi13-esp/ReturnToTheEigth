@@ -15,6 +15,7 @@ namespace ReturnToTheEigth.Core
     {
         private const string MainMenuSceneName = "MainMenu";
         private const string PianoPuzzleSceneName = "PianoPuzzle";
+        private const string BoxPuzzleSceneName = "BoxPuzzle";
         private const string ElectricityPuzzleId = "ElectricityPuzzle";
         private const string MusicVolumeKey = "MusicVolume";
         private const string SoundVolumeKey = "SoundVolume";
@@ -32,6 +33,7 @@ namespace ReturnToTheEigth.Core
         private const float TwoDimensionalAudio = 0f;
 
         private static readonly List<RegisteredAudioSource> RegisteredAudioSources = new List<RegisteredAudioSource>();
+        private static readonly List<AudioSourcePauseState> AudioSourcePauseStates = new List<AudioSourcePauseState>();
 
         private static AudioSettingsController instance;
         private static float musicVolume = DefaultVolume;
@@ -48,7 +50,15 @@ namespace ReturnToTheEigth.Core
         private TimelineEra currentEra = TimelineEra.Present;
         private bool eraMusicScheduled;
         private bool suppressEraMusicUntilPowerRestored;
-        private bool isBackgroundMusicSuspendedForCinematic;
+        private bool isCinematicAudioSuspended;
+        private bool previousAudioListenerPauseState;
+        private AudioSource cinematicAudioSource;
+
+        private sealed class AudioSourcePauseState
+        {
+            public AudioSource Source;
+            public bool IgnoreListenerPause;
+        }
 
         private sealed class RegisteredAudioSource
         {
@@ -101,6 +111,11 @@ namespace ReturnToTheEigth.Core
             }
             if (instance == this)
             {
+                if (isCinematicAudioSuspended)
+                {
+                    RestoreAudioAfterCinematic();
+                }
+
                 instance = null;
             }
         }
@@ -122,28 +137,93 @@ namespace ReturnToTheEigth.Core
             RegisterAudioSource(source, true);
         }
 
-        /// <summary>Stops background music for a cinematic without changing the saved category or master volumes.</summary>
-        public static void SuspendBackgroundMusicForCinematic()
+        /// <summary>Pauses every audio source except the supplied cinematic track and stops background music.</summary>
+        public static void SuspendAudioForCinematic(AudioSource cinematicSource)
         {
-            if (instance == null)
+            if (instance == null || cinematicSource == null || instance.isCinematicAudioSuspended)
             {
                 return;
             }
 
-            instance.isBackgroundMusicSuspendedForCinematic = true;
+            instance.previousAudioListenerPauseState = AudioListener.pause;
+            instance.isCinematicAudioSuspended = true;
+            instance.cinematicAudioSource = cinematicSource;
             instance.StopBackgroundMusic();
+            instance.PauseNonCinematicAudioSources();
         }
 
-        /// <summary>Restarts scene-appropriate background music after a cinematic transition finishes loading.</summary>
+        /// <summary>Restores audio immediately if a cinematic is cancelled before its scene transition.</summary>
+        public static void ResumeAudioAfterCinematic()
+        {
+            if (instance != null)
+            {
+                instance.ResumeBackgroundMusicAfterCinematic();
+            }
+        }
+
+        /// <summary>Restarts scene-appropriate background music and restores audio after a cinematic transition.</summary>
         private void ResumeBackgroundMusicAfterCinematic()
         {
-            if (!isBackgroundMusicSuspendedForCinematic)
+            if (!isCinematicAudioSuspended)
             {
                 return;
             }
 
-            isBackgroundMusicSuspendedForCinematic = false;
+            RestoreAudioAfterCinematic();
             UpdateMusicForScene(SceneManager.GetActiveScene());
+        }
+
+        private void PauseNonCinematicAudioSources()
+        {
+            AudioSourcePauseStates.Clear();
+            AudioSource[] audioSources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
+            for (int index = 0; index < audioSources.Length; index++)
+            {
+                StoreAndSetCinematicPause(audioSources[index]);
+            }
+
+            AudioListener.pause = true;
+        }
+
+        private void StoreAndSetCinematicPause(AudioSource source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < AudioSourcePauseStates.Count; index++)
+            {
+                if (AudioSourcePauseStates[index].Source == source)
+                {
+                    source.ignoreListenerPause = source == cinematicAudioSource;
+                    return;
+                }
+            }
+
+            AudioSourcePauseStates.Add(new AudioSourcePauseState
+            {
+                Source = source,
+                IgnoreListenerPause = source.ignoreListenerPause
+            });
+            source.ignoreListenerPause = source == cinematicAudioSource;
+        }
+
+        private void RestoreAudioAfterCinematic()
+        {
+            AudioListener.pause = previousAudioListenerPauseState;
+            for (int index = 0; index < AudioSourcePauseStates.Count; index++)
+            {
+                AudioSourcePauseState pauseState = AudioSourcePauseStates[index];
+                if (pauseState.Source != null)
+                {
+                    pauseState.Source.ignoreListenerPause = pauseState.IgnoreListenerPause;
+                }
+            }
+
+            AudioSourcePauseStates.Clear();
+            cinematicAudioSource = null;
+            isCinematicAudioSuspended = false;
         }
 
         /// <summary>Sets the music volume from its options slider and saves the preference.</summary>
@@ -211,6 +291,11 @@ namespace ReturnToTheEigth.Core
 
             if (instance != null)
             {
+                if (instance.isCinematicAudioSuspended)
+                {
+                    instance.StoreAndSetCinematicPause(source);
+                }
+
                 instance.ApplyCategoryVolumes();
             }
         }
@@ -219,7 +304,7 @@ namespace ReturnToTheEigth.Core
         {
             RegisterSceneAudioSources();
             BindVolumeSliders();
-            if (isBackgroundMusicSuspendedForCinematic)
+            if (isCinematicAudioSuspended)
             {
                 ResumeBackgroundMusicAfterCinematic();
                 return;
@@ -287,7 +372,7 @@ namespace ReturnToTheEigth.Core
                 return;
             }
 
-            if (isBackgroundMusicSuspendedForCinematic)
+            if (isCinematicAudioSuspended)
             {
                 StopBackgroundMusic();
                 return;
@@ -312,6 +397,10 @@ namespace ReturnToTheEigth.Core
             if (scene.name == PianoPuzzleSceneName)
             {
                 suppressEraMusicUntilPowerRestored = true;
+            }
+            else if (scene.name == BoxPuzzleSceneName)
+            {
+                suppressEraMusicUntilPowerRestored = false;
             }
 
             GameManager gameManager = GameManager.Instance;
@@ -394,6 +483,8 @@ namespace ReturnToTheEigth.Core
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetRuntimeState()
         {
+            AudioListener.pause = false;
+            AudioSourcePauseStates.Clear();
             RegisteredAudioSources.Clear();
             instance = null;
             musicVolume = DefaultVolume;

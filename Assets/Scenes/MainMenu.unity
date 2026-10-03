@@ -4890,7 +4890,7 @@ MonoBehaviour:
       m_Calls: []
   sceneToLoadAfterAnimation: Hall
   enablePointerHoverFeedback: 1
-  introCinematicClip: {fileID: 0}
+  introCinematicClip: {fileID: 32900000, guid: 7ded88ac63ec54e428dbdc37c6004105, type: 3}
 --- !u!1 &828681082
 GameObject:
   m_ObjectHideFlags: 0

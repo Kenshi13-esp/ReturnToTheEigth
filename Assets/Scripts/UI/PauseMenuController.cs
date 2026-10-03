@@ -32,6 +32,34 @@ namespace ReturnToTheEigth.UI
                 pauseEventSystem = persistentEventSystem.GetComponent<EventSystem>();
 
             SetPauseMenuVisible(false);
+            UpdatePersistentEventSystem(SceneManager.GetActiveScene());
+        }
+
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            UpdatePersistentEventSystem(SceneManager.GetActiveScene());
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+        }
+
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            UpdatePersistentEventSystem(scene);
+        }
+
+        private void UpdatePersistentEventSystem(Scene scene)
+        {
+            if (persistentEventSystem == null)
+                return;
+
+            bool shouldBeActive = scene.name != MainMenuSceneName;
+            if (persistentEventSystem.activeSelf != shouldBeActive)
+                persistentEventSystem.SetActive(shouldBeActive);
         }
 
         private void Update()

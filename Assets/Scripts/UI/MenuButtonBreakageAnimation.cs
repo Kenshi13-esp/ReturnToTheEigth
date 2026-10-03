@@ -21,6 +21,8 @@ namespace ReturnToTheEigth.UI
         private const int SecondVariantIndex = 1;
         private const int ThirdVariantIndex = 2;
         private const float AnimationDurationSeconds = 0.4f;
+        private const float CinematicPrepareTimeoutSeconds = 15f;
+        private const float CinematicPlaybackTimeoutGraceSeconds = 30f;
         private const float AnimationOverlayOpacity = 0.75f;
         private const float HoverScaleMultiplier = 1.12f;
         private const float FullAudioVolume = 1f;
@@ -42,7 +44,13 @@ namespace ReturnToTheEigth.UI
         private RectTransform animationOverlayRectTransform;
         private Image buttonImage;
         private AudioSource introCinematicAudioSource;
+        private Canvas menuCanvas;
+        private Canvas[] menuCanvases;
+        private bool[] menuCanvasEnabledStates;
         private Vector2 originalOverlaySizeDelta;
+        private bool isMenuCanvasHiddenForCinematic;
+        private bool isLoadingDestinationScene;
+        private VideoPlayer introVideoPlayer;
 
         private int originalSiblingIndex;
         private bool isPointerOverButton;
@@ -54,6 +62,7 @@ namespace ReturnToTheEigth.UI
         private void Awake()
         {
             originalLocalScale = transform.localScale;
+            menuCanvas = GetComponentInParent<Canvas>();
 
             if (button == null)
                 button = GetComponent<Button>();
@@ -95,6 +104,13 @@ namespace ReturnToTheEigth.UI
             {
                 StopCoroutine(playbackCoroutine);
                 playbackCoroutine = null;
+            }
+
+            if (!isLoadingDestinationScene)
+            {
+                StopAndDestroyIntroVideoPlayer();
+                AudioSettingsController.ResumeAudioAfterCinematic();
+                RestoreMenuCanvasAfterCinematic();
             }
 
             RestoreButtonSiblingIndex();
@@ -233,11 +249,27 @@ namespace ReturnToTheEigth.UI
                 if (sceneToLoadAfterAnimation == HallSceneName)
                     GameManager.Instance?.ResetForNewGameSession();
 
+                isLoadingDestinationScene = true;
                 AsyncOperation sceneLoad = SceneManager.LoadSceneAsync(sceneToLoadAfterAnimation, LoadSceneMode.Single);
-                if (sceneLoad != null)
+                if (sceneLoad == null)
+                {
+                    isLoadingDestinationScene = false;
+                    RestoreMenuCanvasAfterCinematic();
+                    AudioSettingsController.ResumeAudioAfterCinematic();
+                    Debug.LogError($"Menu cinematic could not load scene '{sceneToLoadAfterAnimation}'.", this);
+                }
+                else
                 {
                     while (!sceneLoad.isDone)
                         yield return null;
+
+                    if (SceneManager.GetActiveScene().name != sceneToLoadAfterAnimation)
+                    {
+                        isLoadingDestinationScene = false;
+                        RestoreMenuCanvasAfterCinematic();
+                        AudioSettingsController.ResumeAudioAfterCinematic();
+                        Debug.LogError($"Scene load completed without activating '{sceneToLoadAfterAnimation}'.", this);
+                    }
                 }
             }
 
@@ -254,13 +286,14 @@ namespace ReturnToTheEigth.UI
                 yield break;
             }
 
-            VideoPlayer videoPlayer = gameObject.AddComponent<VideoPlayer>();
-            videoPlayer.playOnAwake = false;
-            videoPlayer.source = VideoSource.VideoClip;
-            videoPlayer.clip = introCinematicClip;
-            videoPlayer.renderMode = VideoRenderMode.CameraNearPlane;
-            videoPlayer.targetCamera = mainCamera;
-            videoPlayer.aspectRatio = VideoAspectRatio.FitInside;
+            introVideoPlayer = gameObject.AddComponent<VideoPlayer>();
+            introVideoPlayer.playOnAwake = false;
+            introVideoPlayer.source = VideoSource.VideoClip;
+            introVideoPlayer.clip = introCinematicClip;
+            introVideoPlayer.renderMode = VideoRenderMode.CameraNearPlane;
+            introVideoPlayer.targetCamera = mainCamera;
+            introVideoPlayer.aspectRatio = VideoAspectRatio.FitInside;
+            introVideoPlayer.timeUpdateMode = VideoTimeUpdateMode.UnscaledGameTime;
             if (introCinematicAudioSource == null)
             {
                 introCinematicAudioSource = gameObject.AddComponent<AudioSource>();
@@ -269,33 +302,110 @@ namespace ReturnToTheEigth.UI
                 introCinematicAudioSource.spatialBlend = TwoDimensionalAudio;
                 AudioSettingsController.RegisterMusicSource(introCinematicAudioSource);
             }
-            videoPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;
-            videoPlayer.EnableAudioTrack(CinematicAudioTrackIndex, true);
-            videoPlayer.SetTargetAudioSource(CinematicAudioTrackIndex, introCinematicAudioSource);
-            videoPlayer.isLooping = false;
+            introVideoPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;
+            introVideoPlayer.EnableAudioTrack(CinematicAudioTrackIndex, true);
+            introVideoPlayer.SetTargetAudioSource(CinematicAudioTrackIndex, introCinematicAudioSource);
+            introVideoPlayer.isLooping = false;
 
             bool playbackFinished = false;
             bool playbackFailed = false;
-            videoPlayer.loopPointReached += _ => playbackFinished = true;
-            videoPlayer.errorReceived += (_, errorMessage) =>
+            introVideoPlayer.loopPointReached += _ => playbackFinished = true;
+            introVideoPlayer.errorReceived += (_, errorMessage) =>
             {
                 Debug.LogError($"Intro cinematic playback failed: {errorMessage}", this);
                 playbackFailed = true;
             };
 
-            videoPlayer.Prepare();
-            while (!videoPlayer.isPrepared && !playbackFailed)
+            introVideoPlayer.Prepare();
+            float preparationDeadline = Time.realtimeSinceStartup + CinematicPrepareTimeoutSeconds;
+            while (!introVideoPlayer.isPrepared && !playbackFailed
+                   && Time.realtimeSinceStartup < preparationDeadline)
+            {
                 yield return null;
+            }
+
+            if (!playbackFailed && !introVideoPlayer.isPrepared)
+            {
+                Debug.LogError("Intro cinematic preparation timed out.", this);
+                playbackFailed = true;
+            }
 
             if (!playbackFailed)
             {
-                AudioSettingsController.SuspendBackgroundMusicForCinematic();
-                videoPlayer.Play();
-                while (!playbackFinished && !playbackFailed)
+                HideMenuCanvasForCinematic();
+                AudioSettingsController.SuspendAudioForCinematic(introCinematicAudioSource);
+                introVideoPlayer.Play();
+                double playbackDeadline = Time.realtimeSinceStartup
+                    + introCinematicClip.length + CinematicPlaybackTimeoutGraceSeconds;
+                while (!playbackFinished && !playbackFailed
+                       && Time.realtimeSinceStartup < playbackDeadline)
+                {
                     yield return null;
+                }
+
+                if (!playbackFinished && !playbackFailed)
+                {
+                    Debug.LogError("Intro cinematic playback timed out; continuing to the destination scene.", this);
+                }
             }
 
-            Destroy(videoPlayer);
+            StopAndDestroyIntroVideoPlayer();
+            yield return null;
+        }
+
+        private void StopAndDestroyIntroVideoPlayer()
+        {
+            if (introVideoPlayer != null)
+            {
+                introVideoPlayer.Stop();
+                introVideoPlayer.clip = null;
+                Destroy(introVideoPlayer);
+                introVideoPlayer = null;
+            }
+
+            if (introCinematicAudioSource != null)
+                introCinematicAudioSource.Stop();
+        }
+
+
+        private void HideMenuCanvasForCinematic()
+        {
+            if (menuCanvas == null)
+                menuCanvas = GetComponentInParent<Canvas>();
+
+            if (menuCanvas == null || isMenuCanvasHiddenForCinematic)
+                return;
+
+            menuCanvases = menuCanvas.GetComponentsInChildren<Canvas>(true);
+            menuCanvasEnabledStates = new bool[menuCanvases.Length];
+            for (int canvasIndex = 0; canvasIndex < menuCanvases.Length; canvasIndex++)
+            {
+                Canvas canvas = menuCanvases[canvasIndex];
+                if (canvas == null)
+                    continue;
+
+                menuCanvasEnabledStates[canvasIndex] = canvas.enabled;
+                canvas.enabled = false;
+            }
+
+            isMenuCanvasHiddenForCinematic = true;
+        }
+
+        private void RestoreMenuCanvasAfterCinematic()
+        {
+            if (!isMenuCanvasHiddenForCinematic || menuCanvases == null)
+                return;
+
+            for (int canvasIndex = 0; canvasIndex < menuCanvases.Length; canvasIndex++)
+            {
+                Canvas canvas = menuCanvases[canvasIndex];
+                if (canvas != null)
+                    canvas.enabled = menuCanvasEnabledStates[canvasIndex];
+            }
+
+            menuCanvases = null;
+            menuCanvasEnabledStates = null;
+            isMenuCanvasHiddenForCinematic = false;
         }
 
         private Vector2 CalculateDisplayedButtonSize()

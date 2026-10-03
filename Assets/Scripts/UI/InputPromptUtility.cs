@@ -11,11 +11,11 @@ namespace ReturnToTheEigth.UI
         private const string KeyboardMoveLabel = "WASD";
         private const string GamepadMoveLabel = "Joystick / D-pad";
         private const string KeyboardInteractLabel = "E";
-        private const string GamepadInteractLabel = "X";
+        private const string GamepadInteractLabel = "A";
         private const string KeyboardTimeShiftLabel = "R";
-        private const string GamepadTimeShiftLabel = "Square";
+        private const string GamepadTimeShiftLabel = "X";
         private const string KeyboardPuzzleExitLabel = "Q";
-        private const string GamepadPuzzleExitLabel = "Circle";
+        private const string GamepadPuzzleExitLabel = "B";
         private const string KeyboardNavigationLabel = "A/D";
         private const string GamepadNavigationLabel = "Left stick / D-pad Left/Right";
         private static bool isInitialized;

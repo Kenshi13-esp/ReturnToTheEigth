@@ -24,6 +24,8 @@ namespace ReturnToTheEigth.Interaction
         private const string ExitPortraitPromptFormat = "Press {0} to leave the portrait.";
         private const float InitialPortraitMessageDuration = 5f;
         private const float FinalPortraitMessageDuration = 12f;
+        private const float FinalCinematicPrepareTimeoutSeconds = 15f;
+        private const float FinalCinematicPlaybackTimeoutGraceSeconds = 60f;
         private const int PanelMargin = 24;
         private const float HighlightRadius = 0.9f;
         private const float ColliderPadding = 0.4f;
@@ -66,6 +68,7 @@ namespace ReturnToTheEigth.Interaction
         private AudioSource finalCinematicAudioSource;
         private Coroutine finalEndingCoroutine;
         private bool isFinalCinematicPlaying;
+        private bool hasFinalTransitionStarted;
 
         /// <summary>Gets whether this view should hide the normal exploration HUD.</summary>
         public static bool HidesExplorationHud { get; private set; }
@@ -103,6 +106,7 @@ namespace ReturnToTheEigth.Interaction
                 finalCinematicPlayer.renderMode = VideoRenderMode.CameraNearPlane;
                 finalCinematicPlayer.targetCamera = Camera.main;
                 finalCinematicPlayer.aspectRatio = VideoAspectRatio.FitInside;
+                finalCinematicPlayer.timeUpdateMode = VideoTimeUpdateMode.UnscaledGameTime;
                 finalCinematicAudioSource = gameObject.AddComponent<AudioSource>();
                 finalCinematicAudioSource.playOnAwake = false;
                 finalCinematicAudioSource.volume = FullAudioVolume;
@@ -113,6 +117,7 @@ namespace ReturnToTheEigth.Interaction
                 finalCinematicPlayer.SetTargetAudioSource(CinematicAudioTrackIndex, finalCinematicAudioSource);
                 finalCinematicPlayer.isLooping = false;
                 finalCinematicPlayer.loopPointReached += HandleFinalCinematicFinished;
+                finalCinematicPlayer.errorReceived += HandleFinalCinematicError;
             }
         }
 
@@ -214,10 +219,38 @@ namespace ReturnToTheEigth.Interaction
                 yield break;
             }
 
+            finalCinematicPlayer.Prepare();
+            float preparationDeadline = Time.realtimeSinceStartup + FinalCinematicPrepareTimeoutSeconds;
+            while (!finalCinematicPlayer.isPrepared
+                   && Time.realtimeSinceStartup < preparationDeadline)
+            {
+                yield return null;
+            }
+
+            if (!finalCinematicPlayer.isPrepared)
+            {
+                Debug.LogError("Final cinematic preparation timed out; continuing to the credits.", this);
+                HandleFinalCinematicFinished(finalCinematicPlayer);
+                yield break;
+            }
+
             isFinalCinematicPlaying = true;
             finalCinematicPlayer.targetCamera = Camera.main;
-            AudioSettingsController.SuspendBackgroundMusicForCinematic();
+            AudioSettingsController.SuspendAudioForCinematic(finalCinematicAudioSource);
             finalCinematicPlayer.Play();
+
+            double playbackDeadline = Time.realtimeSinceStartup
+                + finalCinematicClip.length + FinalCinematicPlaybackTimeoutGraceSeconds;
+            while (isFinalCinematicPlaying && Time.realtimeSinceStartup < playbackDeadline)
+            {
+                yield return null;
+            }
+
+            if (isFinalCinematicPlaying)
+            {
+                Debug.LogError("Final cinematic playback timed out; continuing to the credits.", this);
+                HandleFinalCinematicFinished(finalCinematicPlayer);
+            }
         }
 
         /// <summary>Restores the exploration HUD after the first-watch discovery sequence ends.</summary>
@@ -305,14 +338,30 @@ namespace ReturnToTheEigth.Interaction
             GUI.DrawTextureWithTexCoords(imageRect, spriteTexture, uv, true);
         }
 
+        private void HandleFinalCinematicError(VideoPlayer source, string errorMessage)
+        {
+            Debug.LogError($"Final cinematic playback failed: {errorMessage}", this);
+            HandleFinalCinematicFinished(source);
+        }
+
         private void HandleFinalCinematicFinished(VideoPlayer source)
         {
+            if (hasFinalTransitionStarted)
+                return;
+
+            hasFinalTransitionStarted = true;
             isFinalCinematicPlaying = false;
+            if (finalCinematicPlayer != null)
+                finalCinematicPlayer.Stop();
+
             GameManager.Instance?.SetGameState(GameState.GameOver);
             MenuOptionsNavigation.ShowCreditsOnNextMainMenuLoad();
             AsyncOperation sceneLoad = SceneManager.LoadSceneAsync(MainMenuSceneName, LoadSceneMode.Single);
             if (sceneLoad == null)
             {
+                hasFinalTransitionStarted = false;
+                GameManager.Instance?.SetGameState(GameState.Puzzle);
+                AudioSettingsController.ResumeAudioAfterCinematic();
                 Debug.LogWarning(MissingMainMenuWarning, this);
             }
         }
@@ -344,6 +393,26 @@ namespace ReturnToTheEigth.Interaction
         {
             frameExitAction?.Disable();
             if (!isTimelineIntroPlaying) HidesExplorationHud = false;
+            if (!hasFinalTransitionStarted && (isEnding || isFinalCinematicPlaying))
+            {
+                if (finalEndingCoroutine != null)
+                {
+                    StopCoroutine(finalEndingCoroutine);
+                    finalEndingCoroutine = null;
+                }
+
+                if (finalCinematicPlayer != null)
+                    finalCinematicPlayer.Stop();
+
+                isFinalCinematicPlaying = false;
+                isEnding = false;
+                isOpen = false;
+                HidesExplorationHud = false;
+                playerController?.SetMovementEnabled(true);
+                GameManager.Instance?.SetGameState(GameState.Exploration);
+                AudioSettingsController.ResumeAudioAfterCinematic();
+            }
+
             if (isOpen && !isEnding && !HasAllFragments() && playerController != null)
             {
                 playerController.SetMovementEnabled(true);
@@ -353,6 +422,13 @@ namespace ReturnToTheEigth.Interaction
         private void OnDestroy()
         {
             frameExitAction?.Dispose();
+            if (finalCinematicPlayer != null)
+            {
+                finalCinematicPlayer.loopPointReached -= HandleFinalCinematicFinished;
+                finalCinematicPlayer.errorReceived -= HandleFinalCinematicError;
+                finalCinematicPlayer.Stop();
+            }
+
             if (solidTexture != null) Destroy(solidTexture);
         }
     }

@@ -279,7 +279,7 @@ namespace ReturnToTheEigth.UI
                     return true;
                 case PuzzleItemIds.PianoSheetMusic:
                     icon = pianoSheetMusicSprite;
-                    displayName = "Family Sheet Music";
+                    displayName = "Family Music Sheet";
                     description = "A family sheet of music for the old piano.";
                     return true;
                 default:

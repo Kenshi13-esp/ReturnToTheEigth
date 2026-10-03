@@ -65,12 +65,10 @@ namespace ReturnToTheEigth.Puzzles
             return null;
         }
 
-        /// <summary>True when a piece of the supplied color may occupy the cell: any track cell or the target of its own color.</summary>
+        /// <summary>True when the cell is a track cell or any registered target cell, regardless of piece color.</summary>
         public bool IsPassable(Vector2Int cell, PuzzleColorId color)
         {
-            if (IsTrack(cell)) return true;
-            ColorTarget target = GetTargetAt(cell);
-            return target != null && target.ColorId == color;
+            return IsTrack(cell) || GetTargetAt(cell) != null;
         }
 
         /// <summary>Returns the registered slider whose logical cell matches, or null.</summary>

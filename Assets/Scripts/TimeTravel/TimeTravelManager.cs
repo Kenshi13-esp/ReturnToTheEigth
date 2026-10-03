@@ -1,3 +1,4 @@
+using ReturnToTheEigth.CameraSystem;
 using ReturnToTheEigth.Core;
 using ReturnToTheEigth.Events;
 using UnityEngine;
@@ -14,6 +15,9 @@ namespace ReturnToTheEigth.TimeTravel
         private const int FirstIndex = 0;
         private const int AllLayers = -1;
         private const float TransitionCooldownSeconds = 0.5f;
+        private const float TimeShiftShakeDuration = 0.16f;
+        private const float TimeShiftShakeMagnitude = 0.025f;
+        private const float TimeShiftShakeRollDegrees = 0.5f;
         private const float ClearanceInset = 0.002f;
         private const float MinimumSize = 0.001f;
         private const float Zero = 0f;
@@ -35,6 +39,7 @@ namespace ReturnToTheEigth.TimeTravel
         [SerializeField] private GameStateEventChannelSO gameStateChannel;
         private readonly Collider2D[] liveOverlaps = new Collider2D[OverlapCapacity];
         private TimelineCollisionWorld collisionWorld;
+        private CameraShake cameraShake;
         private float nextTransitionTime;
         private bool isTransitioning;
         private bool isConfigured;
@@ -64,6 +69,8 @@ namespace ReturnToTheEigth.TimeTravel
                 return;
             }
             collisionWorld = new TimelineCollisionWorld();
+            cameraShake = Camera.main != null ? Camera.main.GetComponent<CameraShake>() : null;
+            if (cameraShake == null) cameraShake = FindAnyObjectByType<CameraShake>();
             CurrentEra = initialEra;
             if (GameManager.Instance != null
                 && GameManager.Instance.TryGetPendingPlayerReturnEra(out TimelineEra returnEra))
@@ -143,9 +150,22 @@ namespace ReturnToTheEigth.TimeTravel
                 nextTransitionTime = Time.unscaledTime + transitionCooldownSeconds;
                 timelineChangedChannel?.RaiseTimelineChanged(targetEra);
                 SoundManager.Play(TimeTravelSoundId);
+                ApplySuccessfulShiftCameraShake();
                 return true;
             }
             finally { isTransitioning = false; }
+        }
+
+        private void ApplySuccessfulShiftCameraShake()
+        {
+            if (cameraShake == null)
+            {
+                Camera mainCamera = Camera.main;
+                cameraShake = mainCamera != null ? mainCamera.GetComponent<CameraShake>() : null;
+                if (cameraShake == null) cameraShake = FindAnyObjectByType<CameraShake>();
+            }
+
+            cameraShake?.Shake(TimeShiftShakeDuration, TimeShiftShakeMagnitude, TimeShiftShakeRollDegrees);
         }
 
         private bool CanTransitionToEra(TimelineEra targetEra)

@@ -7,7 +7,7 @@ namespace ReturnToTheEigth.UI
     {
         private const string TypographyFontName = "TypographySilver";
         private const int BaseFontSize = 32;
-        private const int MinimumFontSize = 32;
+        private const int MinimumFontSize = 14;
         private const int MaximumFontSize = 32;
         private const float ReferenceScreenWidth = 1920f;
         private const float ReferenceScreenHeight = 1080f;
@@ -123,11 +123,23 @@ namespace ReturnToTheEigth.UI
 
             labelStyle.alignment = alignment;
             labelStyle.fontSize = GetStandardFontSize();
+            FitFontSizeToRect(text, labelRect);
             SetStyleTextColor(TextColor);
             GUI.color = TextColor;
             GUI.Label(labelRect, text, labelStyle);
             GUI.color = previousColor;
         }
+
+        private static void FitFontSizeToRect(string text, Rect rect)
+        {
+            GUIContent content = new GUIContent(text ?? string.Empty);
+            while (labelStyle.fontSize > MinimumFontSize
+                   && labelStyle.CalcHeight(content, rect.width) > rect.height)
+            {
+                labelStyle.fontSize--;
+            }
+        }
+
 
         private static Rect IntersectRects(Rect first, Rect second)
         {

@@ -1,4 +1,5 @@
 using System.Collections;
+using ReturnToTheEigth.Core;
 using UnityEngine;
 
 namespace ReturnToTheEigth.Puzzles
@@ -8,6 +9,7 @@ namespace ReturnToTheEigth.Puzzles
     public sealed class TrackSlider : MonoBehaviour
     {
         private const string MissingBoardWarning = "TrackSlider could not find a TrackBoard in the scene.";
+        private const string ScrapingSoundId = "metal-scraping";
         private const float DefaultSlideSpeed = 6f;
         private const float DefaultSelectedScale = 1.15f;
         private const float DefaultHoveredScale = 1.08f;
@@ -96,6 +98,7 @@ namespace ReturnToTheEigth.Puzzles
         {
             float speed = slideSpeed * Grid.CellSize;
             Vector3 destination = new Vector3(target.x, target.y, transform.position.z);
+            SoundManager.Play(ScrapingSoundId);
             while ((transform.position - destination).sqrMagnitude > float.Epsilon)
             {
                 transform.position = Vector3.MoveTowards(transform.position, destination, speed * Time.deltaTime);

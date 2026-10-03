@@ -98,6 +98,41 @@ namespace ReturnToTheEigth.Tests
             yield return null;
         }
 
+
+        /// <summary>Repeated permanent-open requests preserve the door state without replaying unlock feedback.</summary>
+        [Test]
+        public void PermanentDoorOpenRequestRaisesOnlyOnce()
+        {
+            int openEvents = NoEvents;
+            doorChannel.OnDoorStateRequested += (identifier, isOpen) =>
+            {
+                if (identifier == TestDoorIdentifier && isOpen)
+                    openEvents++;
+            };
+
+            doorChannel.RequestPermanentDoorOpen(TestDoorIdentifier);
+            doorChannel.RequestPermanentDoorOpen(TestDoorIdentifier);
+
+            Assert.That(openEvents, Is.EqualTo(OneEvent));
+            Assert.That(doorChannel.IsDoorPermanentlyOpen(TestDoorIdentifier), Is.True);
+            Assert.That(doorChannel.TryGetDoorState(TestDoorIdentifier, out bool isOpen) && isOpen, Is.True);
+        }
+
+        /// <summary>Re-enabled era doors restore a previously permanent-open state without requiring another event.</summary>
+        [Test]
+        public void PermanentlyOpenDoorRestoresWhenEraRootIsReactivated()
+        {
+            DoorController door = CreateDestinationDoor();
+            BoxCollider2D blockingCollider = door.GetComponent<BoxCollider2D>();
+            doorChannel.RequestPermanentDoorOpen(TestDoorIdentifier);
+
+            past.SetActive(true);
+
+            Assert.That(door.IsOpen, Is.True);
+            Assert.That(blockingCollider.enabled, Is.False);
+        }
+
+
         /// <summary>A clear shift changes roots without moving XY or depth.</summary>
         [Test]
         public void ClearShiftPreservesPositionAndTogglesRoots()

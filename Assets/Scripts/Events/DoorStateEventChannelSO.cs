@@ -43,7 +43,12 @@ namespace ReturnToTheEigth.Events
                 return;
             }
 
-            permanentlyOpenDoorIdentifiers.Add(doorIdentifier);
+            if (!permanentlyOpenDoorIdentifiers.Add(doorIdentifier))
+            {
+                requestedStates[doorIdentifier] = true;
+                return;
+            }
+
             requestedStates[doorIdentifier] = true;
             OnDoorStateRequested?.Invoke(doorIdentifier, true);
         }

@@ -318,11 +318,14 @@ namespace ReturnToTheEigth.Puzzles
             }
 
             doorStateChannel.OnDoorStateRequested += HandleDoorStateRequested;
-            bool shouldOpen = doorStateChannel.TryGetDoorState(doorIdentifier, out bool requestedOpen)
-                ? requestedOpen : IsOpen;
+            bool hasRequestedState = doorStateChannel.TryGetDoorState(doorIdentifier, out bool requestedOpen);
+            bool shouldOpen = hasRequestedState ? requestedOpen : IsOpen;
             if (shouldOpen)
             {
-                doorStateChannel.RequestPermanentDoorOpen(doorIdentifier);
+                if (!doorStateChannel.IsDoorPermanentlyOpen(doorIdentifier))
+                    doorStateChannel.RequestPermanentDoorOpen(doorIdentifier);
+
+                ApplyDoorState(true, true);
             }
             else
             {

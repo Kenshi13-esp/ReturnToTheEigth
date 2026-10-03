@@ -12233,7 +12233,6 @@ Transform:
   - {fileID: 460869338}
   - {fileID: 564949805}
   - {fileID: 1102642844}
-  - {fileID: 1115292976}
   - {fileID: 468873687}
   - {fileID: 1451567599}
   m_Father: {fileID: 1497850399}
@@ -12987,143 +12986,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.15, y: 0.35}
   m_EdgeRadius: 0
---- !u!1001 &1115292975
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1061731800}
-    m_Modifications:
-    - target: {fileID: -2253911629886400664, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_Name
-      value: Escombroh
-      objectReference: {fileID: 0}
-    - target: {fileID: -2253911629886400664, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -1.1605948
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.57100314
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: -2253911629886400664, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1115292978}
-    - targetCorrespondingSourceObject: {fileID: -2253911629886400664, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1115292979}
-  m_SourcePrefab: {fileID: -8435245712485981826, guid: ae2292b844f794647953e5f38fa12283, type: 3}
---- !u!4 &1115292976 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7878350319992209165, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-  m_PrefabInstance: {fileID: 1115292975}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1115292977 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -2253911629886400664, guid: ae2292b844f794647953e5f38fa12283, type: 3}
-  m_PrefabInstance: {fileID: 1115292975}
-  m_PrefabAsset: {fileID: 0}
---- !u!61 &1115292978
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1115292977}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0.17127642, y: 0.255}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5102041, y: -0.06666667}
-    oldSize: {x: 0.49, y: 0.45}
-    newSize: {x: 0.49, y: 0.45}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.84255284, y: 0.45}
-  m_EdgeRadius: 0
---- !u!114 &1115292979
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1115292977}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4ec4cec97c4d954481dcae76dd9e821, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Interaction.ProximityDescriptionInteractable
-  proximityDescription: It looks like the stairs leading up to the bedrooms are blocked by rubble, and I can't get past.
-  puzzleIdToHideAfterCompletion: 
 --- !u!1 &1139089633
 GameObject:
   m_ObjectHideFlags: 0
@@ -14921,6 +14783,9 @@ MonoBehaviour:
   - effectId: box-drag
     clip: {fileID: 8300000, guid: 156d9e2610b186e4a861f2c9d6dbc536, type: 3}
     volume: 0.7
+  - effectId: metal-scraping
+    clip: {fileID: 8300000, guid: 73a85fea248c97f4f9e076dc89c6d943, type: 3}
+    volume: 0.7
 --- !u!1 &1280655439
 GameObject:
   m_ObjectHideFlags: 0
@@ -15036,7 +14901,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f127e8b0a3e1fe409368d309db9de7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ReturnToTheEigth.Runtime::ReturnToTheEigth.Puzzles.DoorUnlockedRubbleCleanup
-  rubbleToDestroy: {fileID: 1115292977}
+  rubbleToDestroy: {fileID: 0}
 --- !u!1001 &1281073570
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17103,9 +16968,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.0011456311
+    x: 0.00074878335
     y: 0
-    width: 0.99770874
+    width: 0.99850243
     height: 1
   near clip plane: 0.1
   far clip plane: 30
@@ -17798,7 +17663,7 @@ MonoBehaviour:
   openAngleDegrees: -100
   animationSpeedDegrees: 180
   playerInteraction: {fileID: 0}
-  proximityDescription: 
+  proximityDescription: This door request a key...
   showProximityDescriptionOnWrongSideOnly: 0
 --- !u!1 &1493923223
 GameObject:
@@ -25153,6 +25018,14 @@ PrefabInstance:
     - target: {fileID: -2253911629886400664, guid: b04efa55e57f6b548ace2bea7134b443, type: 3}
       propertyPath: m_Name
       value: book
+      objectReference: {fileID: 0}
+    - target: {fileID: 3626916397498700004, guid: b04efa55e57f6b548ace2bea7134b443, type: 3}
+      propertyPath: m_SortingLayer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3626916397498700004, guid: b04efa55e57f6b548ace2bea7134b443, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 1567108557
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: b04efa55e57f6b548ace2bea7134b443, type: 3}
       propertyPath: m_LocalPosition.x

@@ -79,6 +79,7 @@ namespace ReturnToTheEigth.Puzzles
         {
             if (slideRoutine != null)
             {
+                SoundManager.StopTimed(ScrapingSoundId);
                 StopCoroutine(slideRoutine);
                 slideRoutine = null;
                 SnapToCell(Cell);
@@ -98,12 +99,14 @@ namespace ReturnToTheEigth.Puzzles
         {
             float speed = slideSpeed * Grid.CellSize;
             Vector3 destination = new Vector3(target.x, target.y, transform.position.z);
-            SoundManager.Play(ScrapingSoundId);
+            float movementDuration = Vector3.Distance(transform.position, destination) / speed;
+            SoundManager.PlayForDuration(ScrapingSoundId, movementDuration);
             while ((transform.position - destination).sqrMagnitude > float.Epsilon)
             {
                 transform.position = Vector3.MoveTowards(transform.position, destination, speed * Time.deltaTime);
                 yield return null;
             }
+            SoundManager.StopTimed(ScrapingSoundId);
             slideRoutine = null;
             SnapToCell(Cell);
             board.NotifySlideFinished(this);

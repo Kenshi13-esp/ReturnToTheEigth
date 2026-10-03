@@ -23,7 +23,7 @@ namespace ReturnToTheEigth.Interaction
         private const string InitialPortraitMessage = "This is the old family portrait. It seems intact, but our family photo is missing. This is very strange...";
         private const string ExitPortraitPromptFormat = "Press {0} to leave the portrait.";
         private const float InitialPortraitMessageDuration = 5f;
-        private const float FinalPortraitMessageDuration = 2f;
+        private const float FinalPortraitMessageDuration = 12f;
         private const int PanelMargin = 24;
         private const float HighlightRadius = 0.9f;
         private const float ColliderPadding = 0.4f;

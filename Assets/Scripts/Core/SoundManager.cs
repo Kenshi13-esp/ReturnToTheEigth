@@ -28,6 +28,8 @@ namespace ReturnToTheEigth.Core
             new Dictionary<string, AudioSource>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, AudioSource> loopingAudioSources =
             new Dictionary<string, AudioSource>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, AudioSource> durationAudioSources =
+            new Dictionary<string, AudioSource>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Rebuilds the effect lookup and registers a dedicated source with the shared sound-volume controls.</summary>
         private void Awake()
@@ -77,6 +79,50 @@ namespace ReturnToTheEigth.Core
             return true;
         }
 
+        /// <summary>Plays a configured effect accelerated toward a target duration; the caller stops it at its actual end.</summary>
+        public static bool PlayForDuration(string effectId, float duration)
+        {
+            if (string.IsNullOrWhiteSpace(effectId) || duration <= 0f
+                || !EffectsById.TryGetValue(effectId.Trim(), out SoundEffectDefinition effect)
+                || effect == null || effect.Clip == null)
+            {
+                return false;
+            }
+
+            SoundManager manager = FindAnyObjectByType<SoundManager>();
+            if (manager == null)
+            {
+                return false;
+            }
+
+            AudioSource source = manager.GetDurationAudioSource(effect);
+            source.Stop();
+            source.clip = effect.Clip;
+            source.pitch = Mathf.Clamp(effect.Clip.length / duration, MinimumPitch, MaximumPitch);
+            source.Play();
+            return true;
+        }
+
+        /// <summary>Stops an effect currently played through <see cref="PlayForDuration(string, float)"/>.</summary>
+        public static bool StopTimed(string effectId)
+        {
+            if (string.IsNullOrWhiteSpace(effectId))
+            {
+                return false;
+            }
+
+            SoundManager manager = FindAnyObjectByType<SoundManager>();
+            if (manager == null || !manager.durationAudioSources.TryGetValue(effectId.Trim(), out AudioSource source)
+                || source == null)
+            {
+                return false;
+            }
+
+            source.Stop();
+            source.pitch = DefaultPitch;
+            return true;
+        }
+
         private AudioSource GetOneShotAudioSource(SoundEffectDefinition effect, float pitch)
         {
             string effectId = effect.EffectId.Trim();
@@ -92,6 +138,23 @@ namespace ReturnToTheEigth.Core
             else
             {
                 source.pitch = pitch;
+            }
+
+            return source;
+        }
+
+        private AudioSource GetDurationAudioSource(SoundEffectDefinition effect)
+        {
+            string effectId = effect.EffectId.Trim();
+            if (!durationAudioSources.TryGetValue(effectId, out AudioSource source) || source == null)
+            {
+                source = gameObject.AddComponent<AudioSource>();
+                source.playOnAwake = false;
+                source.loop = false;
+                source.spatialBlend = TwoDimensionalAudio;
+                source.volume = Mathf.Clamp(effect.Volume, MinimumEffectVolume, MaximumEffectVolume);
+                durationAudioSources[effectId] = source;
+                AudioSettingsController.RegisterSoundSource(source);
             }
 
             return source;

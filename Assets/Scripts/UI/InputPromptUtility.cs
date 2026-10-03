@@ -17,7 +17,7 @@ namespace ReturnToTheEigth.UI
         private const string KeyboardPuzzleExitLabel = "Q";
         private const string GamepadPuzzleExitLabel = "Circle";
         private const string KeyboardNavigationLabel = "A/D";
-        private const string GamepadNavigationLabel = "D-pad Left/Right";
+        private const string GamepadNavigationLabel = "Left stick / D-pad Left/Right";
         private static bool isInitialized;
         private static InputDevice lastUsedDevice;
         private static bool isGamepadActive;
